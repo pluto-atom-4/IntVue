@@ -21,22 +21,73 @@ try {
     # 1) Formatting check
     Write-Host 'Running dotnet format (verify no changes)...'
     $formatExe = 'dotnet'
-    $formatArgs = @('format', '--verify-no-changes')
+
+    function Get-FormatWorkspace {
+        param([string]$root)
+
+        # Look for solution files (*.sln, *.slnx) at repo root
+        $sln = Get-ChildItem -Path $root -Filter *.sln -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $sln) {
+            $sln = Get-ChildItem -Path $root -Filter *.slnx -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        }
+        if ($sln) { return $sln.FullName }
+
+        # Look for a project file in repo root
+        $projRoot = Get-ChildItem -Path $root -Filter *.csproj -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($projRoot) { return $projRoot.FullName }
+
+        # Otherwise, try to find a csproj whose name matches the repository folder name
+        $repoName = Split-Path -Leaf $root
+        $matching = Get-ChildItem -Path $root -Recurse -Filter *.csproj -File -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $repoName } | Select-Object -First 1
+        if ($matching) { return $matching.FullName }
+
+        # Fall back to any csproj in the tree
+        $anyProj = Get-ChildItem -Path $root -Recurse -Filter *.csproj -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($anyProj) { return $anyProj.FullName }
+
+        return $null
+    }
+
+    # Determine workspace
+    $workspace = Get-FormatWorkspace -root $RepoRoot
+
     try {
-        $proc = Start-Process -FilePath $formatExe -ArgumentList $formatArgs -NoNewWindow -Wait -PassThru -WindowStyle Hidden
-        if ($proc.ExitCode -ne 0) {
-            Write-Host "dotnet format detected formatting issues (exit code $($proc.ExitCode)). Please run 'dotnet format' to fix." -ForegroundColor Yellow
-            Exit $proc.ExitCode
+        # Check whether dotnet-format is installed globally
+        $formatInstalled = $false
+        try {
+            $output = & dotnet tool list -g 2>$null
+            if ($output -match 'dotnet-format') { $formatInstalled = $true }
+        } catch {
+            $formatInstalled = $false
+        }
+
+        if (-not $formatInstalled) {
+            Write-Host "The 'dotnet-format' tool was not found globally. Skipping formatting check." -ForegroundColor Yellow
+        } else {
+            if ($workspace) {
+                Write-Host "Using workspace for dotnet format: $workspace"
+                $workspaceArg = @($workspace)
+            } else {
+                Write-Host "No .sln or .csproj found; running 'dotnet format' in repository root (may require explicit workspace)." -ForegroundColor Yellow
+                $workspaceArg = @()
+            }
+
+            $formatArgs = @('format','--verify-no-changes') + $workspaceArg
+            $proc = Start-Process -FilePath $formatExe -ArgumentList $formatArgs -NoNewWindow -Wait -PassThru
+            if ($proc.ExitCode -ne 0) {
+                Write-Host "dotnet format detected formatting issues (exit code $($proc.ExitCode)). Please run 'dotnet format' to fix." -ForegroundColor Yellow
+                Exit $proc.ExitCode
+            }
         }
     } catch {
-        Write-Host "Failed to run 'dotnet format'. Ensure dotnet-format is available (dotnet tool install -g dotnet-format) or that 'dotnet format' is supported by your SDK." -ForegroundColor Red
+        Write-Host "Failed to run 'dotnet format'. Ensure dotnet-format is available (dotnet tool install -g dotnet-format) and that the workspace can be resolved." -ForegroundColor Red
         Exit 1
     }
 
     # 2) Build (this will run analyzers during build)
     Write-Host 'Running dotnet build...'
     $buildArgs = @('build','-c','Debug',"-p:Platform=$Platform")
-    $proc = Start-Process -FilePath 'dotnet' -ArgumentList $buildArgs -NoNewWindow -Wait -PassThru -WindowStyle Hidden
+    $proc = Start-Process -FilePath 'dotnet' -ArgumentList $buildArgs -NoNewWindow -Wait -PassThru
     if ($proc.ExitCode -ne 0) {
         Write-Host "dotnet build failed (exit code $($proc.ExitCode)). Fix build errors before committing." -ForegroundColor Red
         Exit $proc.ExitCode
@@ -46,7 +97,7 @@ try {
     # Running tests can be slow; if you prefer to skip tests in pre-commit, comment the following block out.
     Write-Host 'Running dotnet test (tests may be slow)...'
     $testArgs = @('test','-c','Debug',"-p:Platform=$Platform")
-    $proc = Start-Process -FilePath 'dotnet' -ArgumentList $testArgs -NoNewWindow -Wait -PassThru -WindowStyle Hidden
+    $proc = Start-Process -FilePath 'dotnet' -ArgumentList $testArgs -NoNewWindow -Wait -PassThru
     if ($proc.ExitCode -ne 0) {
         Write-Host "dotnet test failed (exit code $($proc.ExitCode)). Fix failing tests before committing." -ForegroundColor Red
         Exit $proc.ExitCode
