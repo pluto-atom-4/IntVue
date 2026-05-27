@@ -26,3 +26,18 @@ Notes:
 - Pre-commit hooks run locally — they are intended to fail fast and prevent commits that violate formatting, build, or test expectations.
 - If you prefer a faster pre-commit, edit `scripts/pre-commit.ps1` to skip tests or only run a subset of checks.
 
+Automatic setup (recommended)
+--------------------------------
+To streamline onboarding, a repository setup script is provided: `scripts/setup-repo.ps1`.
+Run it once after cloning to configure hooks and verify common tooling:
+
+    pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-repo.ps1
+
+What `setup-repo.ps1` does:
+- Sets `git config core.hooksPath .githooks` (same as `install-githooks.ps1`).
+- Verifies `dotnet` is available and runs `dotnet restore`.
+- Checks whether `dotnet-format` is installed globally and offers to install it if missing.
+- Runs an initial `dotnet build` to surface any immediate build/analyzer issues.
+
+The setup script is interactive by default but idempotent — safe to re-run.
+
