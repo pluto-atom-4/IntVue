@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "IntVue (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "IntVue (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
