@@ -1,4 +1,6 @@
-﻿using Microsoft.UI.Xaml;
+// <copyright file="MainWindow.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
 
 namespace IntVue;
 
@@ -8,21 +10,10 @@ namespace IntVue;
 /// is defined in MainWindow.xaml, but providing this partial class ensures
 /// the app can compile and run basic unit tests.
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow
 {
-    public MainWindow()
-    {
-        InitializeComponent();
-    }
-
-    // Minimal InitializeComponent implementation - when XAML compilation
-    // produces a generated method, that generated method will be used.
-    // Provide an empty fallback so the project can build in environments
-    // where the XAML compiler did not emit the generated method yet.
-    public void InitializeComponent()
-    {
-        // Intentionally empty: real XAML will populate generated content.
-    }
+    // This file intentionally left minimal. The XAML-generated partial
+    // class (MainWindow.g.i.cs) provides the constructor and InitializeComponent
+    // implementation during normal builds. Keeping this file present allows
+    // adding code-behind members later without modifying the generated file.
 }
-
-

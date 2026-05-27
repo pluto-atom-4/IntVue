@@ -1,8 +1,12 @@
+// <copyright file="MainWindow.xaml.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+using IntVue.Views;
 using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace IntVue;
 
 /// <summary>
@@ -14,14 +18,14 @@ public sealed partial class MainWindow : Window
 {
     public MainWindow()
     {
-        InitializeComponent();
+        this.InitializeComponent();
 
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
+        this.ExtendsContentIntoTitleBar = true;
+        this.SetTitleBar(this.AppTitleBar);
 
-        AppWindow.SetIcon("Assets/AppIcon.ico");
+        this.AppWindow.SetIcon("Assets/AppIcon.ico");
 
         // Navigate the root frame to the main page on startup.
-        RootFrame.Navigate(typeof(MainPage));
+        this.RootFrame.Navigate(typeof(MainPage));
     }
 }

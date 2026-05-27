@@ -1,8 +1,11 @@
+// <copyright file="MainPage.xaml.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace IntVue.Views;
 
 /// <summary>
@@ -13,7 +16,7 @@ public sealed partial class MainPage : Page
 {
     public MainPage()
     {
-        InitializeComponent();
+        this.InitializeComponent();
 
         // TODO: Add your initialization logic here.
     }

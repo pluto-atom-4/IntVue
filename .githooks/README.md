@@ -33,6 +33,12 @@ Run it once after cloning to configure hooks and verify common tooling:
 
     pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-repo.ps1
 
+You can also pass options:
+
+- `-FixFormatting` — apply formatting fixes automatically (runs `dotnet format <workspace>`).
+- `-Yes` — answer prompts automatically (useful for CI or scripted setup).
+- `-Workspace <path>` — explicitly specify a solution (.sln/.slnx) or project (.csproj) to format. If omitted the script will detect a suitable workspace automatically (prefers solution, then project).
+
 What `setup-repo.ps1` does:
 - Sets `git config core.hooksPath .githooks` (same as `install-githooks.ps1`).
 - Verifies `dotnet` is available and runs `dotnet restore`.
