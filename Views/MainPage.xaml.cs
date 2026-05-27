@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace IntVue;
+namespace IntVue.Views;
 
 /// <summary>
 /// The main content page displayed inside the application window.
@@ -17,4 +17,6 @@ public sealed partial class MainPage : Page
 
         // TODO: Add your initialization logic here.
     }
+
+    // InitializeComponent is provided by generated XAML code (MainPage.g.i.cs)
 }
