@@ -3,7 +3,6 @@
 // </copyright>
 
 using IntVue.Views;
-
 using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,

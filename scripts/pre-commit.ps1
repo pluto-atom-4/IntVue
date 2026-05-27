@@ -7,6 +7,16 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Ensure dotnet from user install (~\/.dotnet) is on PATH for non-login shells
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    $userDotnet = Join-Path $env:USERPROFILE '.dotnet'
+    $userDotnetExe = Join-Path $userDotnet 'dotnet.exe'
+    if (Test-Path $userDotnetExe) {
+        Write-Host "Adding user dotnet to PATH: $userDotnet"
+        $env:PATH = "$userDotnet;" + $env:PATH
+    }
+}
+
 # Determine repository root (parent of scripts folder)
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 Write-Host "Repository root: $RepoRoot"

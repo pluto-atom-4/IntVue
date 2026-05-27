@@ -4,7 +4,6 @@
 
 using IntVue.Services;
 using IntVue.ViewModels;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
