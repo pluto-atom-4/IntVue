@@ -78,6 +78,12 @@
       <Folder Include="Services\" />
     </ItemGroup>
 
+    <!-- Exclude the Tests folder from the main project compile items so the test
+         source files (which live under Tests\) are built only by the test
+         project and do not cause compilation errors in the app project. -->
+    <ItemGroup>
+      <Compile Remove="Tests\**\*.cs" />
+    </ItemGroup>
     <!--
       Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
       Explorer "Package and Publish" context menu entry to be enabled for this project even if
