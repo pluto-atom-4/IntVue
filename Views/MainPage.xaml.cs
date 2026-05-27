@@ -2,24 +2,29 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using Microsoft.UI.Xaml.Controls;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-namespace IntVue.Views;
-
-/// <summary>
-/// The main content page displayed inside the application window.
-/// Add your UI logic, event handlers, and data binding here.
-/// </summary>
-public sealed partial class MainPage : Page
+namespace IntVue.Views
 {
-    public MainPage()
+    using Microsoft.UI.Xaml.Controls;
+
+    // To learn more about WinUI, the WinUI project structure,
+    // and more about our project templates, see: http://aka.ms/winui-project-info.
+
+    /// <summary>
+    /// The main content page displayed inside the application window.
+    /// Add your UI logic, event handlers, and data binding here.
+    /// </summary>
+    public sealed partial class MainPage : Page
     {
-        this.InitializeComponent();
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainPage"/> class.
+        /// </summary>
+        public MainPage()
+        {
+            this.InitializeComponent();
 
-        // TODO: Add your initialization logic here.
+            // TODO: Add your initialization logic here.
+        }
+
+        // InitializeComponent is provided by generated XAML code (MainPage.g.i.cs)
     }
-
-    // InitializeComponent is provided by generated XAML code (MainPage.g.i.cs)
 }

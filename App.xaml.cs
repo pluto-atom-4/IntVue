@@ -2,47 +2,59 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using IntVue.Services;
-using IntVue.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
-
-namespace IntVue;
-
-public partial class App : Application
+namespace IntVue
 {
-    public static IServiceProvider Services { get; private set; } = null!;
+    using IntVue.Services;
+    using IntVue.ViewModels;
 
-    // Backing field for the main application window
-    private Window? window;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.UI.Xaml;
 
-    public App()
+    /// <summary>
+    /// Application entry point and DI configuration.
+    /// </summary>
+    public partial class App : Application
     {
-        this.InitializeComponent();
-        Services = ConfigureServices();
-    }
+        /// <summary>
+        /// Backing field for the main application window.
+        /// </summary>
+        private Window? window;
 
-    // InitializeComponent is provided by generated XAML code (App.g.i.cs)
-    private static IServiceProvider ConfigureServices()
-    {
-        var services = new ServiceCollection();
+        /// <summary>
+        /// Initializes a new instance of the <see cref="App"/> class.
+        /// </summary>
+        public App()
+        {
+            this.InitializeComponent();
+            Services = ConfigureServices();
+        }
 
-        // Services
-        services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
+        /// <summary>
+        /// Gets the application's <see cref="IServiceProvider"/>.
+        /// </summary>
+        public static IServiceProvider Services { get; private set; } = null!;
 
-        // navigation, data services, etc:
-        // services.AddSingleton<INavigationService, NavigationService>();
+        /// <inheritdoc/>
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        {
+            this.window = new MainWindow();
+            this.window.Activate();
+        }
 
-        // ViewModels
-        services.AddTransient<MainViewModel>();
+        /// <summary>
+        /// Configure dependency injection services.
+        /// </summary>
+        private static IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
 
-        return services.BuildServiceProvider();
-    }
+            // Services
+            services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
 
-    /// <inheritdoc/>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
-    {
-        this.window = new MainWindow();
-        this.window.Activate();
+            // ViewModels
+            services.AddTransient<MainViewModel>();
+
+            return services.BuildServiceProvider();
+        }
     }
 }
