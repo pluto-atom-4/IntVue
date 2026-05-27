@@ -15,6 +15,20 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <!-- Code analysis & style enforcement settings (added per project guidelines) -->
+    <PropertyGroup>
+        <!-- Enable built-in .NET analyzers -->
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <!-- Use the recommended analysis level -->
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <!-- Apply code style in build to surface style issues during CI/builds -->
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <!-- Do not treat warnings as errors by default; team can opt-in via CI -->
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <!-- Nullable already enabled above; keep it enabled -->
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
     <ItemGroup>
         <Content Include="Assets\SplashScreen.scale-200.png"/>
         <Content Include="Assets\LockScreenLogo.scale-200.png"/>
@@ -49,9 +63,19 @@
       <PropertyGroup> above to opt out.
     -->
     <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705"/>
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003"/>
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.3.1"/>
+        <!-- Code analysis packages: enable Roslyn analyzers and StyleCop -->
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="*" />
+        <PackageReference Include="StyleCop.Analyzers" Version="*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Services\" />
     </ItemGroup>
 
     <!--
