@@ -53,6 +53,7 @@ namespace IntVue
 
             // ViewModels
             services.AddTransient<MainViewModel>();
+            services.AddTransient<InterviewViewModel>();
 
             return services.BuildServiceProvider();
         }

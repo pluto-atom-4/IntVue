@@ -51,6 +51,5 @@
     <systemai:Capability Name="systemAIModels"/>
     <DeviceCapability Name="webcam" />
     <DeviceCapability Name="microphone" />
-    <Capability Name="videosLibrary" />
   </Capabilities>
 </Package>

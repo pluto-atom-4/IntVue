@@ -6,13 +6,27 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:IntVue"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <!--
-        This is the main content area of your application.
-        Add your UI elements here — for example, controls, layouts, and data-bound views.
-        Use 'dotnet new winui-page' to create additional pages and navigate to them via
-        the Frame in MainWindow (RootFrame).
-    -->
-    <Grid />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Preview host -->
+        <controls:MediaPlayerElement x:Name="PreviewControl" AreTransportControlsEnabled="False" Grid.Row="0" />
+
+        <!-- Controls -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
+            <Button x:Name="BtnStartPreview" Content="Start Preview" Click="BtnStartPreview_Click" AutomationProperties.Name="StartPreviewButton" />
+            <Button x:Name="BtnStartRecording" Content="Start Recording" Click="BtnStartRecording_Click" AutomationProperties.Name="StartRecordingButton" Margin="10,0,0,0" />
+            <Button x:Name="BtnStopRecording" Content="Stop Recording" Click="BtnStopRecording_Click" AutomationProperties.Name="StopRecordingButton" Margin="10,0,0,0" />
+        </StackPanel>
+
+        <!-- Consent / status -->
+        <TextBlock x:Name="TxtConsent" Text="By enabling camera/microphone you consent to local recording." Grid.Row="2" TextWrapping="Wrap" Margin="10" />
+    </Grid>
 </Page>
