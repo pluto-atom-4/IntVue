@@ -1,8 +1,13 @@
+// <copyright file="InterviewViewModel.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 namespace IntVue.ViewModels
 {
     using System.ComponentModel;
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
+
     using IntVue.Services;
 
     /// <summary>
@@ -24,39 +29,54 @@ namespace IntVue.ViewModels
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-
         public string QuestionText
         {
             get => this.questionText;
-            set { this.questionText = value; this.OnPropertyChanged(); }
+            set
+            {
+                this.questionText = value;
+                this.OnPropertyChanged();
+            }
         }
 
         public bool IsPreviewing
         {
             get => this.isPreviewing;
-            private set { this.isPreviewing = value; this.OnPropertyChanged(); }
+            private set
+            {
+                this.isPreviewing = value;
+                this.OnPropertyChanged();
+            }
         }
 
         public bool IsRecording
         {
             get => this.isRecording;
-            private set { this.isRecording = value; this.OnPropertyChanged(); }
+            private set
+            {
+                this.isRecording = value;
+                this.OnPropertyChanged();
+            }
         }
 
         public string RecordedFilePath
         {
             get => this.recordedFilePath;
-            private set { this.recordedFilePath = value; this.OnPropertyChanged(); }
+            private set
+            {
+                this.recordedFilePath = value;
+                this.OnPropertyChanged();
+            }
         }
 
         public bool ConsentGiven
         {
             get => this.consentGiven;
-            set { this.consentGiven = value; this.OnPropertyChanged(); }
+            set
+            {
+                this.consentGiven = value;
+                this.OnPropertyChanged();
+            }
         }
 
         public async Task<bool> StartPreviewAsync(object previewHost)
@@ -100,6 +120,11 @@ namespace IntVue.ViewModels
         {
             await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
             this.IsRecording = false;
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string? name = null)
+        {
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 }
