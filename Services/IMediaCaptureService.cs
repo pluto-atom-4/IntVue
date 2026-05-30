@@ -2,9 +2,6 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace IntVue.Services;
 
 /// <summary>
@@ -14,43 +11,53 @@ namespace IntVue.Services;
 public interface IMediaCaptureService
 {
     /// <summary>
+    /// Gets a value indicating whether a recording is currently in progress.
+    /// </summary>
+    bool IsRecording { get; }
+
+    /// <summary>
     /// Initialize the underlying media capture resources.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token used to abort initialization.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Request permissions for camera/microphone and return true if granted.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task<bool> RequestPermissionsAsync();
 
     /// <summary>
     /// Start showing the camera preview in the provided preview host object.
     /// The concrete type is forwarded by the view (e.g., MediaPlayerElement).
     /// </summary>
+    /// <param name="previewHost">UI element used to render the camera preview (implementation-specific).</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task StartPreviewAsync(object previewHost);
 
     /// <summary>
     /// Stop the camera preview.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task StopPreviewAsync();
 
     /// <summary>
     /// Start recording and return the saved file path.
     /// </summary>
+    /// <param name="baseFileName">Suggested base filename to use for the recording; will be sanitized.</param>
+    /// <returns>A <see cref="Task{String}"/> representing the asynchronous operation and returning the file path.</returns>
     Task<string> StartRecordingAsync(string baseFileName);
 
     /// <summary>
     /// Stop recording.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task StopRecordingAsync();
 
     /// <summary>
     /// Dispose and release resources asynchronously.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task DisposeAsync();
-
-    /// <summary>
-    /// Whether a recording is currently in progress.
-    /// </summary>
-    bool IsRecording { get; }
 }
