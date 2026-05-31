@@ -179,6 +179,248 @@ CI / PR checks:
 - Sanity build + run on dev machine using `dotnet run` (winapp integration).
 - Manual checks for: privacy prompt, preview starts, recording file exists under LocalFolder, playback works, deletion works.
 
+---
+
+## Remote Debugging with JetBrains Rider (Surface Tablet from Desktop PC)
+
+This section describes how to debug the IntVue app on a Surface Tablet from a Desktop PC without native hardware.
+
+### Scenario
+
+- **Development Machine:** Desktop PC (Windows 11+, no camera/microphone)
+- **Target Device:** Surface Tablet (Windows 11+, has camera/microphone)
+- **Goal:** Debug app on Surface using Rider on Desktop
+
+### Prerequisites
+
+1. **Developer Mode enabled on both machines**
+   - Desktop PC: Settings → System → For developers → Developer Mode: ON
+   - Surface Tablet: Settings → System → For developers → Developer Mode: ON
+
+2. **Visual Studio Remote Tools (must match Rider version)**
+   - Download from: https://visualstudio.microsoft.com/downloads/#remote-tools-for-visual-studio-2026
+   - Choose architecture matching Surface Tablet (typically ARM64 for Surface devices)
+   - Install on Surface Tablet (target device)
+   - Start the Remote Debugging Monitor (`msvsmon.exe`) on Surface
+
+3. **Network connectivity**
+   - Both machines on same LAN (Wi-Fi or Ethernet)
+   - Note Surface IP address: `ipconfig` in PowerShell on Surface
+
+4. **Rider & .NET SDK**
+   - Rider 2024.3+ with .NET debugging support
+   - .NET 8+ SDK on both machines
+
+### Build & Deploy to Surface
+
+#### Option 1: Deploy via `dotnet run` (Recommended for single debug session)
+
+```powershell
+# On Desktop PC in project directory
+
+$Platform = "ARM64"  # Adjust if Surface uses x64
+$TargetIP = "192.168.1.100"  # Surface tablet IP address
+
+# Build for target architecture
+dotnet build -c Debug -p:Platform=$Platform
+
+# Deploy loose-layout package to Surface (requires Developer Mode + network discovery)
+# Use winapp CLI to register and launch
+winapp run --architecture $Platform --device "192.168.1.100"
+```
+
+#### Option 2: Package & Deploy (For persistent installation)
+
+```powershell
+# On Desktop PC
+
+$Platform = "ARM64"
+
+# Build release package
+dotnet build -c Release -p:Platform=$Platform
+
+# Sign the package
+winapp sign ".\bin\$Platform\Release\net10.0-windows10.0.26100.0\win-$Platform\*" `
+    --cert ".\dev-cert.pfx"
+
+# Transfer MSIX to Surface and install
+# On Surface: Add-AppxPackage "C:\path\to\IntVue.msix"
+```
+
+### Configure Rider for Remote Debugging
+
+#### Step 1: Set Remote Connection in Rider
+
+1. Open **Rider** on Desktop PC
+2. Go to **Run → Edit Configurations**
+3. Select/create **.NET Executable** configuration
+4. Set:
+   - **Target framework:** `net10.0-windows10.0.26100.0`
+   - **Executable:** Path to built app or AUMID
+   - **Host:** Surface Tablet IP (e.g., `192.168.1.100`)
+   - **Port:** `4026` (default for Remote Debugging)
+
+#### Step 2: Attach Debugger to Running App
+
+Alternative to pre-configured run config:
+
+1. Deploy/run app on Surface Tablet
+2. In Rider: **Run → Attach to Process**
+3. Set connection type: **Remote (TCP/IP)**
+4. Enter Surface IP and port `4026`
+5. Select the IntVue process from list
+6. Click **Attach**
+
+#### Step 3: Set Breakpoints and Debug
+
+1. Open source files in Rider (same codebase)
+2. Click to set breakpoints (red circles)
+3. Interact with app on Surface; breakpoints trigger in Rider
+4. Use **Variables**, **Call Stack**, **Threads** panels to inspect state
+5. Step through code using standard debugger controls
+
+### Handling Device-Not-Found Gracefully (Critical for Cross-Device Debug)
+
+Since Desktop PC has no camera, the app **must gracefully handle missing devices** to reach the UI for testing.
+
+#### Required Implementation
+
+In `Services/MediaCaptureService.cs`:
+
+```csharp
+public async Task InitializeAsync(CancellationToken cancellationToken = default)
+{
+    if (this.initialized) return;
+
+    this.mediaCapture = new MediaCapture();
+
+    try
+    {
+        var devices = await DeviceInformation.FindAllAsync(
+            DeviceClass.VideoCapture, 
+            cancellationToken
+        );
+
+        // ✅ Graceful fallback if no devices found
+        if (devices.Count == 0)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                "Warning: No camera device found. Preview will be unavailable."
+            );
+            this.initialized = true;
+            return;  // Exit gracefully, don't crash
+        }
+
+        // Select front camera, fallback to first device
+        var front = devices.FirstOrDefault(
+            d => d.EnclosureLocation?.Panel == Panel.Front
+        ) ?? devices[0];
+
+        var settings = new MediaCaptureInitializationSettings
+        {
+            VideoDeviceId = front.Id,  // Now guaranteed non-null
+            StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo,
+        };
+
+        await this.mediaCapture.InitializeAsync(settings);
+        this.initialized = true;
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"MediaCapture init error: {ex.Message}");
+        this.initialized = false;
+        throw;  // Caller handles
+    }
+}
+```
+
+**Benefit:** App runs on Desktop (preview disabled), full functionality on Surface.
+
+### Creating Mock Services for Unit Testing
+
+For unit tests on Desktop PC without hardware, create mock implementation:
+
+```csharp
+// Tests/Mocks/MockMediaCaptureService.cs
+public class MockMediaCaptureService : IMediaCaptureService
+{
+    public bool IsRecording { get; private set; }
+
+    public Task InitializeAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task<bool> RequestPermissionsAsync() => Task.FromResult(true);
+
+    public Task StartPreviewAsync(object previewHost) => Task.CompletedTask;
+
+    public Task StopPreviewAsync() => Task.CompletedTask;
+
+    public async Task<string> StartRecordingAsync(string baseFileName)
+    {
+        this.IsRecording = true;
+        return $"mock-recording-{Guid.NewGuid()}.mp4";
+    }
+
+    public async Task StopRecordingAsync()
+    {
+        this.IsRecording = false;
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+}
+
+// Usage in tests:
+[TestMethod]
+public async Task RecordingFlow_Success()
+{
+    var mockService = new MockMediaCaptureService();
+    var viewModel = new InterviewViewModel(mockService);
+
+    await viewModel.StartPreviewAsync(previewControl);
+    await viewModel.StartRecordingAsync("test");
+
+    Assert.IsTrue(mockService.IsRecording);
+
+    await viewModel.StopRecordingAsync();
+    Assert.IsFalse(mockService.IsRecording);
+}
+```
+
+### Debugging Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **Cannot connect to Surface** | Developer Mode off, firewall blocking, wrong IP | Enable Dev Mode, check Windows Firewall inbound rules, verify IP with `ipconfig` |
+| **Remote debugger not starting** | Remote Tools not installed or wrong architecture | Download matching VS Remote Tools for ARM64/x64, run `msvsmon.exe` on Surface |
+| **App crashes on init (Desktop)** | No camera device found | Implement graceful device-not-found handling (see above) |
+| **Breakpoints not hitting** | Debug symbols not loaded | Verify `.pdb` files in bin folder, check Rider symbol loading in debugger options |
+| **App runs differently on Surface vs Desktop** | Environmental differences (device features) | Use mock services for unit tests, remote debug actual hardware-dependent code |
+
+### Recommended Workflow
+
+1. **Develop & test UI logic on Desktop** (no hardware needed)
+   - Use mock `IMediaCaptureService`
+   - Run unit tests: `dotnet test`
+   - Build & run: `dotnet run`
+
+2. **Debug hardware-dependent code on Surface**
+   - Deploy app: `winapp run --device 192.168.1.100`
+   - Set breakpoints in Rider
+   - Attach debugger: **Run → Attach to Process** (Remote TCP/IP)
+   - Step through real camera/microphone flows
+
+3. **Validate on both environments**
+   - Desktop PC: UI layout, navigation, accessibility
+   - Surface: Camera preview, recording, playback, permissions
+
+### Further Reading
+
+- [Rider Debugger Documentation](https://www.jetbrains.com/help/rider/Debugging-Code.html)
+- [Visual Studio Remote Debugging](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging)
+- [Windows App SDK Deployment](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/set-up-your-development-environment)
+- [winapp CLI Documentation](https://github.com/microsoft/WinAppCli/blob/main/docs/usage.md)
+
+---
+
 ## Next steps
 
 If you confirm, I will produce Phase 1 detailed per-file skeletons and ready-to-paste code
