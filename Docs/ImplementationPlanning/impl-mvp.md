@@ -421,10 +421,76 @@ public async Task RecordingFlow_Success()
 
 ---
 
-## Next steps
+---
 
-If you confirm, I will produce Phase 1 detailed per-file skeletons and ready-to-paste code
-for `IMediaCaptureService`, DI registration in `App.xaml.cs`, and a small filename
-sanitizer helper in `Helpers/FileHelpers.cs`. After Phase 1 is applied we will run
-the unit tests and proceed to Phase 2.
+## Prerequisites: Critical Issues & Infrastructure (June 1, 2026)
+
+### Issue #13 — CRITICAL: Fix device-not-found crash in MediaCaptureService
+
+**Problem:** MediaCaptureService crashes on Desktop PC (no camera) when `DeviceInformation.FindAllAsync()` returns 0 devices.
+
+**Impact:** ❌ Blocks all UI testing, Phases 4-6, and remote debugging setup.
+
+**Solution:** Add graceful device-not-found handling in `MediaCaptureService.InitializeAsync()` (line 49):
+
+```csharp
+// After: var devices = await DeviceInformation.FindAllAsync(...)
+if (devices.Count == 0)
+{
+    Debug.WriteLine("Warning: No camera device found. Preview mode disabled.");
+    this.initialized = true;
+    return;  // Exit gracefully without crash
+}
+```
+
+**Status:** Ready to implement (GitHub Issue #13)  
+**Effort:** 30 minutes  
+**Priority:** 🔴 CRITICAL (unblocks all downstream work)
+
+### Issue #14 — Setup: Configure JetBrains Rider for Remote Debugging
+
+**Problem:** Remote debugging from Desktop PC to Surface Tablet requires infrastructure not yet configured.
+
+**Solution:** One-time setup:
+1. Download Visual Studio Remote Tools (ARM64 version for Surface)
+2. Enable Developer Mode on both Desktop and Surface
+3. Rider → Run → Edit Configurations → Remote Machine
+4. Set host: Surface IP, port: 4026
+5. Deploy via `winapp run`
+
+**Status:** Ready to implement (GitHub Issue #14)  
+**Effort:** 1 hour (one-time)  
+**Priority:** 🟡 HIGH (prerequisite for hardware testing)
+
+### Issue #15 — TEST: Implement MockMediaCaptureService for Offline Testing
+
+**Problem:** Unit tests crash on Desktop PC without hardware mocking.
+
+**Solution:** Create `Tests/Mocks/MockMediaCaptureService.cs` implementing `IMediaCaptureService`:
+- All methods return `Task.CompletedTask`
+- Properties have getters/setters for assertions
+- No external dependencies
+
+**Status:** Ready to implement (GitHub Issue #15)  
+**Effort:** 1 hour  
+**Priority:** 🟡 HIGH (enables offline unit testing)
+
+### Execution Priority
+
+```
+1. FIX #13 (30 min) → Unblocks all work
+2. PARALLEL #14 & #15 (1 hour each)
+3. START Phase 4 → #2, #3, #4
+```
+
+---
+
+## Next Steps
+
+1. **Immediate (30 minutes):** Implement Issue #13 device-not-found fix
+2. **Then (1 hour):** Setup remote debugging infrastructure (Issue #14)
+3. **Parallel (1 hour):** Create MockMediaCaptureService (Issue #15)
+4. **Then (4 hours):** Begin Phase 4 UI & Accessibility work
+
+All 15 GitHub issues created and ready. See issues #13-#15 for detailed requirements, acceptance criteria, and effort estimates.
 
