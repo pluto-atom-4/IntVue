@@ -1,0 +1,44 @@
+﻿# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# IDE & Editor
+.idea/
+.vs/
+.vscode/
+*.user
+*.userprefs
+*.suo
+.DS_Store
+
+# NuGet & Package management
+packages/
+*.nuspec
+
+# Generated code & cache
+.cache/
+Generated/
+*.g.cs
+
+# OS & Temp
+node_modules/
+Thumbs.db
+*.tmp
+*.temp
+
+# Local configuration (unless shared)
+local.settings.json
+devcert.pfx
+
+# Test artifacts
+TestResults/
+*.trx
+coverage/
+
+# Optional: Keep these if you want AI assistance with them
+# Uncomment to ignore:
+# Tests/
+# Docs/
