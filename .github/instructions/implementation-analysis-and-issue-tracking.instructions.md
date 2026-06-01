@@ -83,6 +83,45 @@ Analyze which issues/features depend on others:
 SELECT blocker, severity, affected_by, status FROM remote_debug_blockers;
 ```
 
+### Step 1.4 — Identify Infrastructure & Debugging Prerequisites
+
+For projects requiring cross-device debugging or hardware-dependent testing, analyze infrastructure blockers separately:
+
+1. **Device Handling Issues**
+   - Does the app crash or fail gracefully when hardware is missing?
+   - Are there null device checks before accessing camera, microphone, or sensors?
+   - Can the app run on desktop (no hardware) for UI testing?
+   - Mark as 🔴 CRITICAL if blocking all downstream phases
+
+2. **Remote Debugging Infrastructure**
+   - Can the app be debugged from a development machine to a target device?
+   - Are build deployment options documented (fast inner-loop vs. production MSIX)?
+   - Is the remote debugger configured and tested?
+   - Mark as 🟡 HIGH if prerequisite for hardware testing phases
+
+3. **Mock/Offline Testing Support**
+   - Can unit tests run without hardware dependencies?
+   - Are mock service implementations available?
+   - Can the app fall back gracefully to mock services in offline mode?
+   - Mark as 🟡 HIGH if blocking parallel offline development
+
+**Checklist for cross-device development:**
+- [ ] Device-not-found handling implemented (graceful vs. crash)
+- [ ] Mock services created for offline unit testing
+- [ ] Remote debugging infrastructure documented (VS Remote Tools, network setup)
+- [ ] Build/deploy workflow established for target device
+- [ ] Rider or IDE remote debugging configuration step-by-step
+- [ ] Troubleshooting guide for common remote debugging issues
+- [ ] Three-phase workflow documented: desktop-only → hardware-focused → validation
+
+**Example blocker chain:**
+```
+Issue #13 (CRITICAL): Device-not-found crash
+  └─ BLOCKS Issue #14 (remote debugging setup) and Issue #15 (mock services)
+     └─ BLOCKS Phase 4 (UI testing on Surface)
+        └─ BLOCKS Phase 5 (interview features)
+```
+
 ---
 
 ## Phase 2: Create Detailed GitHub Issue Descriptions
@@ -96,6 +135,8 @@ Based on gap analysis, determine which issues are needed:
 - Documentation/research tasks
 
 ### Step 2.2 — Write Issue Content
+
+#### Generic Content Template
 
 For each issue, create a markdown file in `Docs/ImplementationPlanning/` with:
 
@@ -143,7 +184,76 @@ For each issue, create a markdown file in `Docs/ImplementationPlanning/` with:
 - Mark blocking relationships clearly
 - Estimate effort realistically (30 min to 3 hours per issue)
 
-### Step 2.3 — Create GitHub Issues
+### Step 2.2.1 — Remote Debugging Issue Template (for infrastructure blockers)
+
+For device handling, mock services, and remote debugging setup issues:
+
+```markdown
+## Problem
+[Specific failure mode: crash on missing device, cannot deploy to Surface, tests fail without hardware, etc.]
+
+## Scenario / Impact
+- **Environment:** Desktop PC (no hardware) vs. Surface Tablet (with camera/mic)
+- **Blocked workflow:** [e.g., "Cannot test UI on Surface from Desktop PC"]
+- **Impact on phases:** [e.g., "Blocks Phase 4 (UI testing) and Phase 5 (interview features)"]
+
+## Solution
+
+### For Device Handling Issues:
+Include working C# code with:
+- Device availability check (`DeviceInformation.FindAllAsync`)
+- Graceful null/empty device handling (no crash)
+- Fallback behavior (mock, disabled preview, etc.)
+
+### For Remote Debugging Infrastructure:
+Include step-by-step setup:
+1. Prerequisites (Developer Mode, VS Remote Tools version, network)
+2. Build/deploy process (dotnet build, winapp run with IP/architecture)
+3. Rider configuration (remote connection, breakpoint setup)
+4. Troubleshooting (common failures and solutions)
+
+### For Mock Services:
+Include mock implementation with:
+- Interface implementation (all public methods)
+- Task-returning methods (async without actual work)
+- Property setters for test assertions
+- No external dependencies
+
+## Code Location
+- **File:** Path to affected code (e.g., Services/MediaCaptureService.cs)
+- **Method/Class:** Specific entry point (e.g., InitializeAsync)
+- **Related files:** Tests/Mocks/MockMediaCaptureService.cs
+
+## Acceptance Criteria
+- [ ] App runs on Desktop without hardware (graceful device-not-found)
+- [ ] Mock service passes all unit tests
+- [ ] Remote debugger connects to Surface successfully
+- [ ] Build/deploy workflow documented with examples
+- [ ] Troubleshooting guide includes 5+ common issues
+- [ ] No crashes or unhandled exceptions
+
+## Testing Strategy
+1. **Desktop (no hardware):** Unit tests with mocks; UI runs with preview disabled
+2. **Surface Tablet:** Deploy app; verify camera/mic access; remote debug from Desktop
+3. **Both environments:** Validate graceful fallbacks and error messages
+
+## Related Issues
+- Blocks: #X, #Y (downstream phases/features)
+- Depends on: #Z (if prerequisites exist)
+
+## Effort Estimate
+**X hours (device handling: 0.5h, infrastructure: 1-2h, mocks: 1-1.5h)**
+
+## Priority
+[🔴 CRITICAL / 🟡 HIGH]
+
+## Reference
+- [WinAppSDK MediaCapture API](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.controls.mediaelement)
+- [Visual Studio Remote Debugging](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging)
+- [Rider Remote Debugging Guide](https://www.jetbrains.com/help/rider/Debugging-Code.html)
+```
+
+### Step 2.2.2 — Generic Issue Template
 
 For each markdown file created:
 
@@ -352,6 +462,17 @@ VALUES ('Prerequisites', 'created', 3, 2.5, 'Blockers #13-15, unblocks Phases 4-
 ❌ **Vague effort estimates:** Be realistic; use 30-min buckets (0.5h, 1h, 1.5h, etc.)  
 ❌ **Forgotten commits:** Always commit with Co-authored-by trailer  
 
+### Remote Debugging Anti-Patterns
+
+❌ **Ignoring device-not-found crashes:** Assume all devices exist — crashes on Desktop testing  
+❌ **Missing mock services:** No offline testing capability — blocks parallel development  
+❌ **Skipping infrastructure blocker analysis:** Discover remote debugging issues late in project  
+❌ **Incomplete deployment workflow:** No documented steps for build/deploy to target device  
+❌ **Vague troubleshooting guides:** List problems without solutions — wasted debugging time  
+❌ **No graceful fallbacks:** App disabled entirely when hardware missing — cannot test UI  
+❌ **Untested on both environments:** Desktop-only testing masks hardware-dependent bugs  
+❌ **Missing three-phase workflow:** No clear strategy for desktop → remote → validation phases  
+
 ---
 
 ## Reusable SQL Queries
@@ -397,6 +518,145 @@ GROUP BY activity_type, status;
 
 ---
 
+## Example Workflow: Cross-Device Remote Debugging (Surface Tablet Scenario)
+
+This example applies the workflow to identify and document infrastructure blockers for remote debugging from Desktop PC to Surface Tablet.
+
+### Phase 1: Analyze Implementation Status
+
+**Step 1.1 — Gather Baseline Data**
+- Review `impl-mvp.md`: Phase 0-3 complete, Phase 4 (UI testing) requires Surface Tablet
+- Audit `Services/MediaCaptureService.cs`: No device-not-found handling (will crash on Desktop)
+- Identify: Cannot test UI on Desktop (no camera); cannot debug on Surface (no remote setup)
+
+**Step 1.2 — Document Current State**
+```
+Phases 0-3: ✅ COMPLETE (28 hours)
+Phases 4-6: 📄 PLANNED (31.5 hours) — BLOCKED by infrastructure
+
+Blockers: CRITICAL (3 identified)
+  - #13: Device-not-found crash (crashes on Desktop without camera)
+  - #14: Remote debugging not configured (no Surface connectivity)
+  - #15: No mock services (tests fail without hardware)
+```
+
+**Step 1.4 — Identify Infrastructure & Debugging Prerequisites**
+- **Device handling:** App crashes on Desktop (no camera) → cannot test UI
+- **Remote debugging:** No infrastructure for Surface debugging → cannot reach hardware-dependent code
+- **Mock services:** Unit tests require real MediaCapture → cannot run offline
+
+### Phase 2: Create Detailed GitHub Issue Descriptions
+
+Create three issue markdown files in `Docs/ImplementationPlanning/`:
+
+**issue-13-device-not-found-crash.md**
+```markdown
+## Problem
+MediaCaptureService crashes on Desktop PC when DeviceInformation.FindAllAsync() returns 0 devices.
+
+## Scenario / Impact
+- **Environment:** Desktop PC without camera/microphone
+- **Blocked workflow:** Cannot test UI (app crashes during initialization)
+- **Impact:** Blocks Phase 4 (UI testing), Phase 5 (interview features), remote debugging setup
+
+## Solution
+Add graceful device-not-found check in MediaCaptureService.InitializeAsync():
+- If no devices found, log warning and return (don't crash)
+- Set initialized = true so ViewModel can proceed
+- Preview will be disabled but UI remains functional
+
+[Include C# code example from impl-mvp.md section "Handling Device-Not-Found Gracefully"]
+
+## Code Location
+- **File:** Services/MediaCaptureService.cs
+- **Method:** InitializeAsync (line 49)
+- **Change:** Add `if (devices.Count == 0)` check before accessing devices[0]
+
+## Acceptance Criteria
+- [ ] App runs on Desktop without camera (no crash)
+- [ ] InitializeAsync sets initialized = true gracefully
+- [ ] Debug output shows "Warning: No camera device found"
+- [ ] Unit tests pass with mock service
+
+## Effort Estimate
+**30 minutes**
+
+## Priority
+🔴 CRITICAL (unblocks all downstream work)
+```
+
+**issue-14-remote-debugging-setup.md**
+```markdown
+## Problem
+Infrastructure for remote debugging from Desktop PC to Surface Tablet not configured.
+
+## Scenario / Impact
+- Cannot deploy app to Surface from Desktop
+- Cannot attach debugger to app running on Surface
+- Cannot test camera/microphone functionality without manual device access
+
+## Solution
+Document and implement:
+1. Developer Mode on both Desktop and Surface
+2. Visual Studio Remote Tools (ARM64 version for Surface)
+3. Network connectivity verification (ipconfig)
+4. Rider remote debugging configuration (host, port, breakpoints)
+5. Build/deploy options: fast inner-loop (dotnet run) and production MSIX
+
+[Include step-by-step setup from impl-mvp.md section "Configure Rider for Remote Debugging"]
+
+## Acceptance Criteria
+- [ ] Developer Mode enabled on both machines
+- [ ] Visual Studio Remote Tools installed on Surface
+- [ ] Rider remote connection configured (Surface IP, port 4026)
+- [ ] Build succeeds for ARM64 architecture
+- [ ] App deploys to Surface and runs
+- [ ] Breakpoints hit during remote debugging
+- [ ] Troubleshooting guide documents 7 common issues
+
+## Effort Estimate
+**1 hour (one-time setup)**
+
+## Priority
+🟡 HIGH (prerequisite for hardware testing)
+```
+
+**issue-15-mock-media-capture-service.md**
+```markdown
+## Problem
+Unit tests crash on Desktop without hardware. Need mock implementation for offline testing.
+
+## Solution
+Create Tests/Mocks/MockMediaCaptureService.cs implementing IMediaCaptureService:
+- All async methods return Task.CompletedTask
+- Properties have getters/setters for test assertions
+- IsRecording and other state can be verified
+
+[Include mock implementation from impl-mvp.md section "Creating Mock Services for Unit Testing"]
+
+## Acceptance Criteria
+- [ ] Mock service implements all IMediaCaptureService methods
+- [ ] Mock tests pass without hardware
+- [ ] ViewModel tests use mock service via DI
+- [ ] No external dependencies
+
+## Effort Estimate
+**1 hour**
+
+## Priority
+🟡 HIGH (enables offline unit testing)
+```
+
+### Phase 3 & Beyond
+
+- Create GitHub issues via `gh issue create --body-file`
+- Update `impl-mvp.md` with prerequisites section
+- Clean up temporary issue-*.md files
+- Commit with documented blocker chain
+- Execute fixes in priority order: #13 → #14 & #15 → Phase 4
+
+---
+
 ## Must Read & Research
 
 When following this workflow, consult:
@@ -408,6 +668,20 @@ When following this workflow, consult:
 | [GitHub CLI docs](https://cli.github.com/manual/) | When creating issues | Correct `gh` syntax |
 | Git commit best practices | During commit phase | Write clear, linked commit messages |
 | [Microsoft Learn SQL](https://learn.microsoft.com/en-us/sql/) | When tracking in SQL | Query existing data for patterns |
+| **Remote Debugging Resources** | When analyzing cross-device issues | See table below |
+
+### Remote Debugging: Research & References
+
+For projects requiring hardware-dependent testing or remote debugging:
+
+| Resource | Reference | When to consult |
+|----------|-----------|-----------------|
+| WinAppSDK MediaCapture | [Windows.Media.Capture API Docs](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.controls.mediaelement) | Implementing graceful device-not-found handling |
+| Visual Studio Remote Tools | [VS Remote Debugging Guide](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging) | Setting up remote debugger for target device |
+| Rider Debugging | [Rider Debugger Documentation](https://www.jetbrains.com/help/rider/Debugging-Code.html) | Configuring IDE for remote debugging |
+| WinAppSDK Deployment | [Set Up Dev Environment](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/set-up-your-development-environment) | Build & deploy to target device (winapp CLI) |
+| winapp CLI | [winapp CLI Usage Docs](https://github.com/microsoft/WinAppCli/blob/main/docs/usage.md) | Deploying packages and managing identity |
+| Device Info API | [DeviceInformation Class Docs](https://learn.microsoft.com/en-us/uwp/api/windows.devices.enumeration.deviceinformation) | Detecting and handling missing hardware |
 
 ---
 
