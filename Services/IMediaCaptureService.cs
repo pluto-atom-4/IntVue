@@ -21,6 +21,7 @@ public interface IMediaCaptureService
     /// <summary>
     /// Initialize the underlying media capture resources.
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task InitializeAsync(CancellationToken cancellationToken = default);
 
@@ -34,6 +35,7 @@ public interface IMediaCaptureService
     /// Start showing the camera preview in the provided preview host object.
     /// The concrete type is forwarded by the view (e.g., MediaPlayerElement).
     /// </summary>
+    /// <param name="previewHost">The preview control or container object that receives the preview stream.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task StartPreviewAsync(object previewHost);
 
@@ -46,6 +48,7 @@ public interface IMediaCaptureService
     /// <summary>
     /// Start recording and return the saved file path.
     /// </summary>
+    /// <param name="baseFileName">The base filename for the recording file (without extension).</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task<string> StartRecordingAsync(string baseFileName);
 

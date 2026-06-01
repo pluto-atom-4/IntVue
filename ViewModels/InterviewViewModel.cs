@@ -22,13 +22,23 @@ namespace IntVue.ViewModels
         private string recordedFilePath = string.Empty;
         private bool consentGiven;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InterviewViewModel"/> class.
+        /// </summary>
+        /// <param name="mediaService">The media capture service dependency.</param>
         public InterviewViewModel(IMediaCaptureService mediaService)
         {
             this.mediaService = mediaService;
         }
 
+        /// <summary>
+        /// Gets or sets the event that occurs when a property value changes.
+        /// </summary>
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        /// <summary>
+        /// Gets or sets the interview question text.
+        /// </summary>
         public string QuestionText
         {
             get => this.questionText;
@@ -39,6 +49,9 @@ namespace IntVue.ViewModels
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether preview is currently active.
+        /// </summary>
         public bool IsPreviewing
         {
             get => this.isPreviewing;
@@ -49,6 +62,9 @@ namespace IntVue.ViewModels
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether recording is currently in progress.
+        /// </summary>
         public bool IsRecording
         {
             get => this.isRecording;
@@ -59,6 +75,9 @@ namespace IntVue.ViewModels
             }
         }
 
+        /// <summary>
+        /// Gets the file path of the most recent recording.
+        /// </summary>
         public string RecordedFilePath
         {
             get => this.recordedFilePath;
@@ -69,6 +88,9 @@ namespace IntVue.ViewModels
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the user has given consent to record.
+        /// </summary>
         public bool ConsentGiven
         {
             get => this.consentGiven;
@@ -79,6 +101,11 @@ namespace IntVue.ViewModels
             }
         }
 
+        /// <summary>
+        /// Request permissions and start the camera preview.
+        /// </summary>
+        /// <param name="previewHost">The preview control or container object that receives the preview stream.</param>
+        /// <returns>A <see cref="Task{T}"/> representing true if preview started successfully, false otherwise.</returns>
         public async Task<bool> StartPreviewAsync(object previewHost)
         {
             if (!this.ConsentGiven)
@@ -98,12 +125,21 @@ namespace IntVue.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// Stop the camera preview.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StopPreviewAsync()
         {
             await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
             this.IsPreviewing = false;
         }
 
+        /// <summary>
+        /// Start recording audio and video.
+        /// </summary>
+        /// <param name="baseFileName">The base filename for the recording file (without extension).</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StartRecordingAsync(string baseFileName)
         {
             if (!this.IsPreviewing)
@@ -116,6 +152,10 @@ namespace IntVue.ViewModels
             this.IsRecording = true;
         }
 
+        /// <summary>
+        /// Stop recording audio and video.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StopRecordingAsync()
         {
             await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
