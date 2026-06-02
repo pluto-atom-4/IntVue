@@ -5,6 +5,7 @@
 namespace IntVue.Services
 {
     using System;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -47,6 +48,14 @@ namespace IntVue.Services
             this.mediaCapture = new MediaCapture();
 
             var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+
+            if (devices.Count == 0)
+            {
+                Debug.WriteLine("Warning: No camera device found. Preview mode disabled.");
+                this.initialized = true;
+                return;
+            }
+
             DeviceInformation? front = null;
             for (var i = 0; i < devices.Count; i++)
             {
