@@ -42,3 +42,11 @@ coverage/
 # Uncomment to ignore:
 # Tests/
 # Docs/
+
+# Note: Adjust the above patterns based on your specific project structure and needs.
+Docs/RemoteDebugSetup.md
+Docs/RemoteDebugChecklist.md
+Docs/start-from-here.md
+
+Assets/
+scripts/
