@@ -11,9 +11,12 @@ namespace IntVue.Services
 
     using IntVue.Helpers;
 
+    using Microsoft.UI.Xaml.Controls;
+
     using Windows.Devices.Enumeration;
     using Windows.Media.Capture;
     using Windows.Media.MediaProperties;
+    using Windows.Media.Playback;
     using Windows.Storage;
 
     /// <summary>
@@ -26,7 +29,9 @@ namespace IntVue.Services
         private MediaCapture? mediaCapture;
         private LowLagMediaRecording? lowLagRecording;
         private StorageFile? currentFile;
+        private MediaPlayer? previewMediaPlayer;
         private bool initialized;
+        private bool previewing;
 
         /// <summary>
         /// Gets a value indicating whether a recording is currently in progress.
@@ -60,7 +65,7 @@ namespace IntVue.Services
             for (var i = 0; i < devices.Count; i++)
             {
                 var d = devices[i];
-                if (d.EnclosureLocation != null && d.EnclosureLocation.Panel == Panel.Front)
+                if (d.EnclosureLocation != null && d.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Front)
                 {
                     front = d;
                     break;
@@ -107,9 +112,8 @@ namespace IntVue.Services
 
         /// <summary>
         /// Start camera preview. The previewHost is a UI element that can render preview frames.
-        /// For this skeleton implementation preview is best-effort and may be a no-op.
         /// </summary>
-        /// <param name="previewHost">UI element used for preview rendering (implementation-specific).</param>
+        /// <param name="previewHost">UI element used for preview rendering (MediaPlayerElement).</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StartPreviewAsync(object previewHost)
         {
@@ -118,9 +122,27 @@ namespace IntVue.Services
                 await this.InitializeAsync().ConfigureAwait(false);
             }
 
-            // Preview support not wired to a UI element in Phase 2 skeleton.
-            // The app's UI may pass a MediaPlayerElement or other control; preview is a best-effort no-op here.
-            await Task.CompletedTask;
+            if (this.mediaCapture == null)
+            {
+                throw new InvalidOperationException("MediaCapture not initialized");
+            }
+
+            if (previewHost is not MediaPlayerElement)
+            {
+                throw new ArgumentException("previewHost must be a MediaPlayerElement", nameof(previewHost));
+            }
+
+            try
+            {
+                await this.mediaCapture.StartPreviewAsync();
+                this.previewMediaPlayer = new MediaPlayer();
+                this.previewing = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error starting preview: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -129,9 +151,25 @@ namespace IntVue.Services
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StopPreviewAsync()
         {
-            if (this.mediaCapture != null)
+            try
             {
-                await this.mediaCapture.StopPreviewAsync();
+                if (this.previewMediaPlayer != null)
+                {
+                    this.previewMediaPlayer.Source = null;
+                    this.previewMediaPlayer.Dispose();
+                    this.previewMediaPlayer = null;
+                }
+
+                if (this.mediaCapture != null)
+                {
+                    await this.mediaCapture.StopPreviewAsync();
+                }
+
+                this.previewing = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error stopping preview: {ex.Message}");
             }
         }
 
@@ -185,6 +223,13 @@ namespace IntVue.Services
         {
             try
             {
+                if (this.previewMediaPlayer != null)
+                {
+                    this.previewMediaPlayer.Source = null;
+                    this.previewMediaPlayer.Dispose();
+                    this.previewMediaPlayer = null;
+                }
+
                 if (this.lowLagRecording != null)
                 {
                     // best-effort stop
@@ -200,6 +245,7 @@ namespace IntVue.Services
                 }
 
                 this.initialized = false;
+                this.previewing = false;
             }
             catch
             {
@@ -222,6 +268,13 @@ namespace IntVue.Services
         {
             try
             {
+                if (this.previewMediaPlayer != null)
+                {
+                    this.previewMediaPlayer.Source = null;
+                    this.previewMediaPlayer.Dispose();
+                    this.previewMediaPlayer = null;
+                }
+
                 if (this.lowLagRecording != null)
                 {
                     // Synchronously stop/finish recordings (block briefly)
@@ -237,6 +290,7 @@ namespace IntVue.Services
                 }
 
                 this.initialized = false;
+                this.previewing = false;
             }
             catch
             {
