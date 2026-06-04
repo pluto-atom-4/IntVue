@@ -16,6 +16,10 @@
         <!-- Forces the WinUI 3 build to output a standard unpackaged .exe -->
         <WindowsPackageType>None</WindowsPackageType>
         <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+        <!-- Enable Windows SDK projections for Windows App SDK with WinUI 3 -->
+        <UseUwp>true</UseUwp>
+        <!-- Allow mixed WinUI and Windows SDK projections (required for Windows.Media APIs with WinUI 3) -->
+        <EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>true</EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>
     </PropertyGroup>
 
     <!-- Code analysis & style enforcement settings (added per project guidelines) -->
@@ -70,6 +74,7 @@
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705"/>
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003"/>
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.3.1"/>
+        <PackageReference Include="Win2D.uwp" Version="1.28.3" />
         <!-- Code analysis packages: enable Roslyn analyzers and StyleCop -->
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="*" />
         <PackageReference Include="StyleCop.Analyzers" Version="*">

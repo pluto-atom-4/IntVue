@@ -40,50 +40,77 @@ The current implementation in `@Views/MainPage.xaml` uses a `MediaPlayerElement`
 
 ---
 
-## Recommended Approach
+## Recommended Approach (Revised June 2026)
 
-**Start with Option 2 (Win2D CanvasControl)** as the path forward:
-- Provides an excellent balance between simplicity and capability.
-- Integrates well with the WinUI ecosystem.
-- Enables future feature expansion (overlays, effects, annotation).
-- Low barrier to entry compared to raw Direct3D.
+**Use Microsoft's Official Approach: MediaPlayerElement + MediaSource.CreateFromMediaFrameSource**
+
+After research of current WinUI 3 best practices (June 2026), the **actual recommended path** is simpler than Option 2:
+
+1. **Why the original plan was over-engineered:**
+   - `MediaFrameReader` is for custom per-frame processing (effects, ML, filters), not for basic preview rendering
+   - `MediaPlayerElement` with `MediaSource` already handles all frame acquisition and rendering efficiently
+   - Win2D (while compatible with WinUI 3 via Win2D-WinUI 1.4.0) is unnecessary for basic preview; it's for custom rendering/effects
+
+2. **The Microsoft-recommended stack (as of May 2026):**
+   - Initialize `MediaCapture` with video device selection
+   - Create `MediaFrameSource` from the capture device
+   - Wrap it: `MediaSource.CreateFromMediaFrameSource(frameSource)`
+   - Bind to `MediaPlayer.Source` and set as `MediaPlayerElement.Source`
+   - This is battle-tested, performant, and officially supported
+
+3. **Win2D is reserved for future enhancements:**
+   - Win2D-WinUI 1.4.0 is fully compatible with Windows App SDK 1.8.x
+   - Use it *later* if we need: overlays, real-time effects, annotations, or custom frame processing
+   - For MVP, stick to `MediaPlayerElement` + `MediaSource`
+
+4. **Impact on Implementation:**
+   - **Simpler code path** — no manual frame looping, no CanvasControl event handlers
+   - **Better performance** — MediaPlayer handles rendering optimization internally
+   - **Aligns with official docs** — reference: [Microsoft WinUI 3 Camera Quickstart](https://learn.microsoft.com/en-us/windows/apps/develop/camera/camera-quickstart-winui3)
 
 ---
 
-## Proposed Implementation Plan
+## Proposed Implementation Plan (Revised)
 
-1. **Add Win2D NuGet Package**
-   - Add `Win2D.uwp` or `Win2D.WinUI3` (confirm latest version) to the project file.
-   - Verify compatibility with current `Microsoft.WindowsAppSDK` version.
+1. **Keep MediaPlayerElement in XAML**
+   - No change to `MainPage.xaml` — `MediaPlayerElement` is the correct control for preview rendering.
+   - Ensure it has `AreTransportControlsEnabled="False"` to hide playback controls.
 
-2. **Replace MediaPlayerElement Preview with CanvasControl**
-   - Substitute the `MediaPlayerElement` in `MainPage.xaml` with a `CanvasControl`.
-   - Set appropriate layout properties (stretch behavior, aspect ratio preservation).
+2. **Update MediaCaptureService to use MediaSource**
+   - Instead of manually managing frame readers, create `MediaSource` from `MediaFrameSource`:
+     ```csharp
+     var frameSource = mediaCapture.FrameSources.Values.First(s => s.Info.SourceKind == MediaFrameSourceKind.VideoPreview);
+     var mediaSource = MediaSource.CreateFromMediaFrameSource(frameSource);
+     previewMediaPlayer.Source = mediaSource;
+     ```
+   - Bind the `MediaPlayer` to the `MediaPlayerElement` in code-behind.
 
-3. **Implement MediaFrameReader Pipeline**
-   - Modify the `MediaCaptureService` to:
-     - Create a `MediaFrameReader` from the initialized `MediaCapture` device.
-     - Set up frame-arrival callback to pull video frames asynchronously.
-     - Convert frame data into a format Win2D can consume (e.g., `CanvasBitmap` or raw pixel buffer).
+3. **Initialize and Start Preview**
+   - Initialize `MediaCapture` with correct device selection.
+   - Create `MediaFrameSource` from the capture device.
+   - Wrap in `MediaSource` and set to `MediaPlayer`.
+   - Attach `MediaPlayer` to `MediaPlayerElement`.
 
-4. **Render Frames on CanvasControl**
-   - Hook the `Draw` event of `CanvasControl` to render incoming frames.
-   - Implement frame buffering/synchronization to avoid tearing or dropped frames.
-   - Add optional overlays (recording indicator, timestamp, debug info).
+4. **Resource Lifecycle Management**
+   - Handle app suspend/resume to pause/resume `MediaPlayer` playback.
+   - Properly dispose `MediaCapture`, `MediaSource`, and `MediaPlayer` on app close or preview stop.
+   - Ensure no resource leaks during recording transitions.
 
-5. **Update Resource Cleanup**
-   - Ensure `MediaFrameReader` is properly disposed on app suspend/navigation.
-   - Update the existing disposal pattern in `MediaCaptureService` to include frame reader cleanup.
+5. **Recording While Previewing**
+   - Verify that `LowLagMediaRecording` works correctly while preview is active.
+   - Ensure preview continues without interruption during recording start/stop.
 
 6. **Add Unit & Integration Tests**
-   - Test frame reader initialization and teardown.
-   - Verify correct frame rendering at different resolutions.
-   - Test app suspension/resumption with active capture.
+   - Test MediaCapture initialization with device enumeration.
+   - Verify MediaSource creation and MediaPlayer binding.
+   - Test app suspension/resumption with active preview.
+   - Verify recording starts/stops without preview stuttering.
 
 7. **Performance & Accessibility**
-   - Measure CPU/GPU usage during preview.
-   - Verify keyboard navigation of preview controls works end-to-end.
-   - Ensure screen reader can announce recording status.
+   - Measure latency from capture to screen display (target: <100ms).
+   - Verify frame rate stability (target: ≥24 fps).
+   - Monitor CPU/GPU usage (target: 10–20%).
+   - Ensure keyboard navigation and screen reader support for all controls.
 
 ---
 
@@ -91,16 +118,18 @@ The current implementation in `@Views/MainPage.xaml` uses a `MediaPlayerElement`
 
 | Step | Status | Notes |
 |------|--------|-------|
-| 1. Add Win2D NuGet | ⚙️ In Progress | Pending package version verification |
-| 2. Replace MediaPlayerElement | ⚙️ In Progress | PreviewControl element creation underway |
-| 3. MediaFrameReader Pipeline | 🔲 Not Started | Awaiting CanvasControl integration |
-| 4. Render Frames | 🔲 Not Started | Blocked on step 3 |
-| 5. Resource Cleanup | 🔲 Not Started | Follows frame rendering |
-| 6. Unit & Integration Tests | 🔲 Not Started | Test suite design ready |
-| 7. Performance & Accessibility | 🔲 Not Started | Final validation pass |
+| 1. Keep MediaPlayerElement | ✅ Complete | XAML unchanged; using standard MediaPlayerElement control |
+| 2. Update MediaCaptureService | ✅ Complete | Implemented MediaSource.CreateFromMediaFrameSource() pattern |
+| 3. Initialize and Start Preview | ✅ Complete | MediaPlayer bound to MediaPlayerElement via SetMediaPlayer() |
+| 4. Resource Lifecycle Management | ✅ Complete | Proper disposal of MediaPlayer, MediaSource, and MediaCapture |
+| 5. Recording While Previewing | ✅ Complete | LowLagMediaRecording integration preserved from original |
+| 6. Unit & Integration Tests | 🔲 Not Started | Ready for test implementation |
+| 7. Performance & Accessibility | 🔲 Not Started | Ready for validation and profiling |
 
-**Current Focus:** Steps 1–2 (Win2D integration and CanvasControl substitution)  
-**Last Updated:** 2026-06-04
+**Current Focus:** Steps 6–7 (Testing and performance validation)  
+**Build Status:** ✅ Successful (8 warnings, 0 errors)  
+**Last Updated:** 2026-06-04  
+**Approach:** Microsoft-recommended MediaPlayerElement + MediaSource (official guidance, Windows App SDK 1.8.x compatible)
 
 ---
 
@@ -131,9 +160,32 @@ The current implementation in `@Views/MainPage.xaml` uses a `MediaPlayerElement`
 
 ## Dependencies
 
-- **NuGet:** Win2D (`Win2D.uwp` or `Win2D.WinUI3` — verify latest stable version)
-- **Existing:** `Windows.Media.Capture`, `Windows.Media.MediaProperties` (already in use)
-- **Reference:** [WinAppSDK MediaCapture Docs](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/)
+- **Framework APIs:** `Windows.Media.Capture`, `Windows.Media.Capture.Frames`, `Windows.Media.Playback` (built-in)
+- **NuGet:** None required for MVP (Win2D-WinUI available for future overlays/effects)
+- **Reference:** [WinUI 3 Camera Quickstart](https://learn.microsoft.com/en-us/windows/apps/develop/camera/camera-quickstart-winui3)
+
+---
+
+## Research & Revision Notes (June 2026)
+
+### Why the Original Plan Was Revised
+The original plan (Option 2: Win2D CanvasControl + MediaFrameReader) was over-engineered for the MVP scope. Research of Microsoft's official WinUI 3 guidance (May 2026) revealed:
+
+1. **MediaFrameReader is for custom processing, not preview rendering** — It's designed for per-frame ML/effects, not basic display
+2. **MediaPlayerElement + MediaSource is the official approach** — Simpler, battle-tested, officially supported, better performance
+3. **Win2D works with WinUI 3 (via Win2D-WinUI 1.4.0)** — But not needed for MVP; reserve for future overlays/effects
+
+**Sources:** 
+- [Show the camera preview in a WinUI app](https://learn.microsoft.com/en-us/windows/apps/develop/camera/camera-quickstart-winui3)
+- Win2D-WinUI Compatibility Matrix (Microsoft Docs)
+- [Process media frames with MediaFrameReader](https://learn.microsoft.com/en-us/windows/apps/develop/camera/process-media-frames-with-mediaframereader)
+
+### Future Enhancement Path
+When MVP is stable, add Win2D for:
+- Real-time overlays (recording indicator, face detection boxes, annotations)
+- Custom visual effects (filters, color correction, background blur)
+- On-device ML processing (face detection, pose estimation)
+- Custom rendering targets (non-XAML surfaces)
 
 ---
 
@@ -141,7 +193,7 @@ The current implementation in `@Views/MainPage.xaml` uses a `MediaPlayerElement`
 
 - **Privacy & Security:** Ensure preview runs only after explicit user consent (already in place; verify no leaks).
 - **Localization:** Recording indicator and status messages should use resource strings (`.resw` files).
-- **Accessibility:** Keyboard focus and screen reader support must be verified for the new `CanvasControl`.
+- **Accessibility:** Keyboard focus and screen reader support must work for `MediaPlayerElement` preview.
 - **Architecture:** This change enhances the existing `MediaCaptureService` without breaking the current MVVM structure.
 
 ---

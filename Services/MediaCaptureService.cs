@@ -6,6 +6,7 @@ namespace IntVue.Services
 {
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -15,23 +16,24 @@ namespace IntVue.Services
 
     using Windows.Devices.Enumeration;
     using Windows.Media.Capture;
+    using Windows.Media.Core;
     using Windows.Media.MediaProperties;
     using Windows.Media.Playback;
     using Windows.Storage;
 
     /// <summary>
     /// MediaCaptureService implements IMediaCaptureService using Windows.Media.Capture.
-    /// This implements preview to a CaptureElement and recording to ApplicationData.LocalFolder.
-    /// Error paths are surfaced as exceptions and should be handled by callers.
+    /// Renders camera preview via MediaPlayerElement (MediaSource + MediaPlayer) and records to ApplicationData.LocalFolder.
+    /// Uses the Microsoft-recommended approach per WinUI 3 camera quickstart.
     /// </summary>
     public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisposable
     {
         private MediaCapture? mediaCapture;
+        private MediaPlayer? previewMediaPlayer;
+        private MediaSource? previewMediaSource;
         private LowLagMediaRecording? lowLagRecording;
         private StorageFile? currentFile;
-        private MediaPlayer? previewMediaPlayer;
         private bool initialized;
-        private bool previewing;
 
         /// <summary>
         /// Gets a value indicating whether a recording is currently in progress.
@@ -93,7 +95,6 @@ namespace IntVue.Services
         /// <returns>True when camera and microphone access are both allowed.</returns>
         public Task<bool> RequestPermissionsAsync()
         {
-            // Use DeviceAccessInformation to infer current permission status for camera and microphone.
             try
             {
                 var camInfo = DeviceAccessInformation.CreateFromDeviceClass(DeviceClass.VideoCapture);
@@ -111,9 +112,10 @@ namespace IntVue.Services
         }
 
         /// <summary>
-        /// Start camera preview. The previewHost is a UI element that can render preview frames.
+        /// Start camera preview using MediaSource and MediaPlayer.
+        /// Uses the Microsoft-recommended approach: MediaCapture → MediaFrameSource → MediaSource → MediaPlayer → MediaPlayerElement.
         /// </summary>
-        /// <param name="previewHost">UI element used for preview rendering (MediaPlayerElement).</param>
+        /// <param name="previewHost">MediaPlayerElement to render the preview stream.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task StartPreviewAsync(object previewHost)
         {
@@ -127,16 +129,28 @@ namespace IntVue.Services
                 throw new InvalidOperationException("MediaCapture not initialized");
             }
 
-            if (previewHost is not MediaPlayerElement)
+            if (previewHost is not MediaPlayerElement mediaPlayerElement)
             {
                 throw new ArgumentException("previewHost must be a MediaPlayerElement", nameof(previewHost));
             }
 
             try
             {
-                await this.mediaCapture.StartPreviewAsync();
+                // Get the first available video frame source from MediaCapture
+                var frameSource = this.mediaCapture.FrameSources.Values.FirstOrDefault();
+
+                if (frameSource == null)
+                {
+                    throw new InvalidOperationException("No video frame source available from MediaCapture");
+                }
+
+                // Create MediaSource from the frame source
+                this.previewMediaSource = MediaSource.CreateFromMediaFrameSource(frameSource);
+
+                // Create MediaPlayer and bind to MediaPlayerElement
                 this.previewMediaPlayer = new MediaPlayer();
-                this.previewing = true;
+                this.previewMediaPlayer.Source = this.previewMediaSource;
+                mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
             }
             catch (Exception ex)
             {
@@ -160,12 +174,13 @@ namespace IntVue.Services
                     this.previewMediaPlayer = null;
                 }
 
-                if (this.mediaCapture != null)
+                if (this.previewMediaSource != null)
                 {
-                    await this.mediaCapture.StopPreviewAsync();
+                    this.previewMediaSource.Dispose();
+                    this.previewMediaSource = null;
                 }
 
-                this.previewing = false;
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -216,7 +231,8 @@ namespace IntVue.Services
         }
 
         /// <summary>
-        /// Asynchronously dispose managed resources used by the service. Stops active preview/recording and releases MediaCapture.
+        /// Asynchronously dispose managed resources used by the service.
+        /// Stops active preview/recording and releases MediaCapture.
         /// </summary>
         /// <returns>A <see cref="Task"/> that completes when disposal is finished.</returns>
         public async Task DisposeAsync()
@@ -230,9 +246,14 @@ namespace IntVue.Services
                     this.previewMediaPlayer = null;
                 }
 
+                if (this.previewMediaSource != null)
+                {
+                    this.previewMediaSource.Dispose();
+                    this.previewMediaSource = null;
+                }
+
                 if (this.lowLagRecording != null)
                 {
-                    // best-effort stop
                     _ = this.lowLagRecording.StopAsync();
                     _ = this.lowLagRecording.FinishAsync();
                     this.lowLagRecording = null;
@@ -245,7 +266,6 @@ namespace IntVue.Services
                 }
 
                 this.initialized = false;
-                this.previewing = false;
             }
             catch
             {
@@ -275,9 +295,14 @@ namespace IntVue.Services
                     this.previewMediaPlayer = null;
                 }
 
+                if (this.previewMediaSource != null)
+                {
+                    this.previewMediaSource.Dispose();
+                    this.previewMediaSource = null;
+                }
+
                 if (this.lowLagRecording != null)
                 {
-                    // Synchronously stop/finish recordings (block briefly)
                     this.lowLagRecording.StopAsync().AsTask().GetAwaiter().GetResult();
                     this.lowLagRecording.FinishAsync().AsTask().GetAwaiter().GetResult();
                     this.lowLagRecording = null;
@@ -290,7 +315,6 @@ namespace IntVue.Services
                 }
 
                 this.initialized = false;
-                this.previewing = false;
             }
             catch
             {
