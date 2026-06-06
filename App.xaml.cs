@@ -4,6 +4,9 @@
 
 namespace IntVue
 {
+    using System;
+    using System.Runtime.Versioning;
+
     using IntVue.Services;
     using IntVue.ViewModels;
 
@@ -13,6 +16,7 @@ namespace IntVue
     /// <summary>
     /// Application entry point and DI configuration.
     /// </summary>
+    [SupportedOSPlatform("windows10.0.17763.0")]
     public partial class App : Application
     {
         /// <summary>

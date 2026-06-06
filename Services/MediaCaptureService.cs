@@ -7,6 +7,7 @@ namespace IntVue.Services
     using System;
     using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.Versioning;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -26,6 +27,7 @@ namespace IntVue.Services
     /// Renders camera preview via MediaPlayerElement (MediaSource + MediaPlayer) and records to ApplicationData.LocalFolder.
     /// Uses the Microsoft-recommended approach per WinUI 3 camera quickstart.
     /// </summary>
+    [SupportedOSPlatform("windows10.0.17763.0")]
     public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisposable
     {
         private MediaCapture? mediaCapture;

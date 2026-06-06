@@ -4,6 +4,9 @@
 
 namespace IntVue.Services;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 /// <summary>
 /// Media capture service interface used by the app.
 /// Defines the minimal contract required by ViewModels and tests.

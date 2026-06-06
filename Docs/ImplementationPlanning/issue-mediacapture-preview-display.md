@@ -123,12 +123,12 @@ After research of current WinUI 3 best practices (June 2026), the **actual recom
 | 3. Initialize and Start Preview | ✅ Complete | MediaPlayer bound to MediaPlayerElement via SetMediaPlayer() |
 | 4. Resource Lifecycle Management | ✅ Complete | Proper disposal of MediaPlayer, MediaSource, and MediaCapture |
 | 5. Recording While Previewing | ✅ Complete | LowLagMediaRecording integration preserved from original |
-| 6. Unit & Integration Tests | 🔲 Not Started | Ready for test implementation |
+| 6. Unit & Integration Tests | ✅ Complete | 22 unit tests + 5 integration tests; all passing |
 | 7. Performance & Accessibility | 🔲 Not Started | Ready for validation and profiling |
 
-**Current Focus:** Steps 6–7 (Testing and performance validation)  
-**Build Status:** ✅ Successful (8 warnings, 0 errors)  
-**Last Updated:** 2026-06-04  
+**Current Focus:** Step 7 (Performance & Accessibility validation)  
+**Build Status:** ✅ Successful (test suite passes)  
+**Last Updated:** 2026-06-06  
 **Approach:** Microsoft-recommended MediaPlayerElement + MediaSource (official guidance, Windows App SDK 1.8.x compatible)
 
 ---
