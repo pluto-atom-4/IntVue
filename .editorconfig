@@ -46,3 +46,8 @@ dotnet_naming_style.underscore_prefix_style.capitalization = camel_case
 dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.SA1200.severity = warning
 
+# Exclude WinUI auto-generated files from code analysis and formatting
+[obj/Debug/net10.0-windows10.0.26100.0/win-x64/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
