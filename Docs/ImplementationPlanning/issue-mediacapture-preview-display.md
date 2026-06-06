@@ -127,8 +127,9 @@ After research of current WinUI 3 best practices (June 2026), the **actual recom
 | 7. Performance & Accessibility | 🔲 Not Started | Ready for validation and profiling |
 
 **Current Focus:** Step 7 (Performance & Accessibility validation)  
-**Build Status:** ✅ Successful (test suite passes)  
+**Build Status:** ✅ Successful (test suite passes; 22 passed, 5 skipped)  
 **Last Updated:** 2026-06-06  
+**Test Implementation:** ✅ Complete (feat/issue-24-unit-tests merged to main)  
 **Approach:** Microsoft-recommended MediaPlayerElement + MediaSource (official guidance, Windows App SDK 1.8.x compatible)
 
 ---
