@@ -54,6 +54,7 @@ namespace IntVue
 
             // Services
             services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
+            services.AddSingleton<IConsentService, ConsentService>();
 
             // ViewModels
             services.AddTransient<MainViewModel>();

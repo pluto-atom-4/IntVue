@@ -23,6 +23,7 @@ namespace IntVue.Views
     public sealed partial class MainPage : Page
     {
         private readonly InterviewViewModel viewModel;
+        private readonly IConsentService consentService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -32,6 +33,7 @@ namespace IntVue.Views
             this.InitializeComponent();
 
             var svc = (IMediaCaptureService?)App.Services.GetService(typeof(IMediaCaptureService));
+            this.consentService = (IConsentService?)App.Services.GetService(typeof(IConsentService)) ?? new ConsentService();
             this.viewModel = (InterviewViewModel?)App.Services.GetService(typeof(InterviewViewModel)) ?? new InterviewViewModel(svc!);
             this.DataContext = this.viewModel;
 
@@ -39,10 +41,23 @@ namespace IntVue.Views
             this.Loaded += (s, e) => this.OnPageLoaded();
         }
 
-        private void OnPageLoaded()
+        private async void OnPageLoaded()
         {
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
             this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
+
+            // Load saved consent state
+            if (this.consentService.HasGivenConsent)
+            {
+                this.viewModel.ConsentGiven = true;
+            }
+            else
+            {
+                // Show consent dialog on first load
+                var consented = await this.consentService.RequestConsentAsync(this.XamlRoot);
+                this.viewModel.ConsentGiven = consented;
+            }
+
             this.UpdateConsentText();
         }
 

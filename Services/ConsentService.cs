@@ -1,0 +1,124 @@
+// <copyright file="ConsentService.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace IntVue.Services
+{
+    using System;
+    using System.Threading.Tasks;
+
+    using Microsoft.UI.Xaml;
+    using Microsoft.UI.Xaml.Controls;
+
+    using Windows.Storage;
+
+    /// <summary>
+    /// Manages user consent for camera and microphone access.
+    /// Persists consent state and timestamp to ApplicationData.LocalSettings.
+    /// </summary>
+    public class ConsentService : IConsentService
+    {
+        private const string ConsentGivenKey = "CameraConsentGiven";
+        private const string ConsentTimestampKey = "CameraConsentTimestamp";
+        private const string ConsentDialogDismissedKey = "ConsentDialogDismissed";
+
+        /// <inheritdoc/>
+        public bool HasGivenConsent
+        {
+            get
+            {
+                var settings = ApplicationData.Current.LocalSettings;
+                return (bool?)settings.Values[ConsentGivenKey] ?? false;
+            }
+        }
+
+        /// <inheritdoc/>
+        public DateTime? ConsentTimestamp
+        {
+            get
+            {
+                var settings = ApplicationData.Current.LocalSettings;
+                var value = settings.Values[ConsentTimestampKey];
+                if (value is string timestamp && DateTime.TryParse(timestamp, out var result))
+                {
+                    return result;
+                }
+
+                return null;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> RequestConsentAsync(object xamlRoot)
+        {
+            // If consent was already given, return true without showing dialog
+            if (this.HasGivenConsent)
+            {
+                return true;
+            }
+
+            // If dialog was already dismissed this session, don't show again
+            var settings = ApplicationData.Current.LocalSettings;
+            if ((bool?)settings.Values[ConsentDialogDismissedKey] ?? false)
+            {
+                return false;
+            }
+
+            // Show consent dialog
+            var dialog = new ContentDialog
+            {
+                Title = "Privacy Notice",
+                Content = this.BuildConsentMessage(),
+                PrimaryButtonText = "I Agree",
+                CloseButtonText = "Decline",
+                XamlRoot = (XamlRoot)xamlRoot,
+            };
+
+            var result = await dialog.ShowAsync();
+
+            // Mark dialog as dismissed this session
+            settings.Values[ConsentDialogDismissedKey] = true;
+
+            // Check if user clicked "I Agree" button
+            if (result == ContentDialogResult.Primary)
+            {
+                this.SetConsentGiven();
+                return true;
+            }
+
+            // User declined or dismissed
+            return false;
+        }
+
+        /// <inheritdoc/>
+        public void RevokeConsent()
+        {
+            var settings = ApplicationData.Current.LocalSettings;
+            settings.Values[ConsentGivenKey] = false;
+            settings.Values[ConsentTimestampKey] = null;
+            settings.Values[ConsentDialogDismissedKey] = false;
+        }
+
+        /// <summary>
+        /// Sets consent as given and records the timestamp.
+        /// </summary>
+        private void SetConsentGiven()
+        {
+            var settings = ApplicationData.Current.LocalSettings;
+            settings.Values[ConsentGivenKey] = true;
+            settings.Values[ConsentTimestampKey] = DateTime.Now.ToString("O");  // ISO 8601 format
+        }
+
+        /// <summary>
+        /// Builds the consent message displayed in the dialog.
+        /// </summary>
+        /// <returns>The consent message text.</returns>
+        private string BuildConsentMessage()
+        {
+            return "IntVue requires access to your camera and microphone to record interview practice videos.\n\n" +
+                   "Recordings are saved locally on your device and are not transmitted to any external service.\n\n" +
+                   "By clicking 'I Agree', you consent to the use of camera and microphone for recording.\n\n" +
+                   "You can revoke this consent at any time through your device settings.";
+        }
+    }
+}
