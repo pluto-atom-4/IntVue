@@ -7,12 +7,14 @@ namespace IntVue.Services
     using System;
     using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Runtime.Versioning;
     using System.Threading;
     using System.Threading.Tasks;
 
     using IntVue.Helpers;
 
+    using Microsoft.UI.Dispatching;
     using Microsoft.UI.Xaml.Controls;
 
     using Windows.Devices.Enumeration;
@@ -245,21 +247,91 @@ namespace IntVue.Services
                 Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaSource created.");
 #endif
 
+                // Clean up any previous MediaPlayer before creating new one (fixes resource leak on double-start)
+#if DEBUG
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking for previous MediaPlayer to clean up...");
+#endif
+                if (this.previewMediaPlayer != null)
+                {
+                    try
+                    {
+#if DEBUG
+                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Disposing previous MediaPlayer...");
+#endif
+                        this.previewMediaPlayer.Source = null;
+                        this.previewMediaPlayer.Dispose();
+                    }
+                    catch (Exception cleanupEx)
+                    {
+#if DEBUG
+                        Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Warning - Error during previous MediaPlayer cleanup: {cleanupEx.Message}");
+#endif
+                    }
+                    finally
+                    {
+                        this.previewMediaPlayer = null;
+                    }
+                }
+
                 // Create MediaPlayer and bind to MediaPlayerElement
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaPlayer...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating new MediaPlayer...");
 #endif
                 this.previewMediaPlayer = new MediaPlayer();
                 this.previewMediaPlayer.Source = this.previewMediaSource;
 
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Setting MediaPlayer on MediaPlayerElement...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking UI thread affinity before SetMediaPlayer...");
 #endif
-                mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+
+                // Ensure SetMediaPlayer is called on the UI thread (fixes COMException from threading issues)
+                try
+                {
+#if DEBUG
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking UI thread affinity...");
+#endif
+
+                    if (!mediaPlayerElement.DispatcherQueue.HasThreadAccess)
+                    {
+#if DEBUG
+                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Not on UI thread, marshaling to UI thread...");
+#endif
+                        // Marshal to UI thread using DispatcherQueue.TryEnqueue
+                        bool enqueued = mediaPlayerElement.DispatcherQueue.TryEnqueue(
+                            Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,
+                            () => mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer)
+                        );
+
+                        if (!enqueued)
+                        {
+#if DEBUG
+                            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: WARNING - Failed to enqueue SetMediaPlayer on UI thread");
+#endif
+                            throw new InvalidOperationException("Failed to marshal SetMediaPlayer call to UI thread");
+                        }
+                    }
+                    else
+                    {
+#if DEBUG
+                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Already on UI thread, calling SetMediaPlayer directly...");
+#endif
+                        mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+                    }
 
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview started successfully. MediaPlayer is now rendering.");
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview started successfully. MediaPlayer is now rendering.");
 #endif
+                }
+                catch (COMException comEx)
+                {
+#if DEBUG
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: COMException caught - HResult=0x{comEx.HResult:X8}, Message={comEx.Message}");
+#endif
+                    throw new InvalidOperationException(
+                        "Failed to bind MediaPlayer to preview control. This may indicate a graphics driver issue or incompatible display settings. " +
+                        "Try updating your graphics drivers or restarting your device.",
+                        comEx);
+                }
             }
             catch (Exception ex)
             {
