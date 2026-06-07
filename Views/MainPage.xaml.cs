@@ -6,6 +6,7 @@ namespace IntVue.Views
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
 
     using IntVue.Services;
@@ -159,6 +160,21 @@ namespace IntVue.Views
                 Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: ArgumentException - {ex.Message}");
 #endif
                 await this.ShowErrorDialog("Invalid Preview Control", "The preview control is not properly configured.");
+            }
+            catch (InvalidOperationException ex) when (ex.InnerException is COMException comEx)
+            {
+                // Specific handling for COMException wrapped in InvalidOperationException (from SetMediaPlayer)
+#if DEBUG
+                Trace.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: COMException caught - HResult=0x{comEx.HResult:X8}, Message={comEx.Message}");
+#endif
+                var errorMessage = "The camera preview cannot be displayed. This is usually caused by graphics driver issues or compatibility problems.\n\n" +
+                    "Try the following:\n" +
+                    "1) Restart your device\n" +
+                    "2) Update your graphics drivers\n" +
+                    "3) Check if another app is using the camera\n" +
+                    "4) Try a different camera if available";
+
+                await this.ShowErrorDialog("Camera Hardware Issue", errorMessage);
             }
             catch (InvalidOperationException ex)
             {
