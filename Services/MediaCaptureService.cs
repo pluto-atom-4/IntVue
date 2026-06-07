@@ -387,6 +387,15 @@ namespace IntVue.Services
                                 Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: SetMediaPlayer executing on UI thread...");
 #endif
                                 mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+
+                                // Explicitly start playback on the UI thread (AutoPlay doesn't work reliably with MediaFrameSource)
+                                if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
+                                {
+#if DEBUG
+                                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play() on UI thread...");
+#endif
+                                    this.previewMediaPlayer.Play();
+                                }
                             });
                         startTime.Stop();
 
@@ -409,20 +418,20 @@ namespace IntVue.Services
 #endif
                         var startTime = System.Diagnostics.Stopwatch.StartNew();
                         mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+
+                        // Explicitly start playback on the UI thread (AutoPlay doesn't work reliably with MediaFrameSource)
+                        if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
+                        {
+#if DEBUG
+                            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play() on UI thread...");
+#endif
+                            this.previewMediaPlayer.Play();
+                        }
                         startTime.Stop();
 
 #if DEBUG
-                        Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: SetMediaPlayer call completed. Time: {startTime.ElapsedMilliseconds}ms");
+                        Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: SetMediaPlayer and Play() call completed. Time: {startTime.ElapsedMilliseconds}ms");
 #endif
-                    }
-
-                    // Explicitly start playback for frame sources (AutoPlay doesn't work reliably with MediaFrameSource)
-                    if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
-                    {
-#if DEBUG
-                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play()...");
-#endif
-                        this.previewMediaPlayer.Play();
                     }
 
 #if DEBUG
