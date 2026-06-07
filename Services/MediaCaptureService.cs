@@ -427,6 +427,7 @@ namespace IntVue.Services
 #endif
                             this.previewMediaPlayer.Play();
                         }
+
                         startTime.Stop();
 
 #if DEBUG

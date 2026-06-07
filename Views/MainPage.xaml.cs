@@ -72,6 +72,17 @@ namespace IntVue.Views
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
             this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
 
+            // Subscribe to IsPreviewing changes to show/hide Stop Preview button
+            this.viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(InterviewViewModel.IsPreviewing))
+                {
+                    this.BtnStopPreview.Visibility = this.viewModel.IsPreviewing
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
+                }
+            };
+
 #if DEBUG
             Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Checking for saved consent...");
 #endif
@@ -111,6 +122,27 @@ namespace IntVue.Views
         {
             this.viewModel.ConsentGiven = !this.viewModel.ConsentGiven;
             this.UpdateConsentText();
+        }
+
+        private async void BtnStopPreview_Click(object sender, RoutedEventArgs e)
+        {
+#if DEBUG
+            Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopPreview_Click: Stop Preview button clicked.");
+#endif
+            try
+            {
+                await this.viewModel.StopPreviewAsync().ConfigureAwait(false);
+#if DEBUG
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopPreview_Click: Preview stopped successfully.");
+#endif
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: Exception - {ex.GetType().Name}: {ex.Message}");
+#endif
+                await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
+            }
         }
 
         private void UpdateConsentText()
@@ -264,13 +296,13 @@ namespace IntVue.Views
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: IsPreviewing={this.viewModel.IsPreviewing}");
 #endif
 
-            if (!this.viewModel.IsPreviewing)
+            // Stop preview before recording (MediaCapture can't do both simultaneously with frame-based preview)
+            if (this.viewModel.IsPreviewing)
             {
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Preview not active, showing error dialog.");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Stopping preview before recording...");
 #endif
-                await this.ShowErrorDialog("Preview Required", "Please start the camera preview before recording.");
-                return;
+                await this.viewModel.StopPreviewAsync().ConfigureAwait(false);
             }
 
             try
