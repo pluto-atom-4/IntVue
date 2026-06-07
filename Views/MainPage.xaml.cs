@@ -45,29 +45,30 @@ namespace IntVue.Views
         private async void OnPageLoaded()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Page loaded, initializing UI...");
+            Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Page loaded, initializing UI...");
 #endif
 
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
             this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Checking for saved consent...");
+            Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Checking for saved consent...");
 #endif
 
             // Load saved consent state
             if (this.consentService.HasGivenConsent)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Found saved consent, loading...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Found saved consent, loading...");
 #endif
                 this.viewModel.ConsentGiven = true;
             }
             else
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: No saved consent, showing consent dialog...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: No saved consent, showing consent dialog...");
 #endif
+
                 // Show consent dialog on first load
                 var consented = await this.consentService.RequestConsentAsync(this.XamlRoot);
 
@@ -81,7 +82,7 @@ namespace IntVue.Views
             this.UpdateConsentText();
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Page initialization complete.");
+            Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Page initialization complete.");
 #endif
         }
 
@@ -114,14 +115,14 @@ namespace IntVue.Views
         private async void BtnStartPreview_Click(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Start Preview button clicked.");
+            Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Start Preview button clicked.");
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: ConsentGiven={this.viewModel.ConsentGiven}, PreviewControl type={this.PreviewControl?.GetType().Name}");
 #endif
 
             if (!this.viewModel.ConsentGiven)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: User consent not given, showing error dialog.");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: User consent not given, showing error dialog.");
 #endif
                 await this.ShowErrorDialog("Consent Required", "Please consent to camera and microphone recording before starting the preview.");
                 return;
@@ -130,7 +131,7 @@ namespace IntVue.Views
             try
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Calling viewModel.StartPreviewAsync()...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Calling viewModel.StartPreviewAsync()...");
 #endif
                 var success = await this.viewModel.StartPreviewAsync(this.PreviewControl).ConfigureAwait(false);
 
@@ -141,14 +142,14 @@ namespace IntVue.Views
                 if (!success)
                 {
 #if DEBUG
-                    Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview start failed, showing error dialog.");
+                    Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview start failed, showing error dialog.");
 #endif
                     await this.ShowErrorDialog("Camera Access Denied", "Camera and microphone permissions are required to use the preview feature. Please enable them in your device settings.");
                 }
                 else
                 {
 #if DEBUG
-                    Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview started successfully.");
+                    Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview started successfully.");
 #endif
                 }
             }
@@ -191,14 +192,14 @@ namespace IntVue.Views
         private async void BtnStartRecording_Click(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Start Recording button clicked.");
+            Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Start Recording button clicked.");
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: IsPreviewing={this.viewModel.IsPreviewing}");
 #endif
 
             if (!this.viewModel.IsPreviewing)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Preview not active, showing error dialog.");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Preview not active, showing error dialog.");
 #endif
                 await this.ShowErrorDialog("Preview Required", "Please start the camera preview before recording.");
                 return;
@@ -207,13 +208,13 @@ namespace IntVue.Views
             try
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Calling viewModel.StartRecordingAsync()...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Calling viewModel.StartRecordingAsync()...");
 #endif
                 var sanitized = "recording";
                 await this.viewModel.StartRecordingAsync(sanitized).ConfigureAwait(false);
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Recording started successfully.");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Recording started successfully.");
 #endif
             }
             catch (InvalidOperationException ex)
@@ -235,19 +236,19 @@ namespace IntVue.Views
         private async void BtnStopRecording_Click(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Stop Recording button clicked.");
+            Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Stop Recording button clicked.");
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopRecording_Click: IsRecording={this.viewModel.IsRecording}");
 #endif
 
             try
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Calling viewModel.StopRecordingAsync()...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Calling viewModel.StopRecordingAsync()...");
 #endif
                 await this.viewModel.StopRecordingAsync().ConfigureAwait(false);
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Recording stopped successfully.");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopRecording_Click: Recording stopped successfully.");
 #endif
             }
             catch (Exception ex)

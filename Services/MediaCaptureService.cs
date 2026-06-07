@@ -52,20 +52,20 @@ namespace IntVue.Services
             if (this.initialized)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Already initialized, skipping.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Already initialized, skipping.");
 #endif
                 return;
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Starting initialization...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Starting initialization...");
 #endif
 
             this.mediaCapture = new MediaCapture();
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture instance created.");
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Enumerating video capture devices...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture instance created.");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Enumerating video capture devices...");
 #endif
 
             var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
@@ -77,7 +77,7 @@ namespace IntVue.Services
             if (devices.Count == 0)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: WARNING - No camera device found. Preview mode disabled.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: WARNING - No camera device found. Preview mode disabled.");
 #endif
                 this.initialized = true;
                 return;
@@ -110,7 +110,7 @@ namespace IntVue.Services
 
 #if DEBUG
             Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Selected device ID: '{front?.Id}'");
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Calling MediaCapture.InitializeAsync()...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Calling MediaCapture.InitializeAsync()...");
 #endif
 
             var settings = new MediaCaptureInitializationSettings
@@ -123,7 +123,7 @@ namespace IntVue.Services
             {
                 await this.mediaCapture.InitializeAsync(settings);
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture.InitializeAsync() completed successfully.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture.InitializeAsync() completed successfully.");
 #endif
                 this.initialized = true;
             }
@@ -143,7 +143,7 @@ namespace IntVue.Services
         public Task<bool> RequestPermissionsAsync()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.RequestPermissionsAsync: Checking camera and microphone permissions...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.RequestPermissionsAsync: Checking camera and microphone permissions...");
 #endif
 
             try
@@ -179,13 +179,13 @@ namespace IntVue.Services
         public async Task StartPreviewAsync(object previewHost)
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Starting preview...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Starting preview...");
 #endif
 
             if (this.mediaCapture == null)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaCapture is null, initializing...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaCapture is null, initializing...");
 #endif
                 await this.InitializeAsync().ConfigureAwait(false);
             }
@@ -193,13 +193,13 @@ namespace IntVue.Services
             if (this.mediaCapture == null)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - MediaCapture failed to initialize.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - MediaCapture failed to initialize.");
 #endif
                 throw new InvalidOperationException("MediaCapture not initialized");
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaCapture is initialized.");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaCapture is initialized.");
 #endif
 
             if (previewHost is not MediaPlayerElement mediaPlayerElement)
@@ -211,7 +211,7 @@ namespace IntVue.Services
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview host is MediaPlayerElement.");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview host is MediaPlayerElement.");
 #endif
 
             try
@@ -226,7 +226,7 @@ namespace IntVue.Services
                 if (frameSource == null)
                 {
 #if DEBUG
-                    Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - No video frame source available from MediaCapture.");
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - No video frame source available from MediaCapture.");
 #endif
                     throw new InvalidOperationException("No video frame source available from MediaCapture");
                 }
@@ -237,28 +237,28 @@ namespace IntVue.Services
 
                 // Create MediaSource from the frame source
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaSource from frame source...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaSource from frame source...");
 #endif
                 this.previewMediaSource = MediaSource.CreateFromMediaFrameSource(frameSource);
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaSource created.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaSource created.");
 #endif
 
                 // Create MediaPlayer and bind to MediaPlayerElement
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaPlayer...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaPlayer...");
 #endif
                 this.previewMediaPlayer = new MediaPlayer();
                 this.previewMediaPlayer.Source = this.previewMediaSource;
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Setting MediaPlayer on MediaPlayerElement...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Setting MediaPlayer on MediaPlayerElement...");
 #endif
                 mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview started successfully. MediaPlayer is now rendering.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview started successfully. MediaPlayer is now rendering.");
 #endif
             }
             catch (Exception ex)
@@ -278,7 +278,7 @@ namespace IntVue.Services
         public async Task StopPreviewAsync()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Stopping preview...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Stopping preview...");
 #endif
 
             try
@@ -286,7 +286,7 @@ namespace IntVue.Services
                 if (this.previewMediaPlayer != null)
                 {
 #if DEBUG
-                    Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Disposing MediaPlayer...");
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Disposing MediaPlayer...");
 #endif
                     this.previewMediaPlayer.Source = null;
                     this.previewMediaPlayer.Dispose();
@@ -296,14 +296,14 @@ namespace IntVue.Services
                 if (this.previewMediaSource != null)
                 {
 #if DEBUG
-                    Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Disposing MediaSource...");
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Disposing MediaSource...");
 #endif
                     this.previewMediaSource.Dispose();
                     this.previewMediaSource = null;
                 }
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Preview stopped successfully.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopPreviewAsync: Preview stopped successfully.");
 #endif
 
                 await Task.CompletedTask;
@@ -330,7 +330,7 @@ namespace IntVue.Services
             if (this.mediaCapture == null)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: MediaCapture is null, initializing...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: MediaCapture is null, initializing...");
 #endif
                 await this.InitializeAsync().ConfigureAwait(false);
             }
@@ -338,7 +338,7 @@ namespace IntVue.Services
             if (this.mediaCapture == null)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: ERROR - MediaCapture failed to initialize.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: ERROR - MediaCapture failed to initialize.");
 #endif
                 throw new InvalidOperationException("MediaCapture not initialized");
             }
@@ -354,14 +354,14 @@ namespace IntVue.Services
 
 #if DEBUG
             Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.StartRecordingAsync: Recording file created at '{this.currentFile.Path}'");
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: Preparing low-lag recording...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: Preparing low-lag recording...");
 #endif
 
             var profile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
             this.lowLagRecording = await this.mediaCapture.PrepareLowLagRecordToStorageFileAsync(profile, this.currentFile);
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: Low-lag recording prepared. Starting recording...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartRecordingAsync: Low-lag recording prepared. Starting recording...");
 #endif
 
             await this.lowLagRecording.StartAsync();
@@ -380,30 +380,30 @@ namespace IntVue.Services
         public async Task StopRecordingAsync()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Stopping recording...");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Stopping recording...");
 #endif
 
             if (this.lowLagRecording != null)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Calling StopAsync()...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Calling StopAsync()...");
 #endif
                 await this.lowLagRecording.StopAsync();
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Calling FinishAsync()...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Calling FinishAsync()...");
 #endif
                 await this.lowLagRecording.FinishAsync();
                 this.lowLagRecording = null;
 
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Recording stopped successfully.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: Recording stopped successfully.");
 #endif
             }
             else
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: No recording in progress.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StopRecordingAsync: No recording in progress.");
 #endif
             }
         }

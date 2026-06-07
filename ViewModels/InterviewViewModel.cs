@@ -4,7 +4,6 @@
 
 namespace IntVue.ViewModels
 {
-    using System;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -100,7 +99,7 @@ namespace IntVue.ViewModels
             {
                 this.consentGiven = value;
 #if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
+                Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
 #endif
                 this.OnPropertyChanged();
             }
@@ -114,19 +113,19 @@ namespace IntVue.ViewModels
         public async Task<bool> StartPreviewAsync(object previewHost)
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview command...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview command...");
 #endif
 
             if (!this.ConsentGiven)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent not given, aborting.");
+                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent not given, aborting.");
 #endif
                 return false;
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent confirmed. Requesting permissions...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent confirmed. Requesting permissions...");
 #endif
 
             var granted = await this.mediaService.RequestPermissionsAsync().ConfigureAwait(false);
@@ -138,25 +137,25 @@ namespace IntVue.ViewModels
             if (!granted)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions not granted, aborting.");
+                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions not granted, aborting.");
 #endif
                 return false;
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Initializing media capture...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Initializing media capture...");
 #endif
 
             await this.mediaService.InitializeAsync().ConfigureAwait(false);
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview on media service...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview on media service...");
 #endif
 
             await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
 #endif
 
             this.IsPreviewing = true;
@@ -170,14 +169,14 @@ namespace IntVue.ViewModels
         public async Task StopPreviewAsync()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
 #endif
 
             await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
             this.IsPreviewing = false;
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Preview stopped.");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Preview stopped.");
 #endif
         }
 
@@ -195,13 +194,13 @@ namespace IntVue.ViewModels
             if (!this.IsPreviewing)
             {
 #if DEBUG
-                Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview not active, cannot start recording.");
+                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview not active, cannot start recording.");
 #endif
                 return;
             }
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview is active. Starting recording on media service...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview is active. Starting recording on media service...");
 #endif
 
             var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
@@ -221,14 +220,14 @@ namespace IntVue.ViewModels
         public async Task StopRecordingAsync()
         {
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Stopping recording...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Stopping recording...");
 #endif
 
             await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
             this.IsRecording = false;
 
 #if DEBUG
-            Debug.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Recording stopped.");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Recording stopped.");
 #endif
         }
 
