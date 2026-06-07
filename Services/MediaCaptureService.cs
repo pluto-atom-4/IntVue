@@ -416,6 +416,15 @@ namespace IntVue.Services
 #endif
                     }
 
+                    // Explicitly start playback for frame sources (AutoPlay doesn't work reliably with MediaFrameSource)
+                    if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
+                    {
+#if DEBUG
+                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play()...");
+#endif
+                        this.previewMediaPlayer.Play();
+                    }
+
 #if DEBUG
                     Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview binding successful. MediaPlayer is now rendering.");
 
