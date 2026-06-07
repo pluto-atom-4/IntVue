@@ -72,6 +72,9 @@ namespace IntVue.Views
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
             this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
 
+            // Set initial Stop Preview button visibility
+            this.BtnStopPreview.Visibility = this.viewModel.IsPreviewing ? Visibility.Visible : Visibility.Collapsed;
+
             // Subscribe to IsPreviewing changes to show/hide Stop Preview button
             this.viewModel.PropertyChanged += (s, e) =>
             {
@@ -80,6 +83,10 @@ namespace IntVue.Views
                     this.BtnStopPreview.Visibility = this.viewModel.IsPreviewing
                         ? Visibility.Visible
                         : Visibility.Collapsed;
+
+#if DEBUG
+                    Trace.WriteLine($"[IntVue.Debug] MainPage.PropertyChanged: IsPreviewing changed to {this.viewModel.IsPreviewing}, BtnStopPreview visibility set to {this.BtnStopPreview.Visibility}");
+#endif
                 }
             };
 
@@ -136,10 +143,20 @@ namespace IntVue.Views
                 Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopPreview_Click: Preview stopped successfully.");
 #endif
             }
+            catch (InvalidOperationException ex)
+            {
+#if DEBUG
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: InvalidOperationException - {ex.Message}");
+#endif
+
+                // Expected if preview already stopped or not initialized
+                await this.ShowErrorDialog("Stop Preview Error", $"Preview already stopped or error: {ex.Message}");
+            }
             catch (Exception ex)
             {
 #if DEBUG
                 Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: Exception - {ex.GetType().Name}: {ex.Message}");
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: StackTrace: {ex.StackTrace}");
 #endif
                 await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
             }
