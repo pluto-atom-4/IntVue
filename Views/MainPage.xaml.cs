@@ -47,6 +47,26 @@ namespace IntVue.Views
         {
 #if DEBUG
             Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Page loaded, initializing UI...");
+
+            // Phase 1: Log MediaPlayerElement layout and visibility
+            try
+            {
+                Trace.WriteLine($"[IntVue.Debug] MainPage.OnPageLoaded: PreviewControl layout info:");
+                Trace.WriteLine($"[IntVue.Debug]   ActualWidth={this.PreviewControl.ActualWidth}, ActualHeight={this.PreviewControl.ActualHeight}");
+                Trace.WriteLine($"[IntVue.Debug]   Visibility: {this.PreviewControl.Visibility}");
+                Trace.WriteLine($"[IntVue.Debug]   Opacity: {this.PreviewControl.Opacity}");
+                Trace.WriteLine($"[IntVue.Debug]   Parent: {this.PreviewControl.Parent?.GetType().Name ?? "null"}");
+
+                var parentControl = this.PreviewControl.Parent as Microsoft.UI.Xaml.Controls.Panel;
+                if (parentControl != null)
+                {
+                    Trace.WriteLine($"[IntVue.Debug]   Parent is {parentControl.GetType().Name} with {parentControl.Children.Count} children");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[IntVue.Debug] MainPage.OnPageLoaded: ERROR getting PreviewControl bounds - {ex.GetType().Name}: {ex.Message}");
+            }
 #endif
 
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
@@ -134,6 +154,12 @@ namespace IntVue.Views
 #if DEBUG
                 Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Calling viewModel.StartPreviewAsync()...");
 #endif
+                if (this.PreviewControl == null)
+                {
+                    await this.ShowErrorDialog("Preview Control Error", "Preview control not initialized.");
+                    return;
+                }
+
                 var success = await this.viewModel.StartPreviewAsync(this.PreviewControl).ConfigureAwait(false);
 
 #if DEBUG
@@ -151,6 +177,32 @@ namespace IntVue.Views
                 {
 #if DEBUG
                     Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview started successfully.");
+
+                    // Phase 1: Log PostPreview element state (diagnostic)
+                    try
+                    {
+                        Trace.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: Post-preview PreviewControl state:");
+                        Trace.WriteLine($"[IntVue.Debug]   ActualWidth={this.PreviewControl.ActualWidth}, ActualHeight={this.PreviewControl.ActualHeight}");
+                        Trace.WriteLine($"[IntVue.Debug]   Visibility: {this.PreviewControl.Visibility}");
+                        Trace.WriteLine($"[IntVue.Debug]   Opacity: {this.PreviewControl.Opacity}");
+                        Trace.WriteLine($"[IntVue.Debug]   Background: {(this.PreviewControl.Background != null ? "Set" : "Null")}");
+
+                        // Check if MediaPlayer is set
+                        if (this.PreviewControl.MediaPlayer != null)
+                        {
+                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer set: True");
+                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer.Source: {(this.PreviewControl.MediaPlayer.Source != null ? "Set" : "Null")}");
+                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer.PlaybackState: {this.PreviewControl.MediaPlayer.PlaybackSession?.PlaybackState}");
+                        }
+                        else
+                        {
+                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer set: False");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: ERROR logging post-preview state - {ex.GetType().Name}: {ex.Message}");
+                    }
 #endif
                 }
             }

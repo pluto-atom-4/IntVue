@@ -18,6 +18,7 @@ namespace IntVue.Services
 
     using Windows.Devices.Enumeration;
     using Windows.Media.Capture;
+    using Windows.Media.Capture.Frames;
     using Windows.Media.Core;
     using Windows.Media.MediaProperties;
     using Windows.Media.Playback;
@@ -125,6 +126,29 @@ namespace IntVue.Services
                 await this.mediaCapture.InitializeAsync(settings);
 #if DEBUG
                 Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture.InitializeAsync() completed successfully.");
+
+                // Phase 1: Enumerate all frame sources and their formats (diagnostic)
+                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Available frame sources: {this.mediaCapture.FrameSources.Count}");
+                foreach (var kvp in this.mediaCapture.FrameSources)
+                {
+                    var key = kvp.Key;
+                    var frameSource = kvp.Value;
+                    var sourceKind = frameSource.Info.SourceKind;
+                    var format = frameSource.CurrentFormat;
+                    var formatSubtype = format?.Subtype ?? "No format set";
+                    var frameRate = format != null ? (double)format.FrameRate.Numerator / format.FrameRate.Denominator : 0;
+
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync:   [{key}] Kind={sourceKind}, Format={formatSubtype}, FPS={frameRate:F2}");
+                }
+
+                // Detect Surface integrated camera
+                var deviceIdPrefix = front?.Id.Substring(0, Math.Min(30, front?.Id.Length ?? 0)) ?? "Unknown";
+                var isSurfaceIntegrated = front?.Id.Contains("DISPLAY", StringComparison.OrdinalIgnoreCase) ?? false;
+                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Device ID prefix: {deviceIdPrefix}...");
+                if (isSurfaceIntegrated)
+                {
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: DETECTED: Surface integrated camera (DISPLAY in device ID)");
+                }
 #endif
                 this.initialized = true;
             }
@@ -219,10 +243,39 @@ namespace IntVue.Services
             {
 #if DEBUG
                 Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: FrameSources count: {this.mediaCapture.FrameSources.Count}");
+
+                // Phase 1: Enumerate all frame sources to understand what's available
+                foreach (var kvp in this.mediaCapture.FrameSources)
+                {
+                    var key = kvp.Key;
+                    var src = kvp.Value;
+                    var kind = src.Info.SourceKind;
+                    var currentFormat = src.CurrentFormat;
+                    var subtype = currentFormat?.Subtype ?? "No format";
+                    var frameRate = currentFormat != null ? (double)currentFormat.FrameRate.Numerator / currentFormat.FrameRate.Denominator : 0;
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: FrameSource[{key}] Kind={kind}, Format={subtype}, FPS={frameRate:F2}");
+                }
 #endif
 
-                // Get the first available video frame source from MediaCapture
-                var frameSource = this.mediaCapture.FrameSources.Values.FirstOrDefault();
+                // Get the best video frame source: prefer Color over Image/Depth/Audio
+                // For Surface cameras with multiple frame sources, explicitly select the best one
+                var frameSource = this.mediaCapture.FrameSources.Values
+                    .Where(fs => fs.Info.SourceKind == MediaFrameSourceKind.Color)
+                    .OrderByDescending(fs => fs.CurrentFormat?.FrameRate.Numerator ?? 0)
+                    .FirstOrDefault()
+                    ?? this.mediaCapture.FrameSources.Values.FirstOrDefault();
+
+#if DEBUG
+                if (frameSource != null)
+                {
+                    var selectedKind = frameSource.Info.SourceKind;
+                    var selectedFormat = frameSource.CurrentFormat?.Subtype ?? "Unknown";
+                    var selectedFps = frameSource.CurrentFormat != null
+                        ? (double)frameSource.CurrentFormat.FrameRate.Numerator / frameSource.CurrentFormat.FrameRate.Denominator
+                        : 0;
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Selected frame source - Kind={selectedKind}, Format={selectedFormat}, FPS={selectedFps:F2}");
+                }
+#endif
 
                 if (frameSource == null)
                 {
@@ -292,7 +345,12 @@ namespace IntVue.Services
                 Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating new MediaPlayer...");
 #endif
                 this.previewMediaPlayer = new MediaPlayer();
+                this.previewMediaPlayer.AutoPlay = true;
                 this.previewMediaPlayer.Source = this.previewMediaSource;
+
+#if DEBUG
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: AutoPlay enabled on MediaPlayer.");
+#endif
 
 #if DEBUG
                 Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking UI thread affinity before SetMediaPlayer...");
@@ -360,6 +418,14 @@ namespace IntVue.Services
 
 #if DEBUG
                     Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview binding successful. MediaPlayer is now rendering.");
+
+                    // Phase 1: Validate MediaPlayer post-binding state
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Post-binding validation:");
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.Source != null: {this.previewMediaPlayer.Source != null}");
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.PlaybackSession.PlaybackState: {this.previewMediaPlayer.PlaybackSession.PlaybackState}");
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.IsMuted: {this.previewMediaPlayer.IsMuted}");
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.Volume: {this.previewMediaPlayer.Volume}");
+                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.AutoPlay: {this.previewMediaPlayer.AutoPlay}");
 #endif
                 }
                 catch (COMException comEx)
