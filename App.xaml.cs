@@ -5,6 +5,7 @@
 namespace IntVue
 {
     using System;
+    using System.Diagnostics;
     using System.Runtime.Versioning;
 
     using IntVue.Services;
@@ -30,6 +31,12 @@ namespace IntVue
         public App()
         {
             this.InitializeComponent();
+
+#if DEBUG
+            // Add ConsoleTraceListener to route trace output to console
+            Trace.Listeners.Add(new ConsoleTraceListener());
+#endif
+
             Services = ConfigureServices();
         }
 
