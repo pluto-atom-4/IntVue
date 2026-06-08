@@ -42,6 +42,8 @@
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
         <!-- Nullable already enabled above; keep it enabled -->
         <Nullable>enable</Nullable>
+        <!-- Suppress CA1416 (platform compatibility) warnings - this is a Windows-only app -->
+        <NoWarn>$(NoWarn);CA1416</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

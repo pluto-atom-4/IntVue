@@ -4,6 +4,7 @@
 
 namespace IntVue.ViewModels
 {
+    using System;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -22,6 +23,7 @@ namespace IntVue.ViewModels
         private bool isRecording;
         private string recordedFilePath = string.Empty;
         private bool consentGiven;
+        private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InterviewViewModel"/> class.
@@ -59,6 +61,11 @@ namespace IntVue.ViewModels
             private set
             {
                 this.isPreviewing = value;
+
+                // Update Stop Preview button visibility based on preview state
+                this.StopPreviewButtonVisibility = value
+                    ? Microsoft.UI.Xaml.Visibility.Visible
+                    : Microsoft.UI.Xaml.Visibility.Collapsed;
                 this.OnPropertyChanged();
             }
         }
@@ -102,6 +109,25 @@ namespace IntVue.ViewModels
                 Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
 #endif
                 this.OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets the visibility state of the Stop Preview button (bound to UI).
+        /// </summary>
+        public Microsoft.UI.Xaml.Visibility StopPreviewButtonVisibility
+        {
+            get => this.stopPreviewButtonVisibility;
+            private set
+            {
+                if (this.stopPreviewButtonVisibility != value)
+                {
+                    this.stopPreviewButtonVisibility = value;
+#if DEBUG
+                    Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewButtonVisibility: Changed to {value}");
+#endif
+                    this.OnPropertyChanged();
+                }
             }
         }
 
@@ -158,6 +184,7 @@ namespace IntVue.ViewModels
             Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
 #endif
 
+            // Set IsPreviewing on the UI thread to ensure PropertyChanged fires synchronously
             this.IsPreviewing = true;
             return true;
         }
@@ -172,7 +199,18 @@ namespace IntVue.ViewModels
             Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
 #endif
 
-            await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
+            try
+            {
+                await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Error stopping preview - {ex.GetType().Name}: {ex.Message}");
+#endif
+            }
+
+            // Always set IsPreviewing to false, even if there was an error
             this.IsPreviewing = false;
 
 #if DEBUG
@@ -191,16 +229,8 @@ namespace IntVue.ViewModels
             Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording with base name '{baseFileName}'...");
 #endif
 
-            if (!this.IsPreviewing)
-            {
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview not active, cannot start recording.");
-#endif
-                return;
-            }
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Preview is active. Starting recording on media service...");
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording on media service (preview state independent)...");
 #endif
 
             var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);

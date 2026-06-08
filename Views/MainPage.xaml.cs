@@ -24,7 +24,7 @@ namespace IntVue.Views
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private readonly InterviewViewModel viewModel;
+        public InterviewViewModel viewModel { get; private set; }
         private readonly IConsentService consentService;
 
         /// <summary>
@@ -38,6 +38,20 @@ namespace IntVue.Views
             this.consentService = (IConsentService?)App.Services.GetService(typeof(IConsentService)) ?? new ConsentService();
             this.viewModel = (InterviewViewModel?)App.Services.GetService(typeof(InterviewViewModel)) ?? new InterviewViewModel(svc!);
             this.DataContext = this.viewModel;
+
+            // Subscribe to ViewModel property changes to ensure UI stays in sync (fallback for binding issues)
+            this.viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(InterviewViewModel.StopPreviewButtonVisibility))
+                {
+#if DEBUG
+                    Trace.WriteLine($"[IntVue.Debug] MainPage: Detected StopPreviewButtonVisibility change to {this.viewModel.StopPreviewButtonVisibility}");
+#endif
+
+                    // Ensure button visibility is updated
+                    this.BtnStopPreview.Visibility = this.viewModel.StopPreviewButtonVisibility;
+                }
+            };
 
             this.Unloaded += (s, e) => this.OnPageUnloaded();
             this.Loaded += (s, e) => this.OnPageLoaded();
@@ -67,28 +81,16 @@ namespace IntVue.Views
             {
                 Trace.WriteLine($"[IntVue.Debug] MainPage.OnPageLoaded: ERROR getting PreviewControl bounds - {ex.GetType().Name}: {ex.Message}");
             }
+
+            // Initialize Stop Preview button visibility (should start collapsed)
+            this.BtnStopPreview.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+#if DEBUG
+            Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Stop Preview button initialized to Collapsed.");
+#endif
 #endif
 
             this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
             this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
-
-            // Set initial Stop Preview button visibility
-            this.BtnStopPreview.Visibility = this.viewModel.IsPreviewing ? Visibility.Visible : Visibility.Collapsed;
-
-            // Subscribe to IsPreviewing changes to show/hide Stop Preview button
-            this.viewModel.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(InterviewViewModel.IsPreviewing))
-                {
-                    this.BtnStopPreview.Visibility = this.viewModel.IsPreviewing
-                        ? Visibility.Visible
-                        : Visibility.Collapsed;
-
-#if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] MainPage.PropertyChanged: IsPreviewing changed to {this.viewModel.IsPreviewing}, BtnStopPreview visibility set to {this.BtnStopPreview.Visibility}");
-#endif
-                }
-            };
 
 #if DEBUG
             Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Checking for saved consent...");
@@ -150,7 +152,16 @@ namespace IntVue.Views
 #endif
 
                 // Expected if preview already stopped or not initialized
-                await this.ShowErrorDialog("Stop Preview Error", $"Preview already stopped or error: {ex.Message}");
+                try
+                {
+                    await this.ShowErrorDialog("Stop Preview Error", $"Preview already stopped or error: {ex.Message}");
+                }
+                catch (Exception dialogEx)
+                {
+#if DEBUG
+                    Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: Error showing dialog - {dialogEx.GetType().Name}");
+#endif
+                }
             }
             catch (Exception ex)
             {
@@ -158,7 +169,23 @@ namespace IntVue.Views
                 Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: Exception - {ex.GetType().Name}: {ex.Message}");
                 Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: StackTrace: {ex.StackTrace}");
 #endif
-                await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
+                try
+                {
+                    await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
+                }
+                catch (Exception dialogEx)
+                {
+#if DEBUG
+                    Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStopPreview_Click: Error showing dialog - {dialogEx.GetType().Name}");
+#endif
+                }
+            }
+            finally
+            {
+                // Stop Preview button visibility managed by ViewModel binding
+#if DEBUG
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStopPreview_Click: Stop Preview button visibility will be updated by ViewModel.");
+#endif
             }
         }
 
@@ -225,33 +252,7 @@ namespace IntVue.Views
                 else
                 {
 #if DEBUG
-                    Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview started successfully.");
-
-                    // Phase 1: Log PostPreview element state (diagnostic)
-                    try
-                    {
-                        Trace.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: Post-preview PreviewControl state:");
-                        Trace.WriteLine($"[IntVue.Debug]   ActualWidth={this.PreviewControl.ActualWidth}, ActualHeight={this.PreviewControl.ActualHeight}");
-                        Trace.WriteLine($"[IntVue.Debug]   Visibility: {this.PreviewControl.Visibility}");
-                        Trace.WriteLine($"[IntVue.Debug]   Opacity: {this.PreviewControl.Opacity}");
-                        Trace.WriteLine($"[IntVue.Debug]   Background: {(this.PreviewControl.Background != null ? "Set" : "Null")}");
-
-                        // Check if MediaPlayer is set
-                        if (this.PreviewControl.MediaPlayer != null)
-                        {
-                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer set: True");
-                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer.Source: {(this.PreviewControl.MediaPlayer.Source != null ? "Set" : "Null")}");
-                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer.PlaybackState: {this.PreviewControl.MediaPlayer.PlaybackSession?.PlaybackState}");
-                        }
-                        else
-                        {
-                            Trace.WriteLine($"[IntVue.Debug]   MediaPlayer set: False");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"[IntVue.Debug] MainPage.BtnStartPreview_Click: ERROR logging post-preview state - {ex.GetType().Name}: {ex.Message}");
-                    }
+                    Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartPreview_Click: Preview started successfully. Stop Preview button visibility managed by ViewModel binding.");
 #endif
                 }
             }
@@ -313,13 +314,23 @@ namespace IntVue.Views
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: IsPreviewing={this.viewModel.IsPreviewing}");
 #endif
 
-            // Stop preview before recording (MediaCapture can't do both simultaneously with frame-based preview)
+            // Stop preview before recording (Microsoft docs: preview and recording are mutually exclusive)
+            // Surface built-in camera uses exclusive hardware control
             if (this.viewModel.IsPreviewing)
             {
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Stopping preview before recording...");
+                Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Stopping preview before recording (hardware exclusivity on Surface camera)...");
 #endif
-                await this.viewModel.StopPreviewAsync().ConfigureAwait(false);
+                try
+                {
+                    await this.viewModel.StopPreviewAsync().ConfigureAwait(false);
+                }
+                catch (Exception stopEx)
+                {
+#if DEBUG
+                    Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: Warning - error stopping preview: {stopEx.Message}");
+#endif
+                }
             }
 
             try
@@ -334,6 +345,18 @@ namespace IntVue.Views
                 Trace.WriteLine("[IntVue.Debug] MainPage.BtnStartRecording_Click: Recording started successfully.");
 #endif
             }
+            catch (InvalidOperationException ex) when (ex.InnerException is COMException comEx)
+            {
+#if DEBUG
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: COMException during recording - HResult=0x{comEx.HResult:X8}: {ex.Message}");
+#endif
+                await this.ShowErrorDialog(
+                    "Camera Hardware Issue",
+                    "Unable to start recording. This may occur if:\n" +
+                    "• Another app is using the camera\n" +
+                    "• Camera driver needs updating\n" +
+                    "• Try restarting the app");
+            }
             catch (InvalidOperationException ex)
             {
 #if DEBUG
@@ -341,12 +364,20 @@ namespace IntVue.Views
 #endif
                 await this.ShowErrorDialog("Recording Error", $"Failed to start recording: {ex.Message}");
             }
+            catch (COMException comEx)
+            {
+#if DEBUG
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: COMException - HResult=0x{comEx.HResult:X8}: {comEx.Message}");
+#endif
+                await this.ShowErrorDialog("Hardware Error", $"Camera hardware error (0x{comEx.HResult:X8}): {comEx.Message}");
+            }
             catch (Exception ex)
             {
 #if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: Exception - {ex.GetType().Name}: {ex.Message}");
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: Unhandled Exception - {ex.GetType().Name}: {ex.Message}");
+                Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: StackTrace: {ex.StackTrace}");
 #endif
-                await this.ShowErrorDialog("Recording Error", $"An unexpected error occurred: {ex.Message}");
+                await this.ShowErrorDialog("Recording Error", $"An unexpected error occurred: {ex.GetType().Name} - {ex.Message}");
             }
         }
 
