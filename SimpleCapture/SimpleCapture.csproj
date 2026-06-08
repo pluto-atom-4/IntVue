@@ -34,6 +34,8 @@
 
     <!-- Kill running SimpleCapture processes before build to avoid file lock issues -->
     <Target Name="KillRunningApp" BeforeTargets="Build">
-        <Exec Command="powershell -NoProfile -Command &quot;Get-Process SimpleCapture -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue&quot;" ContinueOnError="true" />
+        <Exec Command="powershell -NoProfile -Command &quot;Get-Process SimpleCapture -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue&quot;"
+              ContinueOnError="true"
+              IgnoreExitCode="true" />
     </Target>
 </Project>
