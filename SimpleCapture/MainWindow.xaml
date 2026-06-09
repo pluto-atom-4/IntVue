@@ -39,7 +39,8 @@
             <StackPanel Spacing="5">
                 <Button x:Name="btnStartDevice" Content="Initialize Device" Click="BtnStartDevice_Click" />
                 <Button x:Name="btnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" />
-                <Button x:Name="btnReset" Content="Reset Device" Click="BtnReset_Click" IsEnabled="False" />
+		<Button x:Name="btnReset" Content="Reset Device" Click="BtnReset_Click" IsEnabled="False" />
+		<Button x:Name="btnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" Background="#4A1515" Foreground="White"/>
             </StackPanel>
 
             <TextBlock Text="Current Settings:" FontWeight="Bold" />

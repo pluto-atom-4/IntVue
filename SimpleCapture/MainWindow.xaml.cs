@@ -5,16 +5,19 @@ namespace SimpleCapture
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
+    using System.Threading.Tasks;
+
+    using CommunityToolkit.WinUI;
+
     using Microsoft.UI.Xaml;
-    using Microsoft.UI.Xaml.Controls;
-    using Microsoft.UI.Xaml.Media;
+
     using Windows.Devices.Enumeration;
-    using Windows.Media;
     using Windows.Media.Capture;
     using Windows.Media.Capture.Frames;
     using Windows.Media.Core;
     using Windows.Media.MediaProperties;
     using Windows.Media.Playback;
+    using Windows.Storage;
 
     public sealed partial class MainWindow : Window
     {
@@ -31,6 +34,10 @@ namespace SimpleCapture
         private List<MediaFrameSource>? m_previewSourceList;
         private MediaFrameSource? m_currentPreviewSource;
         private StringBuilder m_logBuilder = new StringBuilder();
+
+        // 1. Declare class variable for media recording session
+        private LowLagMediaRecording? m_mediaRecording;
+        private bool m_isRecording = false;
 
         public MainWindow()
         {
@@ -98,6 +105,7 @@ namespace SimpleCapture
                 await InitializeMediaCapture();
                 btnPreview.IsEnabled = true;
                 btnReset.IsEnabled = true;
+		btnRecord.IsEnabled = true;
                 Log("Device initialized successfully", LogMessageType.Success);
             }
             catch (Exception ex)
@@ -118,17 +126,34 @@ namespace SimpleCapture
                 }
 
                 m_MediaCapture = new MediaCapture();
+
+                // Map UI Selection to the proper StreamingCaptureMode
+                StreamingCaptureMode captureMode = StreamingCaptureMode.Video;
+                if (cbCaptureMode.SelectedIndex == 1)
+                {
+                    captureMode = StreamingCaptureMode.Audio;
+                }
+                else if (cbCaptureMode.SelectedIndex == 2)
+                {
+                    captureMode = StreamingCaptureMode.AudioAndVideo;
+                }
+
                 var settings = new MediaCaptureInitializationSettings
                 {
                     VideoDeviceId = m_deviceList[deviceIdx].Id,
-                    StreamingCaptureMode = StreamingCaptureMode.Video
+                    StreamingCaptureMode = captureMode
                 };
 
                 int memoryPrefIdx = cbMemoryPreferenceList.SelectedIndex;
                 if (memoryPrefIdx == 1)
+                {
                     settings.MemoryPreference = MediaCaptureMemoryPreference.Auto;
+
+                }
                 else if (memoryPrefIdx == 2)
+                {
                     settings.MemoryPreference = MediaCaptureMemoryPreference.Cpu;
+                }
 
                 Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
                 await m_MediaCapture.InitializeAsync(settings);
@@ -141,6 +166,7 @@ namespace SimpleCapture
             catch (Exception ex)
             {
                 Log($"MediaCapture initialization failed: {ex.Message}", LogMessageType.Error);
+
                 if (m_MediaCapture != null)
                 {
                     m_MediaCapture.Dispose();
@@ -283,6 +309,7 @@ namespace SimpleCapture
 
                 btnPreview.IsEnabled = false;
                 btnReset.IsEnabled = false;
+		btnRecord.IsEnabled = false;
                 btnPreview.Content = "Start Preview";
                 cbPreviewSourceList.IsEnabled = true;
                 txtSettings.Text = "";
@@ -292,6 +319,123 @@ namespace SimpleCapture
             catch (Exception ex)
             {
                 Log($"Error resetting device: {ex.Message}", LogMessageType.Error);
+            }
+        }
+
+        // 2. Action Handler linked to your "Record" button UI
+        private async void BtnRecord_Click(object sender, RoutedEventArgs e)
+        {
+            if (m_MediaCapture == null)
+            {
+                Log("Initialize MediaCapture before recording.", LogMessageType.Error);
+                return;
+            }
+
+            if (!m_isRecording)
+            {
+                await StartRecordingAsync();
+            }
+            else
+            {
+                await StopRecordingAsync();
+            }
+        }
+
+        private async Task StartRecordingAsync()
+        {
+            try
+            {
+                Log("Preparing capture file storage...", LogMessageType.Message);
+                StorageLibrary myVideos = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Videos);
+
+                // Track selected mode: 0 = Video, 1 = Audio, 2 = AudioAndVideo
+                int selectedMode = cbCaptureMode.SelectedIndex;
+                MediaEncodingProfile encodingProfile;
+                StorageFile file;
+
+                if (selectedMode == 1) // Audio Only
+                {
+                    file = await myVideos.SaveFolder.CreateFileAsync("audio.mp3", CreationCollisionOption.GenerateUniqueName);
+                    encodingProfile = MediaEncodingProfile.CreateMp3(AudioEncodingQuality.High);
+                }
+                else // Video Only or Audio and Video
+                {
+                    file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+                    encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
+                }
+
+                // Register OS max limit rule event (3 hours limit)
+                m_MediaCapture!.RecordLimitationExceeded += M_mediaCapture_RecordLimitationExceeded;
+
+                Log("Initializing recording profile...", LogMessageType.Message);
+                m_mediaRecording = await m_MediaCapture.PrepareLowLagRecordToStorageFileAsync(encodingProfile, file);
+
+                await m_mediaRecording.StartAsync();
+
+                m_isRecording = true;
+                btnRecord.Content = "Stop Recording"; // Update your button element name accordingly
+                txtStatus.Text = $"í´´ RECORDING -> {file.Name}";
+                Log($"Successfully recording capture live to: {file.Path}", LogMessageType.Success);
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to start recording: {ex.Message}", LogMessageType.Error);
+                m_isRecording = false;
+                btnRecord.Content = "Start Recording";
+            }
+        }
+
+        private async Task StopRecordingAsync()
+        {
+            if (m_mediaRecording == null || !m_isRecording) return;
+
+            try
+            {
+                Log("Sending stop session token command...", LogMessageType.Message);
+                await m_mediaRecording.StopAsync();
+
+                Log("Invoking finalization file IO flushes...", LogMessageType.Message);
+                await m_mediaRecording.FinishAsync();
+            }
+            catch (Exception ex)
+            {
+                Log($"Error during stop pipeline: {ex.Message}", LogMessageType.Error);
+            }
+            finally
+            {
+                if (m_MediaCapture != null)
+                {
+                    m_MediaCapture.RecordLimitationExceeded -= M_mediaCapture_RecordLimitationExceeded;
+                }
+
+                m_mediaRecording = null;
+                m_isRecording = false;
+                btnRecord.Content = "Start Recording";
+                Log("Recording pipeline dropped and saved clean.", LogMessageType.Success);
+            }
+        }
+
+        // Handles background execution interruption loops gracefully if limits hit
+        private async void M_mediaCapture_RecordLimitationExceeded(MediaCapture sender)
+        {
+
+            Log("System tracking limit threshold breached. Halting context.", LogMessageType.Error);
+
+            // Marshall background hardware event handler thread cleanly onto WinUI UI Thread
+            _ = this.DispatcherQueue.EnqueueAsync(async () =>
+                {
+                    await StopRecordingAsync();
+                    txtStatus.Text = "Record limitation exceeded.";
+                });
+        }
+
+        private void ResetMediaCapturePipeline()
+        {
+            if (m_MediaCapture != null)
+            {
+                m_MediaCapture.RecordLimitationExceeded -= M_mediaCapture_RecordLimitationExceeded;
+                m_MediaCapture.Dispose();
+                m_MediaCapture = null;
             }
         }
 
