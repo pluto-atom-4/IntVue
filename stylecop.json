@@ -19,7 +19,8 @@
       "newlineAtEndOfFile": "require"
     },
     "namingRules": {
-      "allowCommonHungarianPrefixes": false
+      "allowCommonHungarianPrefixes": false,
+      "allowPrivateFieldsStartingWithUnderscore": true
     }
   }
 }

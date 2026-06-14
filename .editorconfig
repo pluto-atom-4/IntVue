@@ -13,8 +13,12 @@ dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = true
 
 [*.cs]
-# Use file-scoped namespaces (project convention)
-csharp_style_namespace_declarations = file_scoped:suggestion
+# Organize usings: System first, keep groups separated
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Use file-scoped namespaces (project convention enforced as a warning)
+csharp_style_namespace_declarations = file_scoped:warning
 
 # Prefer var usage: built-in types use var; others suggestions
 csharp_style_var_for_built_in_types = true:suggestion
@@ -27,27 +31,24 @@ dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_event = false:suggestion
 
-# File layout: place using directives outside namespace
-csharp_using_directive_placement = outside_namespace:suggestion
+# File layout: place using directives outside namespace (enforced as a warning)
+csharp_using_directive_placement = outside_namespace:warning
 
-# Naming rules: private fields should be _camelCase
-dotnet_naming_rule.private_fields_underscore_style.severity = suggestion
+# Naming rules: private fields should be _camelCase (enforced as a warning)
+dotnet_naming_rule.private_fields_underscore_style.severity = warning
 dotnet_naming_rule.private_fields_underscore_style.symbols = private_fields
 dotnet_naming_rule.private_fields_underscore_style.style = underscore_prefix_style
 
 dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
-dotnet_naming_symbols.private_fields.required_modifiers = 
+dotnet_naming_symbols.private_fields.required_modifiers =
 
 dotnet_naming_style.underscore_prefix_style.required_prefix = _
 dotnet_naming_style.underscore_prefix_style.capitalization = camel_case
 
-# Example analyzer severity tuning
-dotnet_diagnostic.IDE0005.severity = warning
-dotnet_diagnostic.SA1200.severity = warning
+[**/obj/**/*.cs]
+generated_code = true
 
 # Exclude WinUI auto-generated files from code analysis and formatting
 [obj/Debug/net10.0-windows10.0.26100.0/win-x64/*.cs]
 generated_code = true
-dotnet_analyzer_diagnostic.severity = none
-

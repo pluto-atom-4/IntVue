@@ -12,8 +12,9 @@
         <WinUISDKReferences>false</WinUISDKReferences>
         <EnableMsixTooling>true</EnableMsixTooling>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Fixes CsWinRT1030 warning for generic WinRT projection objects -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <!-- Forces the WinUI 3 build to output a standard unpackaged .exe -->
         <WindowsPackageType>None</WindowsPackageType>
         <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
@@ -40,7 +41,6 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <!-- Do not treat warnings as errors by default; team can opt-in via CI -->
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-        <!-- Nullable already enabled above; keep it enabled -->
         <Nullable>enable</Nullable>
         <!-- Suppress CA1416 (platform compatibility) warnings - this is a Windows-only app -->
         <NoWarn>$(NoWarn);CA1416</NoWarn>
@@ -58,6 +58,11 @@
         <Content Include="Assets\Wide310x150Logo.scale-200.png"/>
     </ItemGroup>
 
+    <!-- Isolated Rule Configurations (Ensures Rider pushes this to the compiler) -->
+    <ItemGroup Label="CodeAnalysisConfigurations">
+        <AdditionalFiles Include="stylecop.json" Visible="false" />
+    </ItemGroup>
+    
     <ItemGroup>
         <Manifest Include="$(ApplicationManifest)"/>
     </ItemGroup>
@@ -119,7 +124,7 @@
         <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
         <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     </PropertyGroup>
-    <!-- Exclude both the Tests folder and the WinUI auto-generated win-x64 files 
+    <!-- Exclude both the Tests folder and the WinUI auto-generated win-x64 files
          from the main project compilation items to prevent workspace duplicates. -->
     <!-- Intercepts the WinUI compilation pipeline right before the workspace loader evaluates items -->
     <Target Name="RemoveWinUIDuplicatesFromFormat" BeforeTargets="CoreCompile;ComputeCompileInputs">
