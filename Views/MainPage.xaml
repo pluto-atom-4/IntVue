@@ -3,11 +3,12 @@
     x:Class="IntVue.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:d="http://microsoft.com"
     xmlns:local="using:IntVue"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    x:DataType="local:ViewModels.InterviewViewModel"> <!-- 👈 1. Added explicit compilation data type -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -22,7 +23,10 @@
         <!-- Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
             <Button x:Name="BtnStartPreview" Content="Start Preview" Click="BtnStartPreview_Click" AutomationProperties.Name="StartPreviewButton" />
-            <Button x:Name="BtnStopPreview" Content="Stop Preview" Click="BtnStopPreview_Click" AutomationProperties.Name="StopPreviewButton" Margin="10,0,0,0" Visibility="Visible" IsEnabled="{x:Bind viewModel.IsPreviewing, Mode=OneWay}" />
+
+            <!-- 👈 2. Capitalized "ViewModel" to perfectly match your C# property declaration -->
+            <Button x:Name="BtnStopPreview" Content="Stop Preview" Click="BtnStopPreview_Click" AutomationProperties.Name="StopPreviewButton" Margin="10,0,0,0" Visibility="Visible" IsEnabled="{x:Bind ViewModel.IsPreviewing, Mode=OneWay}" />
+
             <Button x:Name="BtnStartRecording" Content="Start Recording" Click="BtnStartRecording_Click" AutomationProperties.Name="StartRecordingButton" Margin="10,0,0,0" />
             <Button x:Name="BtnStopRecording" Content="Stop Recording" Click="BtnStopRecording_Click" AutomationProperties.Name="StopRecordingButton" Margin="10,0,0,0" />
         </StackPanel>
