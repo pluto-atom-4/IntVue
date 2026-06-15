@@ -1,6 +1,4 @@
-// <copyright file="MainWindow.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+// Copyright (c) YourProjectName. All rights reserved.
 
 namespace IntVue;
 

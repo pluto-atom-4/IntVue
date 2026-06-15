@@ -1,37 +1,34 @@
-// <copyright file="MainWindow.xaml.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+// Copyright (c) YourProjectName. All rights reserved.
 
-namespace IntVue
+using IntVue.Views;
+
+using Microsoft.UI.Xaml;
+
+namespace IntVue;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+/// <summary>
+/// The application window. This hosts a Frame that displays pages. Add your
+/// UI and logic to MainPage.xaml / MainPage.xaml.cs instead of here so you
+/// can use Page features such as navigation events and the Loaded lifecycle.
+/// </summary>
+public sealed partial class MainWindow : Window
 {
-    using IntVue.Views;
-
-    using Microsoft.UI.Xaml;
-
-    // To learn more about WinUI, the WinUI project structure,
-    // and more about our project templates, see: http://aka.ms/winui-project-info.
-
     /// <summary>
-    /// The application window. This hosts a Frame that displays pages. Add your
-    /// UI and logic to MainPage.xaml / MainPage.xaml.cs instead of here so you
-    /// can use Page features such as navigation events and the Loaded lifecycle.
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
-    public sealed partial class MainWindow : Window
+    public MainWindow()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MainWindow"/> class.
-        /// </summary>
-        public MainWindow()
-        {
-            this.InitializeComponent();
+        this.InitializeComponent();
 
-            this.ExtendsContentIntoTitleBar = true;
-            this.SetTitleBar(this.AppTitleBar);
+        this.ExtendsContentIntoTitleBar = true;
+        this.SetTitleBar(this.AppTitleBar);
 
-            this.AppWindow.SetIcon("Assets/AppIcon.ico");
+        this.AppWindow.SetIcon("Assets/AppIcon.ico");
 
-            // Navigate the root frame to the main page on startup.
-            this.RootFrame.Navigate(typeof(MainPage));
-        }
+        // Navigate the root frame to the main page on startup.
+        this.RootFrame.Navigate(typeof(MainPage));
     }
 }
