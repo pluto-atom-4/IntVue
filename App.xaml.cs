@@ -1,73 +1,70 @@
-// <copyright file="App.xaml.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+// Copyright (c) YourProjectName. All rights reserved.
 
-namespace IntVue
+using System;
+using System.Diagnostics;
+using System.Runtime.Versioning;
+
+using IntVue.Services;
+using IntVue.ViewModels;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+
+namespace IntVue;
+
+/// <summary>
+/// Application entry point and DI configuration.
+/// </summary>
+[SupportedOSPlatform("windows10.0.17763.0")]
+public partial class App : Application
 {
-    using System;
-    using System.Diagnostics;
-    using System.Runtime.Versioning;
-
-    using IntVue.Services;
-    using IntVue.ViewModels;
-
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.UI.Xaml;
+    /// <summary>
+    /// Backing field for the main application window.
+    /// </summary>
+    private Window? window;
 
     /// <summary>
-    /// Application entry point and DI configuration.
+    /// Initializes a new instance of the <see cref="App"/> class.
     /// </summary>
-    [SupportedOSPlatform("windows10.0.17763.0")]
-    public partial class App : Application
+    public App()
     {
-        /// <summary>
-        /// Backing field for the main application window.
-        /// </summary>
-        private Window? window;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="App"/> class.
-        /// </summary>
-        public App()
-        {
-            this.InitializeComponent();
+        this.InitializeComponent();
 
 #if DEBUG
-            // Add ConsoleTraceListener to route trace output to console
-            Trace.Listeners.Add(new ConsoleTraceListener());
+        // Add ConsoleTraceListener to route trace output to console
+        Trace.Listeners.Add(new ConsoleTraceListener());
 #endif
 
-            Services = ConfigureServices();
-        }
+        Services = ConfigureServices();
+    }
 
-        /// <summary>
-        /// Gets the application's <see cref="IServiceProvider"/>.
-        /// </summary>
-        public static IServiceProvider Services { get; private set; } = null!;
+    /// <summary>
+    /// Gets the application's <see cref="IServiceProvider"/>.
+    /// </summary>
+    public static IServiceProvider Services { get; private set; } = null!;
 
-        /// <inheritdoc/>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
-        {
-            this.window = new MainWindow();
-            this.window.Activate();
-        }
+    /// <inheritdoc/>
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    {
+        this.window = new MainWindow();
+        this.window.Activate();
+    }
 
-        /// <summary>
-        /// Configure dependency injection services.
-        /// </summary>
-        private static IServiceProvider ConfigureServices()
-        {
-            var services = new ServiceCollection();
+    /// <summary>
+    /// Configure dependency injection services.
+    /// </summary>
+    private static ServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
 
-            // Services
-            services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
-            services.AddSingleton<IConsentService, ConsentService>();
+        // Services
+        services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
+        services.AddSingleton<IConsentService, ConsentService>();
 
-            // ViewModels
-            services.AddTransient<MainViewModel>();
-            services.AddTransient<InterviewViewModel>();
+        // ViewModels
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<InterviewViewModel>();
 
-            return services.BuildServiceProvider();
-        }
+        return services.BuildServiceProvider();
     }
 }
