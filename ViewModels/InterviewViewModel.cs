@@ -1,273 +1,270 @@
-// <copyright file="InterviewViewModel.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+// Copyright (c) YourProjectName. All rights reserved.
 
-namespace IntVue.ViewModels
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+
+using IntVue.Services;
+
+namespace IntVue.ViewModels;
+
+/// <summary>
+/// ViewModel for the interview flow. Keeps logic thin and testable.
+/// </summary>
+public class InterviewViewModel : INotifyPropertyChanged
 {
-    using System;
-    using System.ComponentModel;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Threading.Tasks;
-
-    using IntVue.Services;
+    private readonly IMediaCaptureService mediaService;
+    private string questionText = "Describe a challenging project you worked on and how you resolved it.";
+    private bool isPreviewing;
+    private bool isRecording;
+    private string recordedFilePath = string.Empty;
+    private bool consentGiven;
+    private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
 
     /// <summary>
-    /// ViewModel for the interview flow. Keeps logic thin and testable.
+    /// Initializes a new instance of the <see cref="InterviewViewModel"/> class.
     /// </summary>
-    public class InterviewViewModel : INotifyPropertyChanged
+    /// <param name="mediaService">The media capture service used for camera/microphone operations.</param>
+    public InterviewViewModel(IMediaCaptureService mediaService)
     {
-        private readonly IMediaCaptureService mediaService;
-        private string questionText = "Describe a challenging project you worked on and how you resolved it.";
-        private bool isPreviewing;
-        private bool isRecording;
-        private string recordedFilePath = string.Empty;
-        private bool consentGiven;
-        private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        this.mediaService = mediaService;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InterviewViewModel"/> class.
-        /// </summary>
-        /// <param name="mediaService">The media capture service used for camera/microphone operations.</param>
-        public InterviewViewModel(IMediaCaptureService mediaService)
+    /// <summary>
+    /// Occurs when a property value changes.
+    /// </summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Gets or sets the interview question text displayed to the user.
+    /// </summary>
+    public string QuestionText
+    {
+        get => this.questionText;
+        set
         {
-            this.mediaService = mediaService;
+            this.questionText = value;
+            this.OnPropertyChanged();
         }
+    }
 
-        /// <summary>
-        /// Occurs when a property value changes.
-        /// </summary>
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        /// <summary>
-        /// Gets or sets the interview question text displayed to the user.
-        /// </summary>
-        public string QuestionText
+    /// <summary>
+    /// Gets a value indicating whether the camera preview is currently active.
+    /// </summary>
+    public bool IsPreviewing
+    {
+        get => this.isPreviewing;
+        private set
         {
-            get => this.questionText;
-            set
+            this.isPreviewing = value;
+
+            // Update Stop Preview button visibility based on preview state
+            this.StopPreviewButtonVisibility = value
+                ? Microsoft.UI.Xaml.Visibility.Visible
+                : Microsoft.UI.Xaml.Visibility.Collapsed;
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a recording is currently in progress.
+    /// </summary>
+    public bool IsRecording
+    {
+        get => this.isRecording;
+        private set
+        {
+            this.isRecording = value;
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the file path of the most recently recorded interview.
+    /// </summary>
+    public string RecordedFilePath
+    {
+        get => this.recordedFilePath;
+        private set
+        {
+            this.recordedFilePath = value;
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the user has given consent for recording.
+    /// </summary>
+    public bool ConsentGiven
+    {
+        get => this.consentGiven;
+        set
+        {
+            this.consentGiven = value;
+#if DEBUG
+            Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
+#endif
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the visibility state of the Stop Preview button (bound to UI).
+    /// </summary>
+    public Microsoft.UI.Xaml.Visibility StopPreviewButtonVisibility
+    {
+        get => this.stopPreviewButtonVisibility;
+        private set
+        {
+            if (this.stopPreviewButtonVisibility != value)
             {
-                this.questionText = value;
+                this.stopPreviewButtonVisibility = value;
+#if DEBUG
+                Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewButtonVisibility: Changed to {value}");
+#endif
                 this.OnPropertyChanged();
             }
         }
+    }
 
-        /// <summary>
-        /// Gets a value indicating whether the camera preview is currently active.
-        /// </summary>
-        public bool IsPreviewing
+    /// <summary>
+    /// Starts the camera preview asynchronously after verifying consent and permissions.
+    /// </summary>
+    /// <param name="previewHost">The UI element that will host the camera preview.</param>
+    /// <returns>A <see cref="Task{Boolean}"/> representing the asynchronous operation and returning true if successful.</returns>
+    public async Task<bool> StartPreviewAsync(object previewHost)
+    {
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview command...");
+#endif
+
+        if (!this.ConsentGiven)
         {
-            get => this.isPreviewing;
-            private set
-            {
-                this.isPreviewing = value;
-
-                // Update Stop Preview button visibility based on preview state
-                this.StopPreviewButtonVisibility = value
-                    ? Microsoft.UI.Xaml.Visibility.Visible
-                    : Microsoft.UI.Xaml.Visibility.Collapsed;
-                this.OnPropertyChanged();
-            }
+#if DEBUG
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent not given, aborting.");
+#endif
+            return false;
         }
 
-        /// <summary>
-        /// Gets a value indicating whether a recording is currently in progress.
-        /// </summary>
-        public bool IsRecording
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent confirmed. Requesting permissions...");
+#endif
+
+        var granted = await this.mediaService.RequestPermissionsAsync().ConfigureAwait(false);
+
+#if DEBUG
+        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions granted: {granted}");
+#endif
+
+        if (!granted)
         {
-            get => this.isRecording;
-            private set
-            {
-                this.isRecording = value;
-                this.OnPropertyChanged();
-            }
+#if DEBUG
+            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions not granted, aborting.");
+#endif
+            return false;
         }
 
-        /// <summary>
-        /// Gets the file path of the most recently recorded interview.
-        /// </summary>
-        public string RecordedFilePath
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Initializing media capture...");
+#endif
+
+        await this.mediaService.InitializeAsync().ConfigureAwait(false);
+
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview on media service...");
+#endif
+
+        await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
+
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
+#endif
+
+        // Set IsPreviewing on the UI thread to ensure PropertyChanged fires synchronously
+        this.IsPreviewing = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Stops the camera preview asynchronously.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task StopPreviewAsync()
+    {
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
+#endif
+
+        try
         {
-            get => this.recordedFilePath;
-            private set
-            {
-                this.recordedFilePath = value;
-                this.OnPropertyChanged();
-            }
+            await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the user has given consent for recording.
-        /// </summary>
-        public bool ConsentGiven
-        {
-            get => this.consentGiven;
-            set
-            {
-                this.consentGiven = value;
-#if DEBUG
-                Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
-#endif
-                this.OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets the visibility state of the Stop Preview button (bound to UI).
-        /// </summary>
-        public Microsoft.UI.Xaml.Visibility StopPreviewButtonVisibility
-        {
-            get => this.stopPreviewButtonVisibility;
-            private set
-            {
-                if (this.stopPreviewButtonVisibility != value)
-                {
-                    this.stopPreviewButtonVisibility = value;
-#if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewButtonVisibility: Changed to {value}");
-#endif
-                    this.OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Starts the camera preview asynchronously after verifying consent and permissions.
-        /// </summary>
-        /// <param name="previewHost">The UI element that will host the camera preview.</param>
-        /// <returns>A <see cref="Task{Boolean}"/> representing the asynchronous operation and returning true if successful.</returns>
-        public async Task<bool> StartPreviewAsync(object previewHost)
+        catch (Exception ex)
         {
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview command...");
-#endif
-
-            if (!this.ConsentGiven)
-            {
-#if DEBUG
-                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent not given, aborting.");
-#endif
-                return false;
-            }
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent confirmed. Requesting permissions...");
-#endif
-
-            var granted = await this.mediaService.RequestPermissionsAsync().ConfigureAwait(false);
-
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions granted: {granted}");
-#endif
-
-            if (!granted)
-            {
-#if DEBUG
-                Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions not granted, aborting.");
-#endif
-                return false;
-            }
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Initializing media capture...");
-#endif
-
-            await this.mediaService.InitializeAsync().ConfigureAwait(false);
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview on media service...");
-#endif
-
-            await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
-#endif
-
-            // Set IsPreviewing on the UI thread to ensure PropertyChanged fires synchronously
-            this.IsPreviewing = true;
-            return true;
-        }
-
-        /// <summary>
-        /// Stops the camera preview asynchronously.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task StopPreviewAsync()
-        {
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
-#endif
-
-            try
-            {
-                await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Error stopping preview - {ex.GetType().Name}: {ex.Message}");
-#endif
-            }
-
-            // Always set IsPreviewing to false, even if there was an error
-            this.IsPreviewing = false;
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Preview stopped.");
+            Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Error stopping preview - {ex.GetType().Name}: {ex.Message}");
 #endif
         }
 
-        /// <summary>
-        /// Starts recording the interview asynchronously.
-        /// </summary>
-        /// <param name="baseFileName">The base filename to use for the recording.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task StartRecordingAsync(string baseFileName)
-        {
+        // Always set IsPreviewing to false, even if there was an error
+        this.IsPreviewing = false;
+
 #if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording with base name '{baseFileName}'...");
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Preview stopped.");
+#endif
+    }
+
+    /// <summary>
+    /// Starts recording the interview asynchronously.
+    /// </summary>
+    /// <param name="baseFileName">The base filename to use for the recording.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task StartRecordingAsync(string baseFileName)
+    {
+#if DEBUG
+        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording with base name '{baseFileName}'...");
 #endif
 
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording on media service (preview state independent)...");
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording on media service (preview state independent)...");
 #endif
 
-            var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
+        var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
 
 #if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Recording started. File path: {path}");
+        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Recording started. File path: {path}");
 #endif
 
-            this.RecordedFilePath = path;
-            this.IsRecording = true;
-        }
+        this.RecordedFilePath = path;
+        this.IsRecording = true;
+    }
 
-        /// <summary>
-        /// Stops recording the interview asynchronously.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task StopRecordingAsync()
-        {
+    /// <summary>
+    /// Stops recording the interview asynchronously.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task StopRecordingAsync()
+    {
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Stopping recording...");
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Stopping recording...");
 #endif
 
-            await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
-            this.IsRecording = false;
+        await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
+        this.IsRecording = false;
 
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Recording stopped.");
+        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Recording stopped.");
 #endif
-        }
+    }
 
-        /// <summary>
-        /// Raises the <see cref="PropertyChanged"/> event for the specified property name.
-        /// </summary>
-        /// <param name="name">The name of the property that changed.</param>
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
+    /// <summary>
+    /// Raises the <see cref="PropertyChanged"/> event for the specified property name.
+    /// </summary>
+    /// <param name="name">The name of the property that changed.</param>
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
+        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
