@@ -1,11 +1,9 @@
-// <copyright file="IConsentService.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
-
-namespace IntVue.Services;
+// Copyright (c) YourProjectName. All rights reserved.
 
 using System;
 using System.Threading.Tasks;
+
+namespace IntVue.Services;
 
 /// <summary>
 /// Service for managing user consent for camera and microphone access.

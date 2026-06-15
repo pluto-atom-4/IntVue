@@ -1,11 +1,9 @@
-// <copyright file="IMediaCaptureService.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
-
-namespace IntVue.Services;
+// Copyright (c) YourProjectName. All rights reserved.
 
 using System.Threading;
 using System.Threading.Tasks;
+
+namespace IntVue.Services;
 
 /// <summary>
 /// Media capture service interface used by the app.
