@@ -5,8 +5,11 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseUwp>true</UseUwp>
-    <EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>true</EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>
+    <UseWinUI>true</UseWinUI>
+    <!-- Explicitly define platform support to clear the Win2D warning -->
+    <Platforms>x86;x64;ARM64</Platforms>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <RuntimeIdentifier Condition=" '$(RuntimeIdentifier)' == '' ">win-x64</RuntimeIdentifier>
     <!-- Ignores the always-true assertion rule so dotnet format can finish without errors -->
     <NoWarn>$(NoWarn);MSTEST0032</NoWarn>
   </PropertyGroup>
