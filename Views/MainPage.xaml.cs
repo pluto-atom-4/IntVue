@@ -25,6 +25,7 @@ namespace IntVue.Views;
 public sealed partial class MainPage : Page
 {
     private const string ConsentKey = "HasGivenConsent";
+    private bool isRecording = false;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -97,11 +98,61 @@ public sealed partial class MainPage : Page
         return false;
     }
 
-    private async void BtnStopPreview_Click(object sender, RoutedEventArgs e)
+    private async void BtnPreview_Click(object sender, RoutedEventArgs e)
+    {
+        if (this.BtnPreview.Content.ToString() == "Start Preview")
+        {
+            await this.StartPreviewAsync();
+        }
+        else
+        {
+            await this.StopPreviewAsync();
+        }
+    }
+
+    private async Task StartPreviewAsync()
+    {
+        if (!this.ViewModel.ConsentGiven)
+        {
+            await this.ShowErrorDialog("Consent Required", "Please consent to camera and microphone recording before starting the preview.");
+            return;
+        }
+
+        try
+        {
+            var success = await this.ViewModel.StartPreviewAsync(this.PreviewControl).ConfigureAwait(false);
+            if (success)
+            {
+                this.BtnPreview.Content = "Stop Preview";
+            }
+            else
+            {
+                await this.ShowErrorDialog("Camera Access Denied", "Camera and microphone permissions are required. Please enable them in device settings.");
+            }
+        }
+        catch (InvalidOperationException ex) when (ex.InnerException is COMException)
+        {
+            await this.ShowErrorDialog(
+                "Camera Hardware Issue",
+                "The camera preview cannot be displayed. This is usually caused by graphics driver issues.\n\n" +
+                "Try: 1) Restart your device  2) Update graphics drivers  3) Check if another app is using the camera");
+        }
+        catch (InvalidOperationException ex)
+        {
+            await this.ShowErrorDialog("Camera Not Available", ex.Message ?? "No camera device found.");
+        }
+        catch (Exception ex)
+        {
+            await this.ShowErrorDialog("Preview Error", $"An unexpected error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task StopPreviewAsync()
     {
         try
         {
             await this.ViewModel.StopPreviewAsync().ConfigureAwait(false);
+            this.BtnPreview.Content = "Start Preview";
         }
         catch (Exception ex)
         {
@@ -129,39 +180,6 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void BtnStartPreview_Click(object sender, RoutedEventArgs e)
-    {
-        if (!this.ViewModel.ConsentGiven)
-        {
-            await this.ShowErrorDialog("Consent Required", "Please consent to camera and microphone recording before starting the preview.");
-            return;
-        }
-
-        try
-        {
-            var success = await this.ViewModel.StartPreviewAsync(this.PreviewControl).ConfigureAwait(false);
-            if (!success)
-            {
-                await this.ShowErrorDialog("Camera Access Denied", "Camera and microphone permissions are required. Please enable them in device settings.");
-            }
-        }
-        catch (InvalidOperationException ex) when (ex.InnerException is COMException)
-        {
-            await this.ShowErrorDialog(
-                "Camera Hardware Issue",
-                "The camera preview cannot be displayed. This is usually caused by graphics driver issues.\n\n" +
-                "Try: 1) Restart your device  2) Update graphics drivers  3) Check if another app is using the camera");
-        }
-        catch (InvalidOperationException ex)
-        {
-            await this.ShowErrorDialog("Camera Not Available", ex.Message ?? "No camera device found.");
-        }
-        catch (Exception ex)
-        {
-            await this.ShowErrorDialog("Preview Error", $"An unexpected error occurred: {ex.Message}");
-        }
-    }
-
     private async Task ShowErrorDialog(string title, string message)
     {
         var dialog = new ContentDialog
@@ -175,7 +193,19 @@ public sealed partial class MainPage : Page
         await dialog.ShowAsync();
     }
 
-    private async void BtnStartRecording_Click(object sender, RoutedEventArgs e)
+    private async void BtnRecord_Click(object sender, RoutedEventArgs e)
+    {
+        if (!this.isRecording)
+        {
+            await this.StartRecordingAsync();
+        }
+        else
+        {
+            await this.StopRecordingAsync();
+        }
+    }
+
+    private async Task StartRecordingAsync()
     {
         // Stop preview before recording (preview and recording are mutually exclusive)
         if (this.ViewModel.IsPreviewing)
@@ -183,6 +213,7 @@ public sealed partial class MainPage : Page
             try
             {
                 await this.ViewModel.StopPreviewAsync().ConfigureAwait(false);
+                this.BtnPreview.Content = "Start Preview";
             }
             catch
             {
@@ -193,28 +224,33 @@ public sealed partial class MainPage : Page
         try
         {
             await this.ViewModel.StartRecordingAsync("recording").ConfigureAwait(false);
+            this.isRecording = true;
+            this.BtnRecord.Content = "Stop Recording";
         }
         catch (InvalidOperationException ex) when (ex.InnerException is COMException)
         {
             await this.ShowErrorDialog("Camera Hardware Issue", "Unable to start recording. Another app may be using the camera or drivers need updating.");
+            this.isRecording = false;
+            this.BtnRecord.Content = "Start Recording";
         }
         catch (Exception ex)
         {
             await this.ShowErrorDialog("Recording Error", $"Failed to start recording: {ex.Message}");
+            this.isRecording = false;
+            this.BtnRecord.Content = "Start Recording";
         }
     }
 
-    private async void BtnStopRecording_Click(object sender, RoutedEventArgs e)
+    private async Task StopRecordingAsync()
     {
         try
         {
             await this.ViewModel.StopRecordingAsync().ConfigureAwait(false);
+            this.isRecording = false;
+            this.BtnRecord.Content = "Start Recording";
         }
         catch (Exception ex)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStopRecording: Error - {ex.Message}");
-#endif
             await this.ShowErrorDialog("Stop Recording Error", $"Failed to stop recording: {ex.Message}");
         }
     }
