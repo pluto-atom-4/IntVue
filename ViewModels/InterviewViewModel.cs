@@ -144,10 +144,6 @@ public class InterviewViewModel : INotifyPropertyChanged
         await this.mediaService.InitializeAsync().ConfigureAwait(false);
         await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
 
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] StartPreview: Preview started.");
-#endif
-
         this.IsPreviewing = true;
         return true;
     }
@@ -182,10 +178,6 @@ public class InterviewViewModel : INotifyPropertyChanged
         var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
         this.RecordedFilePath = path;
         this.IsRecording = true;
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] StartRecording: Recording started.");
-#endif
     }
 
     /// <summary>
@@ -196,10 +188,6 @@ public class InterviewViewModel : INotifyPropertyChanged
     {
         await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
         this.IsRecording = false;
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] StopRecording: Recording stopped.");
-#endif
     }
 
     /// <summary>

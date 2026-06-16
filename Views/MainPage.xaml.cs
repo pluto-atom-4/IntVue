@@ -48,10 +48,6 @@ public sealed partial class MainPage : Page
 
     private async void OnPageLoaded()
     {
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] MainPage: Page loaded.");
-#endif
-
         this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
         this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
 
@@ -109,9 +105,6 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStopPreview: Error - {ex.Message}");
-#endif
             await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
         }
     }
@@ -152,11 +145,8 @@ public sealed partial class MainPage : Page
                 await this.ShowErrorDialog("Camera Access Denied", "Camera and microphone permissions are required. Please enable them in device settings.");
             }
         }
-        catch (InvalidOperationException ex) when (ex.InnerException is COMException comEx)
+        catch (InvalidOperationException ex) when (ex.InnerException is COMException)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStartPreview: COMException - HResult=0x{comEx.HResult:X8}");
-#endif
             await this.ShowErrorDialog(
                 "Camera Hardware Issue",
                 "The camera preview cannot be displayed. This is usually caused by graphics driver issues.\n\n" +
@@ -168,9 +158,6 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStartPreview: Error - {ex.GetType().Name}");
-#endif
             await this.ShowErrorDialog("Preview Error", $"An unexpected error occurred: {ex.Message}");
         }
     }
@@ -197,11 +184,9 @@ public sealed partial class MainPage : Page
             {
                 await this.ViewModel.StopPreviewAsync().ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch
             {
-#if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] BtnStartRecording: Error stopping preview - {ex.Message}");
-#endif
+                // Swallow error; preview may already be stopped
             }
         }
 
@@ -209,18 +194,12 @@ public sealed partial class MainPage : Page
         {
             await this.ViewModel.StartRecordingAsync("recording").ConfigureAwait(false);
         }
-        catch (InvalidOperationException ex) when (ex.InnerException is COMException comEx)
+        catch (InvalidOperationException ex) when (ex.InnerException is COMException)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStartRecording: COMException - 0x{comEx.HResult:X8}");
-#endif
             await this.ShowErrorDialog("Camera Hardware Issue", "Unable to start recording. Another app may be using the camera or drivers need updating.");
         }
         catch (Exception ex)
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] BtnStartRecording: Error - {ex.GetType().Name}");
-#endif
             await this.ShowErrorDialog("Recording Error", $"Failed to start recording: {ex.Message}");
         }
     }
