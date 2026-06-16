@@ -82,6 +82,7 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
 #if DEBUG
             Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: ERROR - {ex.GetType().Name}: {ex.Message}");
 #endif
+
             // Mark as initialized to prevent repeated attempts
             this.initialized = true;
             throw;
@@ -565,6 +566,10 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
         catch
         {
             // Swallow exceptions during Dispose to avoid throwing from finalizers.
+        }
+        finally
+        {
+            GC.SuppressFinalize(this);
         }
     }
 }

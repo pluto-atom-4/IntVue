@@ -25,9 +25,6 @@ public sealed partial class MainPage : Page
 {
     private const string ConsentKey = "HasGivenConsent";
 
-    /// <inheritdoc/>
-    public InterviewViewModel ViewModel { get; private set; }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
     /// </summary>
@@ -56,6 +53,11 @@ public sealed partial class MainPage : Page
         this.Unloaded += (s, e) => this.OnPageUnloaded();
         this.Loaded += (s, e) => this.OnPageLoaded();
     }
+
+    /// <summary>
+    /// Gets the ViewModel for this page.
+    /// </summary>
+    public InterviewViewModel ViewModel { get; private set; } = null!;
 
     private async void OnPageLoaded()
     {
@@ -301,7 +303,9 @@ public sealed partial class MainPage : Page
                 "3) Check if another app is using the camera\n" +
                 "4) Try a different camera if available";
 
-            await this.ShowErrorDialog("Camera Hardware Issue", errorMessage);
+            await this.ShowErrorDialog(
+                "Camera Hardware Issue",
+                errorMessage);
         }
         catch (InvalidOperationException ex)
         {
@@ -375,12 +379,12 @@ public sealed partial class MainPage : Page
 #if DEBUG
             Debug.WriteLine($"[IntVue.Debug] MainPage.BtnStartRecording_Click: COMException during recording - HResult=0x{comEx.HResult:X8}: {ex.Message}");
 #endif
-            await this.ShowErrorDialog(
-                "Camera Hardware Issue",
+            var recordingErrorMsg =
                 "Unable to start recording. This may occur if:\n" +
                 "• Another app is using the camera\n" +
                 "• Camera driver needs updating\n" +
-                "• Try restarting the app");
+                "• Try restarting the app";
+            await this.ShowErrorDialog("Camera Hardware Issue", recordingErrorMsg);
         }
         catch (InvalidOperationException ex)
         {
