@@ -3,7 +3,7 @@
 # IntVue Self-Contained Publisher
 # Publishes IntVue as a standalone executable with bundled .NET runtime
 # Usage: ./publish.sh
-# Output: bin/Release/{Platform}/publish/IntVue.exe
+# Output: bin/Release/{TargetFramework}/win-{Platform}/publish/IntVue.exe
 
 set -e
 
@@ -44,8 +44,8 @@ fi
 
 # Clean previous publish artifacts
 echo -e "${YELLOW}Cleaning previous publish artifacts...${NC}"
-if [ -d "bin/Release/$Platform/publish" ]; then
-  rm -rf "bin/Release/$Platform/publish"
+if [ -d "bin/Release" ]; then
+  find bin/Release -name "publish" -type d -exec rm -rf {} + 2>/dev/null || true
 fi
 
 # Publish IntVue as self-contained single file
@@ -53,6 +53,7 @@ echo -e "${YELLOW}Publishing IntVue as self-contained...${NC}"
 dotnet publish IntVue.csproj \
   -c Release \
   -p:Platform=$Platform \
+  -r win-$Platform \
   --self-contained \
   -p:PublishSingleFile=true \
   -p:PublishTrimmed=false \
@@ -64,10 +65,10 @@ dotnet publish IntVue.csproj \
 if [ $? -eq 0 ]; then
   echo -e "${GREEN}✓ Publish completed successfully${NC}"
 
-  # Find the executable
-  EXE_PATH="bin/Release/$Platform/publish/IntVue.exe"
+  # Find the executable (search dynamically since path includes target framework)
+  EXE_PATH=$(find bin/Release -name "IntVue.exe" -type f 2>/dev/null | head -1)
 
-  if [ -f "$EXE_PATH" ]; then
+  if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
     EXE_SIZE=$(ls -lh "$EXE_PATH" | awk '{print $5}')
     echo -e "${GREEN}✓ Executable ready for deployment${NC}"
     echo ""
@@ -80,7 +81,8 @@ if [ $? -eq 0 ]; then
     echo ""
     exit 0
   else
-    echo -e "${RED}Error: Executable not found at $EXE_PATH${NC}"
+    echo -e "${RED}Error: Executable not found in bin/Release directory${NC}"
+    echo -e "${RED}Please check the publish output in bin/Release/${NC}"
     exit 1
   fi
 else
