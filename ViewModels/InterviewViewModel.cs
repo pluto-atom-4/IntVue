@@ -103,9 +103,6 @@ public class InterviewViewModel : INotifyPropertyChanged
         set
         {
             this.consentGiven = value;
-#if DEBUG
-            Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.ConsentGiven: Changed to {value}");
-#endif
             this.OnPropertyChanged();
         }
     }
@@ -121,9 +118,6 @@ public class InterviewViewModel : INotifyPropertyChanged
             if (this.stopPreviewButtonVisibility != value)
             {
                 this.stopPreviewButtonVisibility = value;
-#if DEBUG
-                Trace.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewButtonVisibility: Changed to {value}");
-#endif
                 this.OnPropertyChanged();
             }
         }
@@ -136,53 +130,24 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task{Boolean}"/> representing the asynchronous operation and returning true if successful.</returns>
     public async Task<bool> StartPreviewAsync(object previewHost)
     {
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview command...");
-#endif
-
         if (!this.ConsentGiven)
         {
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent not given, aborting.");
-#endif
             return false;
         }
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: User consent confirmed. Requesting permissions...");
-#endif
 
         var granted = await this.mediaService.RequestPermissionsAsync().ConfigureAwait(false);
-
-#if DEBUG
-        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions granted: {granted}");
-#endif
-
         if (!granted)
         {
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Permissions not granted, aborting.");
-#endif
             return false;
         }
 
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Initializing media capture...");
-#endif
-
         await this.mediaService.InitializeAsync().ConfigureAwait(false);
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Starting preview on media service...");
-#endif
-
         await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
 
 #if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartPreviewAsync: Preview started successfully.");
+        Trace.WriteLine("[IntVue.Debug] StartPreview: Preview started.");
 #endif
 
-        // Set IsPreviewing on the UI thread to ensure PropertyChanged fires synchronously
         this.IsPreviewing = true;
         return true;
     }
@@ -193,10 +158,6 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StopPreviewAsync()
     {
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Stopping preview...");
-#endif
-
         try
         {
             await this.mediaService.StopPreviewAsync().ConfigureAwait(false);
@@ -204,16 +165,11 @@ public class InterviewViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
 #if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Error stopping preview - {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"[IntVue.Debug] StopPreview: Error - {ex.Message}");
 #endif
         }
 
-        // Always set IsPreviewing to false, even if there was an error
         this.IsPreviewing = false;
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopPreviewAsync: Preview stopped.");
-#endif
     }
 
     /// <summary>
@@ -223,22 +179,13 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StartRecordingAsync(string baseFileName)
     {
-#if DEBUG
-        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording with base name '{baseFileName}'...");
-#endif
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Starting recording on media service (preview state independent)...");
-#endif
-
         var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
-
-#if DEBUG
-        Debug.WriteLine($"[IntVue.Debug] InterviewViewModel.StartRecordingAsync: Recording started. File path: {path}");
-#endif
-
         this.RecordedFilePath = path;
         this.IsRecording = true;
+
+#if DEBUG
+        Trace.WriteLine("[IntVue.Debug] StartRecording: Recording started.");
+#endif
     }
 
     /// <summary>
@@ -247,15 +194,11 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StopRecordingAsync()
     {
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Stopping recording...");
-#endif
-
         await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
         this.IsRecording = false;
 
 #if DEBUG
-        Trace.WriteLine("[IntVue.Debug] InterviewViewModel.StopRecordingAsync: Recording stopped.");
+        Trace.WriteLine("[IntVue.Debug] StopRecording: Recording stopped.");
 #endif
     }
 
