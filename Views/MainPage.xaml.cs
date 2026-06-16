@@ -10,6 +10,7 @@ using IntVue.ViewModels;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Storage;
 
 namespace IntVue.Views;
 
@@ -22,10 +23,10 @@ namespace IntVue.Views;
 /// </summary>
 public sealed partial class MainPage : Page
 {
+    private const string ConsentKey = "HasGivenConsent";
+
     /// <inheritdoc/>
     public InterviewViewModel ViewModel { get; private set; }
-
-    private readonly IConsentService consentService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -35,7 +36,6 @@ public sealed partial class MainPage : Page
         this.InitializeComponent();
 
         var svc = (IMediaCaptureService?)App.Services.GetService(typeof(IMediaCaptureService));
-        this.consentService = (IConsentService?)App.Services.GetService(typeof(IConsentService)) ?? new ConsentService();
         this.ViewModel = (InterviewViewModel?)App.Services.GetService(typeof(InterviewViewModel)) ?? new InterviewViewModel(svc!);
         this.DataContext = this.ViewModel;
 
@@ -96,8 +96,11 @@ public sealed partial class MainPage : Page
         Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Checking for saved consent...");
 #endif
 
-        // Load saved consent state
-        if (this.consentService.HasGivenConsent)
+        // Load saved consent state from LocalSettings
+        var hasConsent = ApplicationData.Current.LocalSettings.Values.TryGetValue(ConsentKey, out var value) &&
+                         value is bool consentValue && consentValue;
+
+        if (hasConsent)
         {
 #if DEBUG
             Trace.WriteLine("[IntVue.Debug] MainPage.OnPageLoaded: Found saved consent, loading...");
@@ -111,7 +114,7 @@ public sealed partial class MainPage : Page
 #endif
 
             // Show consent dialog on first load
-            var consented = await this.consentService.RequestConsentAsync(this.XamlRoot);
+            var consented = await this.ShowConsentDialogAsync();
 
 #if DEBUG
             Debug.WriteLine($"[IntVue.Debug] MainPage.OnPageLoaded: Consent dialog result: {consented}");
@@ -130,7 +133,29 @@ public sealed partial class MainPage : Page
     private void OnConsentTapped()
     {
         this.ViewModel.ConsentGiven = !this.ViewModel.ConsentGiven;
+        ApplicationData.Current.LocalSettings.Values[ConsentKey] = this.ViewModel.ConsentGiven;
         this.UpdateConsentText();
+    }
+
+    private async Task<bool> ShowConsentDialogAsync()
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Recording Consent",
+            Content = "This application will record audio and video from your camera and microphone.\n\nDo you consent to this recording?",
+            PrimaryButtonText = "I Consent",
+            CloseButtonText = "Decline",
+            XamlRoot = this.XamlRoot,
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            ApplicationData.Current.LocalSettings.Values[ConsentKey] = true;
+            return true;
+        }
+
+        return false;
     }
 
     private async void BtnStopPreview_Click(object sender, RoutedEventArgs e)

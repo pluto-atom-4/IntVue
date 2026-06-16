@@ -44,7 +44,7 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
     public bool IsRecording => this.lowLagRecording != null;
 
     /// <summary>
-    /// Initialize the underlying MediaCapture resources and select a camera device.
+    /// Initialize the underlying MediaCapture resources.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token to abort initialization.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous initialization operation.</returns>
@@ -62,118 +62,29 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
         Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Starting initialization...");
 #endif
 
-        this.mediaCapture = new MediaCapture();
-
-#if DEBUG
-        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture instance created.");
-        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Enumerating video capture devices...");
-#endif
-
         try
         {
-            var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Found {devices.Count} video device(s).");
-#endif
-
-            if (devices.Count == 0)
-            {
-#if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: WARNING - No camera device found. Preview mode disabled.");
-#endif
-                this.initialized = true;
-                return;
-            }
-
-            DeviceInformation? front = null;
-            for (var i = 0; i < devices.Count; i++)
-            {
-                var d = devices[i];
-#if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Device[{i}]: Name='{d.Name}', ID='{d.Id}', EnclosureLocation={d.EnclosureLocation?.Panel}");
-#endif
-                if (d.EnclosureLocation != null && d.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Front)
-                {
-                    front = d;
-#if DEBUG
-                    Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Front camera selected - '{front.Name}'");
-#endif
-                    break;
-                }
-            }
-
-            if (front == null && devices.Count > 0)
-            {
-                front = devices[0];
-#if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: No front camera found, using first device - '{front.Name}'");
-#endif
-            }
-
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Selected device ID: '{front?.Id}'");
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: Calling MediaCapture.InitializeAsync()...");
-#endif
-
+            this.mediaCapture = new MediaCapture();
             var settings = new MediaCaptureInitializationSettings
             {
-                VideoDeviceId = front?.Id,
                 StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo,
             };
 
-            try
-            {
-                await this.mediaCapture.InitializeAsync(settings);
+            await this.mediaCapture.InitializeAsync(settings);
+
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture.InitializeAsync() completed successfully.");
-
-                // Phase 1: Enumerate all frame sources and their formats (diagnostic)
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Available frame sources: {this.mediaCapture.FrameSources.Count}");
-                foreach (var kvp in this.mediaCapture.FrameSources)
-                {
-                    var key = kvp.Key;
-                    var frameSource = kvp.Value;
-                    var sourceKind = frameSource.Info.SourceKind;
-                    var format = frameSource.CurrentFormat;
-                    var formatSubtype = format?.Subtype ?? "No format set";
-                    var frameRate = format != null ? (double)format.FrameRate.Numerator / format.FrameRate.Denominator : 0;
-
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync:   [{key}] Kind={sourceKind}, Format={formatSubtype}, FPS={frameRate:F2}");
-                }
-
-                // Detect Surface integrated camera
-                var deviceIdPrefix = front?.Id.Substring(0, Math.Min(30, front?.Id.Length ?? 0)) ?? "Unknown";
-                var isSurfaceIntegrated = front?.Id.Contains("DISPLAY", StringComparison.OrdinalIgnoreCase) ?? false;
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: Device ID prefix: {deviceIdPrefix}...");
-                if (isSurfaceIntegrated)
-                {
-                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: DETECTED: Surface integrated camera (DISPLAY in device ID)");
-                }
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.InitializeAsync: MediaCapture initialized successfully.");
 #endif
-                this.initialized = true;
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: ERROR in InitializeAsync - {ex.GetType().Name}: {ex.Message}");
-#endif
-                throw;
-            }
+            this.initialized = true;
         }
         catch (Exception ex)
         {
 #if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: ERROR during device enumeration/init - {ex.GetType().Name}: {ex.Message}");
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: StackTrace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: InnerException - {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
-            }
+            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.InitializeAsync: ERROR - {ex.GetType().Name}: {ex.Message}");
 #endif
-
-            // Don't throw - allow graceful degradation. Mark as initialized anyway to prevent repeated init attempts
+            // Mark as initialized to prevent repeated attempts
             this.initialized = true;
+            throw;
         }
     }
 
@@ -257,94 +168,35 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
 
         try
         {
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: FrameSources count: {this.mediaCapture.FrameSources.Count}");
-
-            // Phase 1: Enumerate all frame sources to understand what's available
-            foreach (var kvp in this.mediaCapture.FrameSources)
-            {
-                var key = kvp.Key;
-                var src = kvp.Value;
-                var kind = src.Info.SourceKind;
-                var currentFormat = src.CurrentFormat;
-                var subtype = currentFormat?.Subtype ?? "No format";
-                var frameRate = currentFormat != null ? (double)currentFormat.FrameRate.Numerator / currentFormat.FrameRate.Denominator : 0;
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: FrameSource[{key}] Kind={kind}, Format={subtype}, FPS={frameRate:F2}");
-            }
-#endif
-
-            // Get the best video frame source: prefer Color over Image/Depth/Audio
-            // For Surface cameras with multiple frame sources, explicitly select the best one
-            var frameSource = this.mediaCapture.FrameSources.Values
-                .Where(fs => fs.Info.SourceKind == MediaFrameSourceKind.Color)
-                .OrderByDescending(fs => fs.CurrentFormat?.FrameRate.Numerator ?? 0)
-                .FirstOrDefault()
-                ?? this.mediaCapture.FrameSources.Values.FirstOrDefault();
-
-            // Store the frame source so we can properly dispose it later
-            this.previewFrameSource = frameSource;
-
-#if DEBUG
-            if (frameSource != null)
-            {
-                var selectedKind = frameSource.Info.SourceKind;
-                var selectedFormat = frameSource.CurrentFormat?.Subtype ?? "Unknown";
-                var selectedFps = frameSource.CurrentFormat != null
-                    ? (double)frameSource.CurrentFormat.FrameRate.Numerator / frameSource.CurrentFormat.FrameRate.Denominator
-                    : 0;
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Selected frame source - Kind={selectedKind}, Format={selectedFormat}, FPS={selectedFps:F2}");
-            }
-#endif
-
+            // Get the first video frame source (simple selection)
+            var frameSource = this.mediaCapture.FrameSources.Values.FirstOrDefault();
             if (frameSource == null)
             {
 #if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - No video frame source available from MediaCapture.");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - No video frame source available.");
 #endif
-                throw new InvalidOperationException("No video frame source available from MediaCapture");
+                throw new InvalidOperationException("No video frame source available");
             }
 
-#if DEBUG
-            Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Frame source obtained - {frameSource.GetType().Name}");
-#endif
-
-            // Create MediaSource from the frame source
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating MediaSource from frame source...");
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   FrameSource type: {frameSource.GetType().Name}");
-#endif
+            this.previewFrameSource = frameSource;
             this.previewMediaSource = MediaSource.CreateFromMediaFrameSource(frameSource);
 
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaSource created successfully.");
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaSource type: {this.previewMediaSource?.GetType().Name}");
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaSource state: {(this.previewMediaSource != null ? "Valid" : "Null")}");
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaSource created from frame source.");
 #endif
 
-            // Clean up any previous MediaPlayer before creating new one (fixes resource leak on double-start)
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking for previous MediaPlayer to clean up...");
-#endif
+            // Clean up previous MediaPlayer if it exists
             if (this.previewMediaPlayer != null)
             {
                 try
                 {
-#if DEBUG
-                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Previous MediaPlayer exists, disposing...");
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   State before cleanup - Source: {(this.previewMediaPlayer.Source != null ? "Set" : "Null")}, IsMuted: {this.previewMediaPlayer.IsMuted}");
-#endif
                     this.previewMediaPlayer.Source = null;
                     this.previewMediaPlayer.Dispose();
-
-#if DEBUG
-                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Previous MediaPlayer disposed successfully.");
-#endif
                 }
-                catch (Exception cleanupEx)
+                catch (Exception ex)
                 {
 #if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: WARNING - Error during MediaPlayer cleanup: {cleanupEx.GetType().Name}");
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   Error message: {cleanupEx.Message}");
+                    Debug.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Error cleaning up previous MediaPlayer - {ex.Message}");
 #endif
                 }
                 finally
@@ -352,150 +204,63 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
                     this.previewMediaPlayer = null;
                 }
             }
-#if DEBUG
-            else
-            {
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: No previous MediaPlayer to clean up.");
-            }
-#endif
 
-            // Create MediaPlayer and bind to MediaPlayerElement
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Creating new MediaPlayer...");
-#endif
+            // Create and configure new MediaPlayer
             this.previewMediaPlayer = new MediaPlayer();
             this.previewMediaPlayer.AutoPlay = true;
             this.previewMediaPlayer.Source = this.previewMediaSource;
 
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: AutoPlay enabled on MediaPlayer.");
-#endif
-
-#if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking UI thread affinity before SetMediaPlayer...");
-#endif
-
-            // Validate MediaPlayer state before binding (diagnostic)
-#if DEBUG
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: MediaPlayer validation - Source={this.previewMediaPlayer.Source != null}, AutoPlay={this.previewMediaPlayer.AutoPlay}");
-#endif
-
-            // Ensure SetMediaPlayer is called on the UI thread (fixes COMException from threading issues)
-            try
+            // Ensure SetMediaPlayer is called on the UI thread
+            if (!mediaPlayerElement.DispatcherQueue.HasThreadAccess)
             {
 #if DEBUG
-                var threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Current thread ID: {threadId}");
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Checking UI thread affinity...");
+                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Marshaling to UI thread...");
 #endif
-
-                if (!mediaPlayerElement.DispatcherQueue.HasThreadAccess)
-                {
-#if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Not on UI thread, DispatcherQueue state: HasThreadAccess=false");
-                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Marshaling SetMediaPlayer call to UI thread using TryEnqueue...");
-#endif
-
-                    // Marshal to UI thread using DispatcherQueue.TryEnqueue
-                    var startTime = System.Diagnostics.Stopwatch.StartNew();
-                    bool enqueued = mediaPlayerElement.DispatcherQueue.TryEnqueue(
-                        Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,
-                        () =>
+                bool enqueued = mediaPlayerElement.DispatcherQueue.TryEnqueue(
+                    Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,
+                    () =>
+                    {
+                        mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+                        if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
                         {
-#if DEBUG
-                            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: SetMediaPlayer executing on UI thread...");
-#endif
-                            mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+                            this.previewMediaPlayer.Play();
+                        }
+                    });
 
-                            // Explicitly start playback on the UI thread (AutoPlay doesn't work reliably with MediaFrameSource)
-                            if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
-                            {
-#if DEBUG
-                                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play() on UI thread...");
-#endif
-                                this.previewMediaPlayer.Play();
-                            }
-                        });
-                    startTime.Stop();
-
-#if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: TryEnqueue result: {(enqueued ? "Success" : "Failed")}, Time: {startTime.ElapsedMilliseconds}ms");
-#endif
-
-                    if (!enqueued)
-                    {
-#if DEBUG
-                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - Failed to enqueue SetMediaPlayer on UI thread. DispatcherQueue may be invalid.");
-#endif
-                        throw new InvalidOperationException("Failed to marshal SetMediaPlayer call to UI thread");
-                    }
-                }
-                else
+                if (!enqueued)
                 {
 #if DEBUG
-                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Already on UI thread (HasThreadAccess=true), calling SetMediaPlayer directly...");
+                    Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - Failed to marshal to UI thread.");
 #endif
-                    var startTime = System.Diagnostics.Stopwatch.StartNew();
-                    mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
-
-                    // Explicitly start playback on the UI thread (AutoPlay doesn't work reliably with MediaFrameSource)
-                    if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
-                    {
-#if DEBUG
-                        Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: PlaybackState not Playing, calling Play() on UI thread...");
-#endif
-                        this.previewMediaPlayer.Play();
-                    }
-
-                    startTime.Stop();
-
-#if DEBUG
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: SetMediaPlayer and Play() call completed. Time: {startTime.ElapsedMilliseconds}ms");
-#endif
+                    throw new InvalidOperationException("Failed to marshal SetMediaPlayer call to UI thread");
                 }
-
-#if DEBUG
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview binding successful. MediaPlayer is now rendering.");
-
-                // Phase 1: Validate MediaPlayer post-binding state
-                Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Post-binding validation:");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.Source != null: {this.previewMediaPlayer.Source != null}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.PlaybackSession.PlaybackState: {this.previewMediaPlayer.PlaybackSession.PlaybackState}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.IsMuted: {this.previewMediaPlayer.IsMuted}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.Volume: {this.previewMediaPlayer.Volume}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   MediaPlayer.AutoPlay: {this.previewMediaPlayer.AutoPlay}");
-#endif
             }
-            catch (COMException comEx)
+            else
             {
-#if DEBUG
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: COMException caught during SetMediaPlayer");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   HResult: 0x{comEx.HResult:X8}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   Message: {comEx.Message}");
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   Source: {comEx.Source}");
-                if (comEx.InnerException != null)
+                mediaPlayerElement.SetMediaPlayer(this.previewMediaPlayer);
+                if (this.previewMediaPlayer.PlaybackSession.PlaybackState != Windows.Media.Playback.MediaPlaybackState.Playing)
                 {
-                    Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   InnerException: {comEx.InnerException.GetType().Name} - {comEx.InnerException.Message}");
+                    this.previewMediaPlayer.Play();
                 }
-#endif
-                throw new InvalidOperationException(
-                    "Failed to bind MediaPlayer to preview control. This may indicate a graphics driver issue or incompatible display settings. " +
-                    "Try updating your graphics drivers or restarting your device.",
-                    comEx);
             }
+
+#if DEBUG
+            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Preview started successfully.");
+#endif
+        }
+        catch (COMException comEx)
+        {
+#if DEBUG
+            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: COMException - HResult=0x{comEx.HResult:X8}");
+#endif
+            throw new InvalidOperationException(
+                "Failed to bind MediaPlayer to preview control. This may indicate a graphics driver issue or incompatible display settings.",
+                comEx);
         }
         catch (Exception ex)
         {
 #if DEBUG
-            Trace.WriteLine("[IntVue.Debug] MediaCaptureService.StartPreviewAsync: Unhandled exception during preview setup");
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   Exception type: {ex.GetType().Name}");
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   Message: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync:   InnerException: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
-            }
-
-            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: StackTrace: {ex.StackTrace}");
+            Trace.WriteLine($"[IntVue.Debug] MediaCaptureService.StartPreviewAsync: ERROR - {ex.GetType().Name}: {ex.Message}");
 #endif
             throw;
         }
