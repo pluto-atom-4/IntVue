@@ -1,7 +1,10 @@
 // Copyright (c) YourProjectName. All rights reserved.
 
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Windows.Devices.Enumeration;
 
 namespace IntVue.Services;
 
@@ -17,11 +20,18 @@ public interface IMediaCaptureService
     bool IsRecording { get; }
 
     /// <summary>
-    /// Initialize the underlying media capture resources.
+    /// Get a list of available camera devices.
     /// </summary>
+    /// <returns>A <see cref="Task{IReadOnlyList}"/> representing the asynchronous operation and returning available cameras.</returns>
+    Task<IReadOnlyList<DeviceInformation>> GetCamerasAsync();
+
+    /// <summary>
+    /// Initialize the underlying media capture resources with an optional specific camera device.
+    /// </summary>
+    /// <param name="videoDeviceId">Optional device ID to use for video capture. If null, the OS default is used.</param>
     /// <param name="cancellationToken">Cancellation token used to abort initialization.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    Task InitializeAsync(CancellationToken cancellationToken = default);
+    Task InitializeAsync(string? videoDeviceId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Request permissions for camera/microphone and return true if granted.

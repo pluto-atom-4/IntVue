@@ -22,11 +22,23 @@
 
         <!-- Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
-            <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" AutomationProperties.Name="PreviewButton" />
-            <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" AutomationProperties.Name="RecordButton" Margin="10,0,0,0" />
+            <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="{x:Bind ViewModel.IsDeviceInitialized, Mode=OneWay}" AutomationProperties.Name="PreviewButton" />
+            <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="{x:Bind ViewModel.IsDeviceInitialized, Mode=OneWay}" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
         </StackPanel>
 
-        <!-- Consent / status -->
-        <TextBlock x:Name="TxtConsent" Text="By enabling camera/microphone you consent to local recording." Grid.Row="2" TextWrapping="Wrap" Margin="10" />
+        <!-- Device initialization -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="8" Margin="10">
+            <ComboBox
+                x:Name="CbCameraList"
+                MinWidth="200"
+                ItemsSource="{x:Bind ViewModel.Cameras, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedCamera, Mode=TwoWay}"
+                DisplayMemberPath="Name"
+                AutomationProperties.Name="Camera Device" />
+            <Button
+                Content="Initialize Device"
+                Click="BtnInitializeDevice_Click"
+                AutomationProperties.Name="InitializeDeviceButton" />
+        </StackPanel>
     </Grid>
 </Page>

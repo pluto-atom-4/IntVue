@@ -1,6 +1,7 @@
 // Copyright (c) YourProjectName. All rights reserved.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -37,6 +38,7 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
     private LowLagMediaRecording? lowLagRecording;
     private StorageFile? currentFile;
     private bool initialized;
+    private string? selectedVideoDeviceId;
 
     /// <summary>
     /// Gets a value indicating whether a recording is currently in progress.
@@ -44,15 +46,41 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
     public bool IsRecording => this.lowLagRecording != null;
 
     /// <summary>
+    /// Get a list of available camera devices.
+    /// </summary>
+    /// <returns>A list of available DeviceInformation objects for video capture devices.</returns>
+    public async Task<IReadOnlyList<DeviceInformation>> GetCamerasAsync()
+    {
+        try
+        {
+            var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+            return devices.ToList().AsReadOnly();
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            Debug.WriteLine($"[IntVue.Debug] GetCamerasAsync: ERROR - {ex.GetType().Name}: {ex.Message}");
+#endif
+            return new List<DeviceInformation>().AsReadOnly();
+        }
+    }
+
+    /// <summary>
     /// Initialize the underlying MediaCapture resources.
     /// </summary>
+    /// <param name="videoDeviceId">Optional device ID to use for video capture. If null, the OS default is used.</param>
     /// <param name="cancellationToken">Cancellation token to abort initialization.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous initialization operation.</returns>
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    public async Task InitializeAsync(string? videoDeviceId = null, CancellationToken cancellationToken = default)
     {
         if (this.initialized)
         {
             return;
+        }
+
+        if (videoDeviceId != null)
+        {
+            this.selectedVideoDeviceId = videoDeviceId;
         }
 
         try
@@ -62,6 +90,11 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
             {
                 StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo,
             };
+
+            if (!string.IsNullOrEmpty(this.selectedVideoDeviceId))
+            {
+                settings.VideoDeviceId = this.selectedVideoDeviceId;
+            }
 
             await this.mediaCapture.InitializeAsync(settings);
             this.initialized = true;

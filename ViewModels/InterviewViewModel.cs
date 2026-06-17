@@ -1,12 +1,15 @@
 // Copyright (c) YourProjectName. All rights reserved.
 
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 using IntVue.Services;
+
+using Windows.Devices.Enumeration;
 
 namespace IntVue.ViewModels;
 
@@ -20,8 +23,10 @@ public class InterviewViewModel : INotifyPropertyChanged
     private bool isPreviewing;
     private bool isRecording;
     private string recordedFilePath = string.Empty;
-    private bool consentGiven;
     private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+    private ObservableCollection<DeviceInformation> cameras = new ();
+    private DeviceInformation? selectedCamera;
+    private bool isDeviceInitialized;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InterviewViewModel"/> class.
@@ -95,14 +100,35 @@ public class InterviewViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the user has given consent for recording.
+    /// Gets the collection of available camera devices.
     /// </summary>
-    public bool ConsentGiven
+    public ObservableCollection<DeviceInformation> Cameras
     {
-        get => this.consentGiven;
+        get => this.cameras;
+    }
+
+    /// <summary>
+    /// Gets or sets the currently selected camera device.
+    /// </summary>
+    public DeviceInformation? SelectedCamera
+    {
+        get => this.selectedCamera;
         set
         {
-            this.consentGiven = value;
+            this.selectedCamera = value;
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a camera device has been initialized.
+    /// </summary>
+    public bool IsDeviceInitialized
+    {
+        get => this.isDeviceInitialized;
+        private set
+        {
+            this.isDeviceInitialized = value;
             this.OnPropertyChanged();
         }
     }
@@ -124,24 +150,66 @@ public class InterviewViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Starts the camera preview asynchronously after verifying consent and permissions.
+    /// Loads the list of available camera devices asynchronously.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task LoadCamerasAsync()
+    {
+        try
+        {
+            var list = await this.mediaService.GetCamerasAsync().ConfigureAwait(false);
+            this.Cameras.Clear();
+            foreach (var device in list)
+            {
+                this.Cameras.Add(device);
+            }
+
+            if (this.Cameras.Count > 0)
+            {
+                this.SelectedCamera = this.Cameras[0];
+            }
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            Debug.WriteLine($"[IntVue.Debug] LoadCamerasAsync: Error - {ex.Message}");
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Initializes the media capture device with the selected camera asynchronously.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task InitializeDeviceAsync()
+    {
+        try
+        {
+            await this.mediaService.InitializeAsync(this.SelectedCamera?.Id).ConfigureAwait(false);
+            this.IsDeviceInitialized = true;
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            Debug.WriteLine($"[IntVue.Debug] InitializeDeviceAsync: Error - {ex.Message}");
+#endif
+            this.IsDeviceInitialized = false;
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Starts the camera preview asynchronously after verifying device initialization.
     /// </summary>
     /// <param name="previewHost">The UI element that will host the camera preview.</param>
     /// <returns>A <see cref="Task{Boolean}"/> representing the asynchronous operation and returning true if successful.</returns>
     public async Task<bool> StartPreviewAsync(object previewHost)
     {
-        if (!this.ConsentGiven)
+        if (!this.IsDeviceInitialized)
         {
             return false;
         }
 
-        var granted = await this.mediaService.RequestPermissionsAsync().ConfigureAwait(false);
-        if (!granted)
-        {
-            return false;
-        }
-
-        await this.mediaService.InitializeAsync().ConfigureAwait(false);
         await this.mediaService.StartPreviewAsync(previewHost).ConfigureAwait(false);
 
         this.IsPreviewing = true;
