@@ -24,7 +24,7 @@ public class InterviewViewModel : INotifyPropertyChanged
     private bool isRecording;
     private string recordedFilePath = string.Empty;
     private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
-    private ObservableCollection<DeviceInformation> cameras = new();
+    private ObservableCollection<DeviceInformation> cameras = new ();
     private DeviceInformation? selectedCamera;
     private bool isDeviceInitialized;
 
