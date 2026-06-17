@@ -40,7 +40,7 @@ namespace IntVue.Tests.ViewModels
             var viewModel = new InterviewViewModel(this.mockMediaService.Object);
 
             // Assert
-            Assert.IsFalse(viewModel.ConsentGiven, "ConsentGiven should default to false");
+            Assert.IsFalse(viewModel.IsDeviceInitialized, "IsDeviceInitialized should default to false");
             Assert.IsFalse(viewModel.IsPreviewing, "IsPreviewing should default to false");
             Assert.IsFalse(viewModel.IsRecording, "IsRecording should default to false");
             Assert.AreEqual(string.Empty, viewModel.RecordedFilePath, "RecordedFilePath should default to empty");
@@ -70,81 +70,66 @@ namespace IntVue.Tests.ViewModels
             Assert.IsTrue(propertyChangedRaised, "PropertyChanged should be raised for QuestionText");
         }
 
-        // ==================== Consent Tests ====================
+        // ==================== Device Initialization Tests ====================
 
         [TestMethod]
-        public void ConsentGiven_CanBeSet_AndRaisesPropertyChanged()
+        public async Task LoadCamerasAsync_PopulatesCameraList()
         {
             // Arrange
-            var propertyChangedRaised = false;
-
-            this.viewModel.PropertyChanged += (sender, e) =>
-            {
-                if (e.PropertyName == nameof(InterviewViewModel.ConsentGiven))
-                {
-                    propertyChangedRaised = true;
-                }
-            };
+            using var cts = new System.Threading.CancellationTokenSource();
+            var mockDevices = new System.Collections.Generic.List<Windows.Devices.Enumeration.DeviceInformation>();
+            this.mockMediaService
+                .Setup(s => s.GetCamerasAsync())
+                .ReturnsAsync(mockDevices.AsReadOnly());
 
             // Act
-            this.viewModel.ConsentGiven = true;
+            await this.viewModel.LoadCamerasAsync();
 
             // Assert
-            Assert.IsTrue(this.viewModel.ConsentGiven);
-            Assert.IsTrue(propertyChangedRaised, "PropertyChanged should be raised for ConsentGiven");
+            this.mockMediaService.Verify(
+                s => s.GetCamerasAsync(),
+                Times.Once,
+                "Should call GetCamerasAsync on service");
         }
 
-        // ==================== Preview Permission Tests ====================
-
         [TestMethod]
-        public async Task StartPreviewAsync_WhenConsentNotGiven_ReturnsFalse()
+        public async Task InitializeDeviceAsync_SetsIsDeviceInitialized()
         {
             // Arrange
-            this.viewModel.ConsentGiven = false;
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+
+            // Act
+            await this.viewModel.InitializeDeviceAsync();
+
+            // Assert
+            Assert.IsTrue(this.viewModel.IsDeviceInitialized, "IsDeviceInitialized should be true after successful initialization");
+        }
+
+        // ==================== Preview Tests ====================
+
+        [TestMethod]
+        public async Task StartPreviewAsync_WhenDeviceNotInitialized_ReturnsFalse()
+        {
+            // Arrange
             var previewHost = new object();
 
             // Act
             var result = await this.viewModel.StartPreviewAsync(previewHost);
 
             // Assert
-            Assert.IsFalse(result, "Should return false when consent not given");
+            Assert.IsFalse(result, "Should return false when device not initialized");
             this.mockMediaService.Verify(
-                s => s.RequestPermissionsAsync(),
+                s => s.StartPreviewAsync(It.IsAny<object>()),
                 Times.Never,
-                "Should not request permissions if consent not given");
+                "Should not start preview if device not initialized");
         }
 
         [TestMethod]
-        public async Task StartPreviewAsync_WhenPermissionsDenied_ReturnsFalse()
+        public async Task StartPreviewAsync_WhenDeviceInitialized_StartsPreview()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService
-                .Setup(s => s.RequestPermissionsAsync())
-                .ReturnsAsync(false);
-
-            var previewHost = new object();
-
-            // Act
-            var result = await this.viewModel.StartPreviewAsync(previewHost);
-
-            // Assert
-            Assert.IsFalse(result, "Should return false when permissions denied");
-            Assert.IsFalse(this.viewModel.IsPreviewing, "IsPreviewing should remain false");
-            this.mockMediaService.Verify(
-                s => s.InitializeAsync(default),
-                Times.Never,
-                "Should not initialize if permissions denied");
-        }
-
-        [TestMethod]
-        public async Task StartPreviewAsync_WithConsentAndPermissions_StartsPreview()
-        {
-            // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService
-                .Setup(s => s.RequestPermissionsAsync())
-                .ReturnsAsync(true);
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            await this.viewModel.InitializeDeviceAsync();
 
             var previewHost = new object();
             var isPreviewingChanged = false;
@@ -166,14 +151,6 @@ namespace IntVue.Tests.ViewModels
             Assert.IsTrue(isPreviewingChanged, "PropertyChanged should be raised for IsPreviewing");
 
             this.mockMediaService.Verify(
-                s => s.RequestPermissionsAsync(),
-                Times.Once,
-                "Should request permissions");
-            this.mockMediaService.Verify(
-                s => s.InitializeAsync(default),
-                Times.Once,
-                "Should initialize MediaCapture");
-            this.mockMediaService.Verify(
                 s => s.StartPreviewAsync(previewHost),
                 Times.Once,
                 "Should start preview with provided host");
@@ -183,8 +160,8 @@ namespace IntVue.Tests.ViewModels
         public async Task StopPreviewAsync_SetsIsPreviewing_ToFalse()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            await this.viewModel.InitializeDeviceAsync();
             await this.viewModel.StartPreviewAsync(new object());
 
             var isPreviewingChanged = false;
@@ -211,32 +188,9 @@ namespace IntVue.Tests.ViewModels
         // ==================== Recording Flow Tests ====================
 
         [TestMethod]
-        public async Task StartRecordingAsync_WhenNotPreviewing_DoesNotStart()
+        public async Task StartRecordingAsync_StartsRecording()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            // Don't start preview, so IsPreviewing is false
-
-            // Act
-            await this.viewModel.StartRecordingAsync("test-recording");
-
-            // Assert
-            Assert.IsFalse(this.viewModel.IsRecording, "Recording should not start when preview not active");
-            Assert.AreEqual(string.Empty, this.viewModel.RecordedFilePath, "RecordedFilePath should remain empty");
-            this.mockMediaService.Verify(
-                s => s.StartRecordingAsync(It.IsAny<string>()),
-                Times.Never,
-                "Should not call StartRecordingAsync on service");
-        }
-
-        [TestMethod]
-        public async Task StartRecordingAsync_WhenPreviewing_StartsRecording()
-        {
-            // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
-            await this.viewModel.StartPreviewAsync(new object());
-
             var testFilePath = @"C:\Users\test\AppData\Local\Packages\IntVue\LocalState\recording.mp4";
             this.mockMediaService
                 .Setup(s => s.StartRecordingAsync("interview"))
@@ -277,10 +231,6 @@ namespace IntVue.Tests.ViewModels
         public async Task StopRecordingAsync_SetsIsRecording_ToFalse()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
-            await this.viewModel.StartPreviewAsync(new object());
-
             var testFilePath = @"C:\recording.mp4";
             this.mockMediaService.Setup(s => s.StartRecordingAsync(It.IsAny<string>())).ReturnsAsync(testFilePath);
             await this.viewModel.StartRecordingAsync("test");
@@ -311,11 +261,10 @@ namespace IntVue.Tests.ViewModels
         // ==================== Complete Recording Workflow Tests ====================
 
         [TestMethod]
-        public async Task CompleteWorkflow_StartPreview_StartRecording_StopRecording_UpdatesState()
+        public async Task CompleteWorkflow_InitializeDevice_StartPreview_StartRecording_StopRecording_UpdatesState()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
             this.mockMediaService
                 .Setup(s => s.StartRecordingAsync("interview"))
                 .ReturnsAsync(@"C:\recorded-interview.mp4");
@@ -326,6 +275,12 @@ namespace IntVue.Tests.ViewModels
             {
                 stateChanges.Add(e.PropertyName ?? "null");
             };
+
+            // Act - Initialize Device
+            await this.viewModel.InitializeDeviceAsync();
+
+            // Assert - After Device Initialization
+            Assert.IsTrue(this.viewModel.IsDeviceInitialized);
 
             // Act - Start Preview
             var previewStarted = await this.viewModel.StartPreviewAsync(new object());
@@ -363,10 +318,6 @@ namespace IntVue.Tests.ViewModels
         public async Task MultipleRecordingAttempts_UpdatesRecordedFilePath()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
-            await this.viewModel.StartPreviewAsync(new object());
-
             var file1Path = @"C:\recording1.mp4";
             var file2Path = @"C:\recording2.mp4";
 
@@ -403,10 +354,11 @@ namespace IntVue.Tests.ViewModels
         public async Task StartPreviewAsync_WhenServiceThrows_PropagatesException()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            await this.viewModel.InitializeDeviceAsync();
+
             this.mockMediaService
-                .Setup(s => s.InitializeAsync(default))
+                .Setup(s => s.StartPreviewAsync(It.IsAny<object>()))
                 .ThrowsAsync(new InvalidOperationException("Camera not found"));
 
             // Act & Assert
@@ -426,10 +378,6 @@ namespace IntVue.Tests.ViewModels
         public async Task StartRecordingAsync_WhenServiceThrows_DoesNotSetIsRecording()
         {
             // Arrange
-            this.viewModel.ConsentGiven = true;
-            this.mockMediaService.Setup(s => s.RequestPermissionsAsync()).ReturnsAsync(true);
-            await this.viewModel.StartPreviewAsync(new object());
-
             this.mockMediaService
                 .Setup(s => s.StartRecordingAsync(It.IsAny<string>()))
                 .ThrowsAsync(new InvalidOperationException("Recording failed"));
@@ -457,13 +405,12 @@ namespace IntVue.Tests.ViewModels
             var viewModel2 = new InterviewViewModel(this.mockMediaService.Object);
 
             // Act
-            viewModel1.ConsentGiven = true;
             viewModel1.QuestionText = "Question 1";
 
             // Assert
-            Assert.IsTrue(viewModel1.ConsentGiven);
-            Assert.IsFalse(viewModel2.ConsentGiven, "viewModel2 should have independent ConsentGiven state");
             Assert.AreNotEqual(viewModel1.QuestionText, viewModel2.QuestionText, "ViewModels should have independent QuestionText");
+            Assert.IsFalse(viewModel1.IsDeviceInitialized, "viewModel1 should have independent IsDeviceInitialized state");
+            Assert.IsFalse(viewModel2.IsDeviceInitialized, "viewModel2 should have independent IsDeviceInitialized state");
         }
 
         // ==================== PropertyChanged Event Tests ====================
@@ -484,11 +431,9 @@ namespace IntVue.Tests.ViewModels
 
             // Act
             this.viewModel.QuestionText = "New Question";
-            this.viewModel.ConsentGiven = true;
 
             // Assert
             Assert.IsTrue(changedProperties.Contains(nameof(InterviewViewModel.QuestionText)));
-            Assert.IsTrue(changedProperties.Contains(nameof(InterviewViewModel.ConsentGiven)));
         }
     }
 }
