@@ -24,7 +24,6 @@ namespace IntVue.Views;
 /// </summary>
 public sealed partial class MainPage : Page
 {
-    private const string ConsentKey = "HasGivenConsent";
     private bool isRecording = false;
 
     /// <summary>
@@ -49,53 +48,19 @@ public sealed partial class MainPage : Page
 
     private async void OnPageLoaded()
     {
-        this.TxtConsent.Tapped += (_, _) => this.OnConsentTapped();
-        this.TxtConsent.PointerReleased += (_, _) => this.OnConsentTapped();
-
-        // Load saved consent state from LocalSettings
-        var hasConsent = ApplicationData.Current.LocalSettings.Values.TryGetValue(ConsentKey, out var value) &&
-                         value is bool consentValue && consentValue;
-
-        if (!hasConsent)
-        {
-            // Show consent dialog on first load
-            var consented = await this.ShowConsentDialogAsync();
-            this.ViewModel.ConsentGiven = consented;
-        }
-        else
-        {
-            this.ViewModel.ConsentGiven = true;
-        }
-
-        this.UpdateConsentText();
+        await this.ViewModel.LoadCamerasAsync();
     }
 
-    private void OnConsentTapped()
+    private async void BtnInitializeDevice_Click(object sender, RoutedEventArgs e)
     {
-        this.ViewModel.ConsentGiven = !this.ViewModel.ConsentGiven;
-        ApplicationData.Current.LocalSettings.Values[ConsentKey] = this.ViewModel.ConsentGiven;
-        this.UpdateConsentText();
-    }
-
-    private async Task<bool> ShowConsentDialogAsync()
-    {
-        var dialog = new ContentDialog
+        try
         {
-            Title = "Recording Consent",
-            Content = "This application will record audio and video from your camera and microphone.\n\nDo you consent to this recording?",
-            PrimaryButtonText = "I Consent",
-            CloseButtonText = "Decline",
-            XamlRoot = this.XamlRoot,
-        };
-
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            ApplicationData.Current.LocalSettings.Values[ConsentKey] = true;
-            return true;
+            await this.ViewModel.InitializeDeviceAsync();
         }
-
-        return false;
+        catch (Exception ex)
+        {
+            await this.ShowErrorDialog("Device Initialization Error", $"Failed to initialize device: {ex.Message}");
+        }
     }
 
     private async void BtnPreview_Click(object sender, RoutedEventArgs e)
@@ -112,12 +77,6 @@ public sealed partial class MainPage : Page
 
     private async Task StartPreviewAsync()
     {
-        if (!this.ViewModel.ConsentGiven)
-        {
-            await this.ShowErrorDialog("Consent Required", "Please consent to camera and microphone recording before starting the preview.");
-            return;
-        }
-
         try
         {
             var success = await this.ViewModel.StartPreviewAsync(this.PreviewControl).ConfigureAwait(false);
@@ -157,18 +116,6 @@ public sealed partial class MainPage : Page
         catch (Exception ex)
         {
             await this.ShowErrorDialog("Stop Preview Error", $"Failed to stop preview: {ex.Message}");
-        }
-    }
-
-    private void UpdateConsentText()
-    {
-        if (this.ViewModel.ConsentGiven)
-        {
-            this.TxtConsent.Text = "✓ Consent given. You can now start the preview.";
-        }
-        else
-        {
-            this.TxtConsent.Text = "By enabling camera/microphone you consent to local recording. [Tap to consent]";
         }
     }
 
