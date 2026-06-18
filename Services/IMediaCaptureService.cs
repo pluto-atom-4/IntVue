@@ -1,5 +1,6 @@
 // Copyright (c) YourProjectName. All rights reserved.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,11 @@ public interface IMediaCaptureService
     /// Gets a value indicating whether a recording is currently in progress.
     /// </summary>
     bool IsRecording { get; }
+
+    /// <summary>
+    /// Raised when the OS recording limit (3 hours) is reached during recording.
+    /// </summary>
+    event EventHandler? RecordLimitationExceeded;
 
     /// <summary>
     /// Get a list of available camera devices.

@@ -435,5 +435,150 @@ namespace IntVue.Tests.ViewModels
             // Assert
             Assert.IsTrue(changedProperties.Contains(nameof(InterviewViewModel.QuestionText)));
         }
+
+        // ==================== Toggle Recording Tests ====================
+
+        [TestMethod]
+        public async Task ToggleRecordingAsync_WhenDeviceNotInitialized_DoesNotRecord()
+        {
+            // Arrange
+            var recordingErrorRaised = false;
+
+            this.viewModel.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == nameof(InterviewViewModel.RecordingError))
+                {
+                    recordingErrorRaised = true;
+                }
+            };
+
+            // Act
+            await this.viewModel.ToggleRecordingAsync("test");
+
+            // Assert
+            Assert.IsFalse(this.viewModel.IsRecording, "IsRecording should remain false");
+            Assert.IsNotEmpty(this.viewModel.RecordingError, "RecordingError should be set");
+            Assert.IsTrue(recordingErrorRaised, "PropertyChanged should be raised for RecordingError");
+
+            this.mockMediaService.Verify(
+                s => s.StartRecordingAsync(It.IsAny<string>()),
+                Times.Never,
+                "Should not call StartRecordingAsync if device not initialized");
+        }
+
+        [TestMethod]
+        public async Task ToggleRecordingAsync_WhenNotRecording_StartsRecording()
+        {
+            // Arrange
+            var testFilePath = @"C:\recording.mp4";
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            this.mockMediaService
+                .Setup(s => s.StartRecordingAsync("test"))
+                .ReturnsAsync(testFilePath);
+
+            await this.viewModel.InitializeDeviceAsync();
+
+            // Act
+            await this.viewModel.ToggleRecordingAsync("test");
+
+            // Assert
+            Assert.IsTrue(this.viewModel.IsRecording, "IsRecording should be true");
+            Assert.AreEqual(testFilePath, this.viewModel.RecordedFilePath);
+
+            this.mockMediaService.Verify(
+                s => s.StartRecordingAsync("test"),
+                Times.Once,
+                "Should call StartRecordingAsync when toggling on");
+        }
+
+        [TestMethod]
+        public async Task ToggleRecordingAsync_WhenRecording_StopsRecording()
+        {
+            // Arrange
+            var testFilePath = @"C:\recording.mp4";
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            this.mockMediaService
+                .Setup(s => s.StartRecordingAsync("test"))
+                .ReturnsAsync(testFilePath);
+
+            await this.viewModel.InitializeDeviceAsync();
+            await this.viewModel.ToggleRecordingAsync("test");
+
+            // Act
+            await this.viewModel.ToggleRecordingAsync("test");
+
+            // Assert
+            Assert.IsFalse(this.viewModel.IsRecording, "IsRecording should be false");
+
+            this.mockMediaService.Verify(
+                s => s.StopRecordingAsync(),
+                Times.Once,
+                "Should call StopRecordingAsync when toggling off");
+        }
+
+        [TestMethod]
+        public async Task StopRecordingAsync_WhenServiceThrows_SetsIsRecordingFalse()
+        {
+            // Arrange
+            var testFilePath = @"C:\recording.mp4";
+            this.mockMediaService
+                .Setup(s => s.StartRecordingAsync(It.IsAny<string>()))
+                .ReturnsAsync(testFilePath);
+            this.mockMediaService
+                .Setup(s => s.StopRecordingAsync())
+                .ThrowsAsync(new InvalidOperationException("Finish failed"));
+
+            await this.viewModel.StartRecordingAsync("test");
+
+            // Act & Assert
+            try
+            {
+                await this.viewModel.StopRecordingAsync();
+                Assert.Fail("Should have thrown InvalidOperationException");
+            }
+            catch (InvalidOperationException)
+            {
+                Assert.IsFalse(this.viewModel.IsRecording, "IsRecording should be false even after exception");
+            }
+        }
+
+        [TestMethod]
+        public async Task OnRecordLimitationExceeded_StopsRecordingAndSetsRecordingError()
+        {
+            // Arrange
+            var testFilePath = @"C:\recording.mp4";
+            this.mockMediaService.Setup(s => s.InitializeAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            this.mockMediaService
+                .Setup(s => s.StartRecordingAsync("test"))
+                .ReturnsAsync(testFilePath);
+
+            await this.viewModel.InitializeDeviceAsync();
+            await this.viewModel.StartRecordingAsync("test");
+
+            var recordingErrorRaised = false;
+            this.viewModel.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == nameof(InterviewViewModel.RecordingError))
+                {
+                    recordingErrorRaised = true;
+                }
+            };
+
+            // Act - Raise the OS limit event
+            this.mockMediaService.Raise(s => s.RecordLimitationExceeded += null, EventArgs.Empty);
+
+            // Brief delay to allow async handler to complete
+            await Task.Delay(100);
+
+            // Assert
+            Assert.IsFalse(this.viewModel.IsRecording, "IsRecording should be false after limit exceeded");
+            Assert.IsNotEmpty(this.viewModel.RecordingError, "RecordingError should be set");
+            Assert.IsTrue(recordingErrorRaised, "PropertyChanged should be raised for RecordingError");
+
+            this.mockMediaService.Verify(
+                s => s.StopRecordingAsync(),
+                Times.AtLeastOnce,
+                "Should call StopRecordingAsync when limit exceeded");
+        }
     }
 }
