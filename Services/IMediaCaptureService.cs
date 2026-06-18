@@ -20,6 +20,11 @@ public interface IMediaCaptureService
     bool IsRecording { get; }
 
     /// <summary>
+    /// Raised when the OS recording limit (3 hours) is reached during recording.
+    /// </summary>
+    event EventHandler? RecordLimitationExceeded;
+
+    /// <summary>
     /// Get a list of available camera devices.
     /// </summary>
     /// <returns>A <see cref="Task{IReadOnlyList}"/> representing the asynchronous operation and returning available cameras.</returns>

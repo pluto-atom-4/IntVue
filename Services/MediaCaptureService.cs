@@ -46,6 +46,11 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
     public bool IsRecording => this.lowLagRecording != null;
 
     /// <summary>
+    /// Raised when the OS recording limit (3 hours) is reached during recording.
+    /// </summary>
+    public event EventHandler? RecordLimitationExceeded;
+
+    /// <summary>
     /// Get a list of available camera devices.
     /// </summary>
     /// <returns>A list of available DeviceInformation objects for video capture devices.</returns>
