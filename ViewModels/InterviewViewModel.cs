@@ -268,9 +268,20 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StartRecordingAsync(string baseFileName)
     {
-        var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
-        this.RecordedFilePath = path;
-        this.IsRecording = true;
+        try
+        {
+            Debug.WriteLine("[IntVue.Debug] StartRecordingAsync: Preparing file...");
+            var path = await this.mediaService.StartRecordingAsync(baseFileName).ConfigureAwait(false);
+            this.RecordedFilePath = path;
+            this.IsRecording = true;
+            Debug.WriteLine("[IntVue.Debug] StartRecordingAsync: Recording started.");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[IntVue.Debug] StartRecordingAsync: Error - {ex.Message}");
+            this.IsRecording = false;
+            throw;
+        }
     }
 
     /// <summary>
@@ -279,8 +290,64 @@ public class InterviewViewModel : INotifyPropertyChanged
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StopRecordingAsync()
     {
-        await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
-        this.IsRecording = false;
+        try
+        {
+            Debug.WriteLine("[IntVue.Debug] StopRecordingAsync: Stopping...");
+            await this.mediaService.StopRecordingAsync().ConfigureAwait(false);
+            Debug.WriteLine("[IntVue.Debug] StopRecordingAsync: Finished.");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[IntVue.Debug] StopRecordingAsync: Error during finish - {ex.Message}");
+            throw;
+        }
+        finally
+        {
+            this.IsRecording = false;
+        }
+    }
+
+    /// <summary>
+    /// Toggles recording on or off asynchronously.
+    /// If device is not initialized, sets error and returns without recording.
+    /// </summary>
+    /// <param name="baseFileName">The base filename to use for the recording if starting.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task ToggleRecordingAsync(string baseFileName)
+    {
+        if (!this.IsDeviceInitialized)
+        {
+            this.RecordingError = "Device is not initialized. Please initialize the camera first.";
+            return;
+        }
+
+        this.RecordingError = string.Empty;
+
+        if (this.IsRecording)
+            await this.StopRecordingAsync().ConfigureAwait(false);
+        else
+            await this.StartRecordingAsync(baseFileName).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Called when the OS recording limit (3 hours) is exceeded during recording.
+    /// Marshals to the UI thread and stops the recording.
+    /// </summary>
+    private void OnRecordLimitationExceeded(object? sender, EventArgs e)
+    {
+        if (this.dispatcherQueue != null && !this.dispatcherQueue.HasThreadAccess)
+            _ = this.dispatcherQueue.TryEnqueue(async () => await this.HandleRecordLimitExceededAsync());
+        else
+            _ = this.HandleRecordLimitExceededAsync();
+    }
+
+    /// <summary>
+    /// Handles the OS recording limit exceeded event by stopping recording and setting error message.
+    /// </summary>
+    private async Task HandleRecordLimitExceededAsync()
+    {
+        await this.StopRecordingAsync().ConfigureAwait(false);
+        this.RecordingError = "Recording stopped: OS 3-hour recording limit reached.";
     }
 
     /// <summary>
