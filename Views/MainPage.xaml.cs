@@ -11,8 +11,6 @@ using IntVue.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Windows.Storage;
-
 namespace IntVue.Views;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -24,8 +22,6 @@ namespace IntVue.Views;
 /// </summary>
 public sealed partial class MainPage : Page
 {
-    private bool isRecording = false;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
     /// </summary>
@@ -36,6 +32,14 @@ public sealed partial class MainPage : Page
         var svc = (IMediaCaptureService?)App.Services.GetService(typeof(IMediaCaptureService));
         this.ViewModel = (InterviewViewModel?)App.Services.GetService(typeof(InterviewViewModel)) ?? new InterviewViewModel(svc!);
         this.DataContext = this.ViewModel;
+
+        // Show error dialog when recording error occurs
+        this.ViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(InterviewViewModel.RecordingError)
+                && !string.IsNullOrEmpty(this.ViewModel.RecordingError))
+                _ = this.ShowErrorDialog("Recording Error", this.ViewModel.RecordingError);
+        };
 
         this.Unloaded += (s, e) => this.OnPageUnloaded();
         this.Loaded += (s, e) => this.OnPageLoaded();
@@ -142,63 +146,31 @@ public sealed partial class MainPage : Page
 
     private async void BtnRecord_Click(object sender, RoutedEventArgs e)
     {
-        if (!this.isRecording)
-        {
-            await this.StartRecordingAsync();
-        }
-        else
-        {
-            await this.StopRecordingAsync();
-        }
-    }
-
-    private async Task StartRecordingAsync()
-    {
-        // Stop preview before recording (preview and recording are mutually exclusive)
-        if (this.ViewModel.IsPreviewing)
-        {
-            try
-            {
-                await this.ViewModel.StopPreviewAsync().ConfigureAwait(false);
-                this.BtnPreview.Content = "Start Preview";
-            }
-            catch
-            {
-                // Swallow error; preview may already be stopped
-            }
-        }
-
         try
         {
-            await this.ViewModel.StartRecordingAsync("recording").ConfigureAwait(false);
-            this.isRecording = true;
-            this.BtnRecord.Content = "Stop Recording";
+            // Stop preview before recording (preview and recording are mutually exclusive)
+            if (this.ViewModel.IsPreviewing)
+            {
+                try
+                {
+                    await this.ViewModel.StopPreviewAsync().ConfigureAwait(false);
+                    this.BtnPreview.Content = "Start Preview";
+                }
+                catch
+                {
+                    // Swallow error; preview may already be stopped
+                }
+            }
+
+            await this.ViewModel.ToggleRecordingAsync("recording").ConfigureAwait(false);
         }
         catch (InvalidOperationException ex) when (ex.InnerException is COMException)
         {
-            await this.ShowErrorDialog("Camera Hardware Issue", "Unable to start recording. Another app may be using the camera or drivers need updating.");
-            this.isRecording = false;
-            this.BtnRecord.Content = "Start Recording";
+            await this.ShowErrorDialog("Camera Hardware Issue", "Unable to start/stop recording. Another app may be using the camera or drivers need updating.");
         }
         catch (Exception ex)
         {
-            await this.ShowErrorDialog("Recording Error", $"Failed to start recording: {ex.Message}");
-            this.isRecording = false;
-            this.BtnRecord.Content = "Start Recording";
-        }
-    }
-
-    private async Task StopRecordingAsync()
-    {
-        try
-        {
-            await this.ViewModel.StopRecordingAsync().ConfigureAwait(false);
-            this.isRecording = false;
-            this.BtnRecord.Content = "Start Recording";
-        }
-        catch (Exception ex)
-        {
-            await this.ShowErrorDialog("Stop Recording Error", $"Failed to stop recording: {ex.Message}");
+            await this.ShowErrorDialog("Recording Error", $"Failed: {ex.Message}");
         }
     }
 

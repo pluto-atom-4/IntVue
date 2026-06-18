@@ -23,7 +23,7 @@
         <!-- Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
             <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="{x:Bind ViewModel.IsDeviceInitialized, Mode=OneWay}" AutomationProperties.Name="PreviewButton" />
-            <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="{x:Bind ViewModel.IsDeviceInitialized, Mode=OneWay}" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
+            <Button x:Name="BtnRecord" Content="{x:Bind ViewModel.RecordButtonLabel, Mode=OneWay}" Click="BtnRecord_Click" IsEnabled="{x:Bind ViewModel.IsDeviceInitialized, Mode=OneWay}" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
         </StackPanel>
 
         <!-- Device initialization -->
