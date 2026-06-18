@@ -107,6 +107,24 @@ public class InterviewViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets any error message from the last recording operation.
+    /// </summary>
+    public string RecordingError
+    {
+        get => this.recordingError;
+        private set
+        {
+            this.recordingError = value;
+            this.OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the label for the record button based on recording state.
+    /// </summary>
+    public string RecordButtonLabel => this.IsRecording ? "Stop Recording" : "Start Recording";
+
+    /// <summary>
     /// Gets the collection of available camera devices.
     /// </summary>
     public ObservableCollection<DeviceInformation> Cameras
