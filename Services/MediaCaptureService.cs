@@ -213,6 +213,9 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
         }
     }
 
+    private void OnMediaCaptureRecordLimitationExceeded(MediaCapture sender, object args)
+        => this.RecordLimitationExceeded?.Invoke(this, EventArgs.Empty);
+
     private void TryDispose<T>(ref T? resource, string name)
         where T : class, IDisposable
     {
@@ -263,6 +266,10 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
 
         var profile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
         this.lowLagRecording = await this.mediaCapture.PrepareLowLagRecordToStorageFileAsync(profile, this.currentFile);
+
+        // Subscribe to OS recording limit event
+        this.mediaCapture.RecordLimitationExceeded += this.OnMediaCaptureRecordLimitationExceeded;
+
         await this.lowLagRecording.StartAsync();
 
         return this.currentFile.Path;
@@ -274,11 +281,22 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StopRecordingAsync()
     {
-        if (this.lowLagRecording != null)
+        try
         {
-            await this.lowLagRecording.StopAsync();
-            await this.lowLagRecording.FinishAsync();
-            this.lowLagRecording = null;
+            if (this.lowLagRecording != null)
+            {
+                await this.lowLagRecording.StopAsync();
+                await this.lowLagRecording.FinishAsync();
+                this.lowLagRecording = null;
+            }
+        }
+        finally
+        {
+            // Always unsubscribe from the OS limit event
+            if (this.mediaCapture != null)
+            {
+                this.mediaCapture.RecordLimitationExceeded -= this.OnMediaCaptureRecordLimitationExceeded;
+            }
         }
     }
 
