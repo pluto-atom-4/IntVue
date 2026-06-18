@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 using IntVue.Services;
 
+using Microsoft.UI.Dispatching;
+
 using Windows.Devices.Enumeration;
 
 namespace IntVue.ViewModels;
@@ -19,10 +21,12 @@ namespace IntVue.ViewModels;
 public class InterviewViewModel : INotifyPropertyChanged
 {
     private readonly IMediaCaptureService mediaService;
+    private readonly DispatcherQueue? dispatcherQueue;
     private string questionText = "Describe a challenging project you worked on and how you resolved it.";
     private bool isPreviewing;
     private bool isRecording;
     private string recordedFilePath = string.Empty;
+    private string recordingError = string.Empty;
     private Microsoft.UI.Xaml.Visibility stopPreviewButtonVisibility = Microsoft.UI.Xaml.Visibility.Collapsed;
     private ObservableCollection<DeviceInformation> cameras = new ();
     private DeviceInformation? selectedCamera;
@@ -35,6 +39,8 @@ public class InterviewViewModel : INotifyPropertyChanged
     public InterviewViewModel(IMediaCaptureService mediaService)
     {
         this.mediaService = mediaService;
+        this.dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        this.mediaService.RecordLimitationExceeded += this.OnRecordLimitationExceeded;
     }
 
     /// <summary>
@@ -83,6 +89,7 @@ public class InterviewViewModel : INotifyPropertyChanged
         {
             this.isRecording = value;
             this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.RecordButtonLabel));
         }
     }
 
