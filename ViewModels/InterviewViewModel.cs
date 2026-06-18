@@ -324,9 +324,13 @@ public class InterviewViewModel : INotifyPropertyChanged
         this.RecordingError = string.Empty;
 
         if (this.IsRecording)
+        {
             await this.StopRecordingAsync().ConfigureAwait(false);
+        }
         else
+        {
             await this.StartRecordingAsync(baseFileName).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -336,9 +340,13 @@ public class InterviewViewModel : INotifyPropertyChanged
     private void OnRecordLimitationExceeded(object? sender, EventArgs e)
     {
         if (this.dispatcherQueue != null && !this.dispatcherQueue.HasThreadAccess)
+        {
             _ = this.dispatcherQueue.TryEnqueue(async () => await this.HandleRecordLimitExceededAsync());
+        }
         else
+        {
             _ = this.HandleRecordLimitExceededAsync();
+        }
     }
 
     /// <summary>

@@ -38,7 +38,9 @@ public sealed partial class MainPage : Page
         {
             if (e.PropertyName == nameof(InterviewViewModel.RecordingError)
                 && !string.IsNullOrEmpty(this.ViewModel.RecordingError))
+            {
                 _ = this.ShowErrorDialog("Recording Error", this.ViewModel.RecordingError);
+            }
         };
 
         this.Unloaded += (s, e) => this.OnPageUnloaded();

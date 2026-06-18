@@ -213,7 +213,7 @@ public class MediaCaptureService : IMediaCaptureService, IAsyncDisposable, IDisp
         }
     }
 
-    private void OnMediaCaptureRecordLimitationExceeded(MediaCapture sender, object args)
+    private void OnMediaCaptureRecordLimitationExceeded(MediaCapture sender)
         => this.RecordLimitationExceeded?.Invoke(this, EventArgs.Empty);
 
     private void TryDispose<T>(ref T? resource, string name)
