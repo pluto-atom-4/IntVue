@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,24 +25,17 @@ namespace IntVue.Views;
 /// Main application page with direct code-behind camera capture, preview, and recording logic.
 /// Implements a simplified state machine without MVVM abstractions for MVP stability.
 /// </summary>
-public sealed partial class MainPage : Page
+public sealed partial class MainPage : Page, IDisposable
 {
-    private enum LogMessageType
-    {
-        Message,
-        Success,
-        Error
-    }
-
     private MediaCapture? mediaCapture;
     private MediaPlayer? mediaPlayer;
     private List<DeviceInformation>? deviceList;
     private List<MediaFrameSource>? previewSourceList;
     private MediaFrameSource? currentPreviewSource;
     private StringBuilder logBuilder = new StringBuilder();
-
     private LowLagMediaRecording? mediaRecording;
-    private bool isRecording = false;
+    private bool isRecording;
+    private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -49,59 +43,78 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         this.InitializeComponent();
-        InitializeUI();
-        Log("Application started", LogMessageType.Message);
+        this.InitializeUI();
+        this.Log("Application started", LogMessageType.Message);
+        this.Unloaded += (s, e) => this.Dispose();
+    }
+
+    /// <summary>
+    /// Disposes resources owned by the page.
+    /// </summary>
+    public void Dispose()
+    {
+        if (this.disposed)
+        {
+            return;
+        }
+
+        this.mediaPlayer?.Dispose();
+        this.mediaCapture?.Dispose();
+        this.mediaRecording = null;
+
+        this.disposed = true;
+        GC.SuppressFinalize(this);
     }
 
     private void InitializeUI()
     {
-        PopulateCameraList();
+        this.PopulateCameraList();
     }
 
     private async void PopulateCameraList()
     {
-        Log("Enumerating camera devices...", LogMessageType.Message);
-        CbCameraList.Items.Clear();
+        this.Log("Enumerating camera devices...", LogMessageType.Message);
+        this.CbCameraList.Items.Clear();
 
         try
         {
-            deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
+            this.deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
 
-            if (deviceList.Count == 0)
+            if (this.deviceList.Count == 0)
             {
-                Log("No camera devices found!", LogMessageType.Error);
+                this.Log("No camera devices found!", LogMessageType.Error);
                 return;
             }
 
-            foreach (var device in deviceList)
+            foreach (var device in this.deviceList)
             {
-                CbCameraList.Items.Add(device.Name);
-                Log($"Found device: {device.Name} (ID: {device.Id})", LogMessageType.Message);
+                this.CbCameraList.Items.Add(device.Name);
+                this.Log($"Found device: {device.Name} (ID: {device.Id})", LogMessageType.Message);
             }
 
-            CbCameraList.SelectedIndex = 0;
-            Log($"Found {deviceList.Count} camera(s)", LogMessageType.Success);
+            this.CbCameraList.SelectedIndex = 0;
+            this.Log($"Found {this.deviceList.Count} camera(s)", LogMessageType.Success);
         }
         catch (Exception ex)
         {
-            Log($"Error enumerating devices: {ex.Message}", LogMessageType.Error);
+            this.Log($"Error enumerating devices: {ex.Message}", LogMessageType.Error);
         }
     }
 
     private async void BtnInitializeDevice_Click(object sender, RoutedEventArgs e)
     {
-        Log("Initializing device...", LogMessageType.Message);
+        this.Log("Initializing device...", LogMessageType.Message);
 
         try
         {
-            await InitializeMediaCapture();
-            BtnPreview.IsEnabled = true;
-            BtnRecord.IsEnabled = true;
-            Log("Device initialized successfully", LogMessageType.Success);
+            await this.InitializeMediaCapture();
+            this.BtnPreview.IsEnabled = true;
+            this.BtnRecord.IsEnabled = true;
+            this.Log("Device initialized successfully", LogMessageType.Success);
         }
         catch (Exception ex)
         {
-            Log($"Failed to initialize device: {ex.Message}", LogMessageType.Error);
+            this.Log($"Failed to initialize device: {ex.Message}", LogMessageType.Error);
         }
     }
 
@@ -109,165 +122,167 @@ public sealed partial class MainPage : Page
     {
         try
         {
-            int deviceIdx = CbCameraList.SelectedIndex;
-            if (deviceList == null || deviceIdx < 0)
+            int deviceIdx = this.CbCameraList.SelectedIndex;
+            if (this.deviceList == null || deviceIdx < 0)
             {
-                Log("Select device before starting", LogMessageType.Error);
+                this.Log("Select device before starting", LogMessageType.Error);
                 return;
             }
 
-            mediaCapture = new MediaCapture();
+            this.mediaCapture = new MediaCapture();
 
             var settings = new MediaCaptureInitializationSettings
             {
-                VideoDeviceId = deviceList[deviceIdx].Id,
-                StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo
+                VideoDeviceId = this.deviceList[deviceIdx].Id,
+                StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo,
             };
 
-            Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
-            await mediaCapture.InitializeAsync(settings);
+            this.Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
+            await this.mediaCapture.InitializeAsync(settings);
 
-            await PopulatePreviewSources();
+            await this.PopulatePreviewSources();
         }
         catch (Exception ex)
         {
-            Log($"MediaCapture initialization failed: {ex.Message}", LogMessageType.Error);
+            this.Log($"MediaCapture initialization failed: {ex.Message}", LogMessageType.Error);
 
-            if (mediaCapture != null)
+            if (this.mediaCapture != null)
             {
-                mediaCapture.Dispose();
-                mediaCapture = null;
+                this.mediaCapture.Dispose();
+                this.mediaCapture = null;
             }
         }
     }
 
     private async Task PopulatePreviewSources()
     {
-        Log("Populating preview sources...", LogMessageType.Message);
+        this.Log("Populating preview sources...", LogMessageType.Message);
 
         try
         {
-            if (mediaCapture == null)
+            if (this.mediaCapture == null)
+            {
                 return;
+            }
 
-            previewSourceList = new List<MediaFrameSource>();
+            this.previewSourceList = new List<MediaFrameSource>();
 
-            foreach (var source in mediaCapture.FrameSources.Values)
+            foreach (var source in this.mediaCapture.FrameSources.Values)
             {
                 if (source.Info.MediaStreamType == MediaStreamType.VideoPreview ||
                     source.Info.MediaStreamType == MediaStreamType.VideoRecord)
                 {
-                    previewSourceList.Add(source);
-                    Log($"Found preview source: {source.Info.SourceKind}", LogMessageType.Message);
+                    this.previewSourceList.Add(source);
+                    this.Log($"Found preview source: {source.Info.SourceKind}", LogMessageType.Message);
                 }
             }
 
-            if (previewSourceList.Count > 0)
+            if (this.previewSourceList.Count > 0)
             {
-                Log($"Found {previewSourceList.Count} preview source(s)", LogMessageType.Success);
+                this.Log($"Found {this.previewSourceList.Count} preview source(s)", LogMessageType.Success);
             }
             else
             {
-                Log("No preview sources found", LogMessageType.Error);
+                this.Log("No preview sources found", LogMessageType.Error);
             }
         }
         catch (Exception ex)
         {
-            Log($"Error populating preview sources: {ex.Message}", LogMessageType.Error);
+            this.Log($"Error populating preview sources: {ex.Message}", LogMessageType.Error);
         }
     }
 
     private void BtnPreview_Click(object sender, RoutedEventArgs e)
     {
-        if (BtnPreview.Content.ToString() == "Start Preview")
+        if (this.BtnPreview.Content.ToString() == "Start Preview")
         {
-            StartPreview();
+            this.StartPreview();
         }
         else
         {
-            StopPreview();
+            this.StopPreview();
         }
     }
 
     private bool StartPreview()
     {
-        Log("Starting preview...", LogMessageType.Message);
+        this.Log("Starting preview...", LogMessageType.Message);
 
         try
         {
-            if (mediaCapture == null)
+            if (this.mediaCapture == null)
             {
-                Log("MediaCapture not initialized", LogMessageType.Error);
+                this.Log("MediaCapture not initialized", LogMessageType.Error);
                 return false;
             }
 
-            if (previewSourceList == null || previewSourceList.Count == 0)
+            if (this.previewSourceList == null || this.previewSourceList.Count == 0)
             {
-                Log("No preview sources available", LogMessageType.Error);
+                this.Log("No preview sources available", LogMessageType.Error);
                 return false;
             }
 
-            currentPreviewSource = previewSourceList[0];
+            this.currentPreviewSource = this.previewSourceList[0];
 
-            mediaPlayer = new MediaPlayer
+            this.mediaPlayer = new MediaPlayer
             {
                 RealTimePlayback = true,
                 AutoPlay = false,
-                Source = MediaSource.CreateFromMediaFrameSource(currentPreviewSource)
+                Source = MediaSource.CreateFromMediaFrameSource(this.currentPreviewSource),
             };
 
-            PreviewControl.SetMediaPlayer(mediaPlayer);
-            mediaPlayer.Play();
+            this.PreviewControl.SetMediaPlayer(this.mediaPlayer);
+            this.mediaPlayer.Play();
 
-            BtnPreview.Content = "Stop Preview";
+            this.BtnPreview.Content = "Stop Preview";
 
-            Log("Preview started successfully", LogMessageType.Success);
+            this.Log("Preview started successfully", LogMessageType.Success);
             return true;
         }
         catch (Exception ex)
         {
-            Log($"Error starting preview: {ex.Message}", LogMessageType.Error);
+            this.Log($"Error starting preview: {ex.Message}", LogMessageType.Error);
             return false;
         }
     }
 
     private void StopPreview()
     {
-        Log("Stopping preview...", LogMessageType.Message);
+        this.Log("Stopping preview...", LogMessageType.Message);
 
         try
         {
-            if (mediaPlayer != null)
+            if (this.mediaPlayer != null)
             {
-                mediaPlayer.Pause();
-                mediaPlayer = null;
+                this.mediaPlayer.Pause();
+                this.mediaPlayer = null;
             }
 
-            BtnPreview.Content = "Start Preview";
+            this.BtnPreview.Content = "Start Preview";
 
-            Log("Preview stopped", LogMessageType.Success);
+            this.Log("Preview stopped", LogMessageType.Success);
         }
         catch (Exception ex)
         {
-            Log($"Error stopping preview: {ex.Message}", LogMessageType.Error);
+            this.Log($"Error stopping preview: {ex.Message}", LogMessageType.Error);
         }
     }
 
     private async void BtnRecord_Click(object sender, RoutedEventArgs e)
     {
-        if (mediaCapture == null)
+        if (this.mediaCapture == null)
         {
-            Log("Initialize MediaCapture before recording.", LogMessageType.Error);
+            this.Log("Initialize MediaCapture before recording.", LogMessageType.Error);
             return;
         }
 
-        if (!isRecording)
+        if (!this.isRecording)
         {
-            await StartRecordingAsync();
+            await this.StartRecordingAsync();
         }
         else
         {
-            await StopRecordingAsync();
+            await this.StopRecordingAsync();
         }
     }
 
@@ -275,86 +290,96 @@ public sealed partial class MainPage : Page
     {
         try
         {
-            Log("Preparing capture file storage...", LogMessageType.Message);
+            this.Log("Preparing capture file storage...", LogMessageType.Message);
             StorageLibrary myVideos = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Videos);
 
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             MediaEncodingProfile encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
 
-            mediaCapture!.RecordLimitationExceeded += OnMediaCaptureRecordLimitationExceeded;
+            this.mediaCapture!.RecordLimitationExceeded += this.OnMediaCaptureRecordLimitationExceeded;
 
-            Log("Initializing recording profile...", LogMessageType.Message);
-            mediaRecording = await mediaCapture.PrepareLowLagRecordToStorageFileAsync(encodingProfile, file);
+            this.Log("Initializing recording profile...", LogMessageType.Message);
+            this.mediaRecording = await this.mediaCapture.PrepareLowLagRecordToStorageFileAsync(encodingProfile, file);
 
-            await mediaRecording.StartAsync();
+            await this.mediaRecording.StartAsync();
 
-            isRecording = true;
-            BtnRecord.Content = "Stop Recording";
-            Log($"Successfully recording capture live to: {file.Path}", LogMessageType.Success);
+            this.isRecording = true;
+            this.BtnRecord.Content = "Stop Recording";
+            this.Log($"Successfully recording capture live to: {file.Path}", LogMessageType.Success);
         }
         catch (Exception ex)
         {
-            Log($"Failed to start recording: {ex.Message}", LogMessageType.Error);
-            isRecording = false;
-            BtnRecord.Content = "Start Recording";
+            this.Log($"Failed to start recording: {ex.Message}", LogMessageType.Error);
+            this.isRecording = false;
+            this.BtnRecord.Content = "Start Recording";
         }
     }
 
     private async Task StopRecordingAsync()
     {
-        if (mediaRecording == null || !isRecording) return;
+        if (this.mediaRecording == null || !this.isRecording)
+        {
+            return;
+        }
 
         try
         {
-            Log("Sending stop session token command...", LogMessageType.Message);
-            await mediaRecording.StopAsync();
+            this.Log("Sending stop session token command...", LogMessageType.Message);
+            await this.mediaRecording.StopAsync();
 
-            Log("Invoking finalization file IO flushes...", LogMessageType.Message);
-            await mediaRecording.FinishAsync();
+            this.Log("Invoking finalization file IO flushes...", LogMessageType.Message);
+            await this.mediaRecording.FinishAsync();
         }
         catch (Exception ex)
         {
-            Log($"Error during stop pipeline: {ex.Message}", LogMessageType.Error);
+            this.Log($"Error during stop pipeline: {ex.Message}", LogMessageType.Error);
         }
         finally
         {
-            if (mediaCapture != null)
+            if (this.mediaCapture != null)
             {
-                mediaCapture.RecordLimitationExceeded -= OnMediaCaptureRecordLimitationExceeded;
+                this.mediaCapture.RecordLimitationExceeded -= this.OnMediaCaptureRecordLimitationExceeded;
             }
 
-            mediaRecording = null;
-            isRecording = false;
-            BtnRecord.Content = "Start Recording";
-            Log("Recording pipeline dropped and saved clean.", LogMessageType.Success);
+            this.mediaRecording = null;
+            this.isRecording = false;
+            this.BtnRecord.Content = "Start Recording";
+            this.Log("Recording pipeline dropped and saved clean.", LogMessageType.Success);
         }
     }
 
     private void OnMediaCaptureRecordLimitationExceeded(MediaCapture sender)
     {
-        Log("System tracking limit threshold breached. Halting context.", LogMessageType.Error);
+        this.Log("System tracking limit threshold breached. Halting context.", LogMessageType.Error);
 
-        _ = this.DispatcherQueue.EnqueueAsync(async () =>
+        _ = this.DispatcherQueue.TryEnqueue(async () =>
         {
-            await StopRecordingAsync();
+            await this.StopRecordingAsync();
         });
     }
 
     private void Log(string message, LogMessageType type = LogMessageType.Message)
     {
-        var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+        var timestamp = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
         var logEntry = $"[{timestamp}] {message}\n";
 
-        logBuilder.Append(logEntry);
+        this.logBuilder.Append(logEntry);
 
 #if DEBUG
         var typeStr = type switch
         {
             LogMessageType.Success => "✓",
             LogMessageType.Error => "✗",
-            _ => "•"
+            _ => "•",
         };
         Trace.WriteLine($"[IntVue] {typeStr} {message}");
 #endif
+    }
+
+    private enum LogMessageType
+    {
+        Message,
+        Success,
+        Error,
     }
 }

@@ -66,7 +66,7 @@ public class ConsentService : IConsentService
         var dialog = new ContentDialog
         {
             Title = "Privacy Notice",
-            Content = this.BuildConsentMessage(),
+            Content = BuildConsentMessage(),
             PrimaryButtonText = "I Agree",
             CloseButtonText = "Decline",
             XamlRoot = (XamlRoot)xamlRoot,
@@ -80,7 +80,7 @@ public class ConsentService : IConsentService
         // Check if user clicked "I Agree" button
         if (result == ContentDialogResult.Primary)
         {
-            this.SetConsentGiven();
+            SetConsentGiven();
             return true;
         }
 
@@ -100,7 +100,7 @@ public class ConsentService : IConsentService
     /// <summary>
     /// Sets consent as given and records the timestamp.
     /// </summary>
-    private void SetConsentGiven()
+    private static void SetConsentGiven()
     {
         var settings = ApplicationData.Current.LocalSettings;
         settings.Values[ConsentGivenKey] = true;
@@ -111,7 +111,7 @@ public class ConsentService : IConsentService
     /// Builds the consent message displayed in the dialog.
     /// </summary>
     /// <returns>The consent message text.</returns>
-    private string BuildConsentMessage()
+    private static string BuildConsentMessage()
     {
         return "IntVue requires access to your camera and microphone to record interview practice videos.\n\n" +
                "Recordings are saved locally on your device and are not transmitted to any external service.\n\n" +

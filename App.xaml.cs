@@ -4,16 +4,13 @@ using System;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
-using IntVue.Services;
-using IntVue.ViewModels;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 namespace IntVue;
 
 /// <summary>
-/// Application entry point and DI configuration.
+/// Application entry point. Uses direct code-behind approach for MVP stability.
 /// </summary>
 [SupportedOSPlatform("windows10.0.17763.0")]
 public partial class App : Application
@@ -51,18 +48,11 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Configure dependency injection services.
+    /// Configure dependency injection services (currently minimal for MVP).
     /// </summary>
     private static ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-
-        // Services
-        services.AddSingleton<IMediaCaptureService, MediaCaptureService>();
-
-        // ViewModels
-        services.AddTransient<InterviewViewModel>();
-
         return services.BuildServiceProvider();
     }
 }
