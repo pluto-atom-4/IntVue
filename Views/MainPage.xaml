@@ -17,12 +17,13 @@
         </Grid.RowDefinitions>
 
         <!-- Preview host -->
-        <controls:MediaPlayerElement x:Name="PreviewControl" AreTransportControlsEnabled="False" Grid.Row="0" />
+        <controls:MediaPlayerElement x:Name="PreviewControl" AreTransportControlsEnabled="True" Grid.Row="0" />
 
         <!-- Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
             <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" AutomationProperties.Name="PreviewButton" />
             <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
+            <Button x:Name="BtnPlay" Content="Play Recording" Click="BtnPlay_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="PlayButton" />
         </StackPanel>
 
         <!-- Device initialization -->
