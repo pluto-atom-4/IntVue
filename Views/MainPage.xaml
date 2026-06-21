@@ -24,6 +24,7 @@
             <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" AutomationProperties.Name="PreviewButton" />
             <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
             <Button x:Name="BtnPlay" Content="Play Recording" Click="BtnPlay_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="PlayButton" />
+            <Button x:Name="BtnDelete" Content="Delete Recording" Click="BtnDelete_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="DeleteButton" AutomationProperties.AutomationId="DeleteRecordingButton" />
         </StackPanel>
 
         <!-- Device initialization -->

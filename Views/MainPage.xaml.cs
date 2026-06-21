@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -330,6 +331,7 @@ public sealed partial class MainPage : Page, IDisposable
             this.BtnRecord.Content = "Stop Recording";
             this.BtnPlay.IsEnabled = false;
             this.BtnPlay.Content = "Play Recording";
+            this.BtnDelete.IsEnabled = false;
             this.Log($"Successfully recording capture live to: {file.Path}", LogMessageType.Success);
         }
         catch (Exception ex)
@@ -358,6 +360,7 @@ public sealed partial class MainPage : Page, IDisposable
             if (this.recordedFile != null)
             {
                 this.BtnPlay.IsEnabled = true;
+                this.BtnDelete.IsEnabled = true;
                 this.Log("Recording saved. Click 'Play Recording' to review.", LogMessageType.Success);
             }
         }
@@ -442,6 +445,7 @@ public sealed partial class MainPage : Page, IDisposable
         this.PreviewControl.AreTransportControlsEnabled = false;
         this.BtnPlay.Content = "Play Recording";
         this.BtnPlay.IsEnabled = this.recordedFile != null;
+        this.BtnDelete.IsEnabled = this.recordedFile != null;
         this.BtnPreview.Content = "Start Preview";
         this.BtnPreview.IsEnabled = true;
         this.BtnRecord.Content = "Start Recording";
@@ -464,6 +468,61 @@ public sealed partial class MainPage : Page, IDisposable
         else
         {
             this.StopPlayback();
+        }
+    }
+
+    private async void BtnDelete_Click(object sender, RoutedEventArgs e)
+    {
+        await this.DeleteRecordingAsync();
+    }
+
+    private async Task DeleteRecordingAsync()
+    {
+        // Validate recorded file exists
+        if (this.recordedFile == null)
+        {
+            this.Log("No recording available to delete", LogMessageType.Error);
+            return;
+        }
+
+        try
+        {
+            // Stop playback if active before deleting file
+            if (this.BtnPlay.Content.ToString() == "Stop Playback")
+            {
+                this.Log("Stopping playback before deletion...", LogMessageType.Message);
+                this.StopPlayback();
+            }
+
+            // Delete file
+            this.Log($"Deleting recorded file: {this.recordedFile.Name}", LogMessageType.Message);
+            await this.recordedFile.DeleteAsync();
+
+            // Clear reference
+            this.recordedFile = null;
+
+            // Update UI state
+            this.BtnDelete.IsEnabled = false;
+            this.BtnPlay.IsEnabled = false;
+            this.BtnPlay.Content = "Play Recording";
+
+            // Log success
+            this.Log("Recording deleted successfully", LogMessageType.Success);
+        }
+        catch (FileNotFoundException ex)
+        {
+            this.Log($"File already deleted externally: {ex.Message}", LogMessageType.Error);
+            this.recordedFile = null;
+            this.BtnDelete.IsEnabled = false;
+            this.BtnPlay.IsEnabled = false;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            this.Log($"Permission denied when deleting file: {ex.Message}", LogMessageType.Error);
+        }
+        catch (Exception ex)
+        {
+            this.Log($"Error deleting recording: {ex.Message}", LogMessageType.Error);
         }
     }
 
