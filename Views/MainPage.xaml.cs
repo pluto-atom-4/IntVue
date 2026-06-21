@@ -34,8 +34,16 @@ public sealed partial class MainPage : Page, IDisposable
     private MediaFrameSource? currentPreviewSource;
     private StringBuilder logBuilder = new StringBuilder();
     private LowLagMediaRecording? mediaRecording;
+    private StorageFile? recordedFile;
     private bool isRecording;
     private bool disposed;
+
+    private enum LogMessageType
+    {
+        Message,
+        Success,
+        Error,
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -61,6 +69,7 @@ public sealed partial class MainPage : Page, IDisposable
         this.mediaPlayer?.Dispose();
         this.mediaCapture?.Dispose();
         this.mediaRecording = null;
+        this.recordedFile = null;
 
         this.disposed = true;
         GC.SuppressFinalize(this);
@@ -252,6 +261,13 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
+            // If playback is active, stop it instead
+            if (this.BtnPlay.Content.ToString() == "Stop Playback")
+            {
+                this.StopPlayback();
+                return;
+            }
+
             if (this.mediaPlayer != null)
             {
                 this.mediaPlayer.Pause();
@@ -288,12 +304,19 @@ public sealed partial class MainPage : Page, IDisposable
 
     private async Task StartRecordingAsync()
     {
+        // Stop playback if active before starting new recording
+        if (this.BtnPlay.Content.ToString() == "Stop Playback")
+        {
+            this.StopPlayback();
+        }
+
         try
         {
             this.Log("Preparing capture file storage...", LogMessageType.Message);
             StorageLibrary myVideos = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Videos);
 
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+            this.recordedFile = file;
             MediaEncodingProfile encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
 
             this.mediaCapture!.RecordLimitationExceeded += this.OnMediaCaptureRecordLimitationExceeded;
@@ -305,6 +328,8 @@ public sealed partial class MainPage : Page, IDisposable
 
             this.isRecording = true;
             this.BtnRecord.Content = "Stop Recording";
+            this.BtnPlay.IsEnabled = false;
+            this.BtnPlay.Content = "Play Recording";
             this.Log($"Successfully recording capture live to: {file.Path}", LogMessageType.Success);
         }
         catch (Exception ex)
@@ -329,6 +354,12 @@ public sealed partial class MainPage : Page, IDisposable
 
             this.Log("Invoking finalization file IO flushes...", LogMessageType.Message);
             await this.mediaRecording.FinishAsync();
+
+            if (this.recordedFile != null)
+            {
+                this.BtnPlay.IsEnabled = true;
+                this.Log("Recording saved. Click 'Play Recording' to review.", LogMessageType.Success);
+            }
         }
         catch (Exception ex)
         {
@@ -358,6 +389,84 @@ public sealed partial class MainPage : Page, IDisposable
         });
     }
 
+    private async Task PlayRecordingAsync()
+    {
+        if (this.recordedFile == null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Stop live preview before switching to playback
+            if (this.mediaPlayer != null)
+            {
+                this.mediaPlayer.Pause();
+                this.PreviewControl.SetMediaPlayer(null);
+                this.mediaPlayer = null;
+            }
+
+            this.mediaPlayer = new MediaPlayer();
+            this.mediaPlayer.Source = MediaSource.CreateFromStorageFile(this.recordedFile);
+            this.mediaPlayer.MediaEnded += this.OnPlaybackEnded;
+
+            this.PreviewControl.SetMediaPlayer(this.mediaPlayer);
+            this.PreviewControl.AreTransportControlsEnabled = true;
+            this.mediaPlayer.Play();
+
+            // Update UI
+            this.BtnPlay.Content = "Stop Playback";
+            this.BtnPreview.IsEnabled = false;
+            this.BtnRecord.IsEnabled = false;
+
+            this.Log("Playback started.", LogMessageType.Message);
+        }
+        catch (Exception ex)
+        {
+            this.Log($"Playback failed: {ex.Message}", LogMessageType.Error);
+            this.BtnPlay.IsEnabled = false;
+        }
+    }
+
+    private void StopPlayback()
+    {
+        if (this.mediaPlayer != null)
+        {
+            this.mediaPlayer.MediaEnded -= this.OnPlaybackEnded;
+            this.mediaPlayer.Pause();
+            this.PreviewControl.SetMediaPlayer(null);
+            this.mediaPlayer.Dispose();
+            this.mediaPlayer = null;
+        }
+
+        this.PreviewControl.AreTransportControlsEnabled = false;
+        this.BtnPlay.Content = "Play Recording";
+        this.BtnPlay.IsEnabled = this.recordedFile != null;
+        this.BtnPreview.Content = "Start Preview";
+        this.BtnPreview.IsEnabled = true;
+        this.BtnRecord.Content = "Start Recording";
+        this.BtnRecord.IsEnabled = false;
+
+        this.Log("Playback stopped.", LogMessageType.Message);
+    }
+
+    private void OnPlaybackEnded(MediaPlayer sender, object args)
+    {
+        this.DispatcherQueue.TryEnqueue(() => this.StopPlayback());
+    }
+
+    private async void BtnPlay_Click(object sender, RoutedEventArgs e)
+    {
+        if (this.BtnPlay.Content.ToString() == "Play Recording")
+        {
+            await this.PlayRecordingAsync();
+        }
+        else
+        {
+            this.StopPlayback();
+        }
+    }
+
     private void Log(string message, LogMessageType type = LogMessageType.Message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -374,12 +483,5 @@ public sealed partial class MainPage : Page, IDisposable
         };
         Trace.WriteLine($"[IntVue] {typeStr} {message}");
 #endif
-    }
-
-    private enum LogMessageType
-    {
-        Message,
-        Success,
-        Error,
     }
 }
