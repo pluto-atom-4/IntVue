@@ -378,6 +378,7 @@ public sealed partial class MainPage : Page, IDisposable
             this.mediaRecording = null;
             this.isRecording = false;
             this.BtnRecord.Content = "Start Recording";
+            this.BtnRecord.IsEnabled = false;
             this.Log("Recording pipeline dropped and saved clean.", LogMessageType.Success);
         }
     }
@@ -505,6 +506,8 @@ public sealed partial class MainPage : Page, IDisposable
             this.BtnDelete.IsEnabled = false;
             this.BtnPlay.IsEnabled = false;
             this.BtnPlay.Content = "Play Recording";
+            this.BtnRecord.IsEnabled = true;
+            this.BtnRecord.Content = "Start Recording";
 
             // Log success
             this.Log("Recording deleted successfully", LogMessageType.Success);
@@ -515,6 +518,7 @@ public sealed partial class MainPage : Page, IDisposable
             this.recordedFile = null;
             this.BtnDelete.IsEnabled = false;
             this.BtnPlay.IsEnabled = false;
+            this.BtnRecord.IsEnabled = true;
         }
         catch (UnauthorizedAccessException ex)
         {
