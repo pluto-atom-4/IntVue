@@ -21,10 +21,10 @@
 
         <!-- Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
-            <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" AutomationProperties.Name="PreviewButton" />
-            <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="RecordButton" />
-            <Button x:Name="BtnPlay" Content="Play Recording" Click="BtnPlay_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="PlayButton" />
-            <Button x:Name="BtnDelete" Content="Delete Recording" Click="BtnDelete_Click" IsEnabled="False" Margin="10,0,0,0" AutomationProperties.Name="DeleteButton" AutomationProperties.AutomationId="DeleteRecordingButton" />
+            <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" TabIndex="2" AccessKey="V" AutomationProperties.Name="PreviewButton" AutomationProperties.AutomationId="PreviewButtonAutomationId" />
+            <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" Margin="10,0,0,0" TabIndex="3" AccessKey="R" AutomationProperties.Name="RecordButton" AutomationProperties.AutomationId="RecordButtonAutomationId" />
+            <Button x:Name="BtnPlay" Content="Play Recording" Click="BtnPlay_Click" IsEnabled="False" Margin="10,0,0,0" TabIndex="4" AccessKey="P" AutomationProperties.Name="PlayButton" AutomationProperties.AutomationId="PlayButtonAutomationId" />
+            <Button x:Name="BtnDelete" Content="Delete Recording" Click="BtnDelete_Click" IsEnabled="False" Margin="10,0,0,0" TabIndex="5" AccessKey="D" AutomationProperties.Name="DeleteButton" AutomationProperties.AutomationId="DeleteRecordingButtonAutomationId" />
         </StackPanel>
 
         <!-- Device initialization -->
@@ -32,11 +32,16 @@
             <ComboBox
                 x:Name="CbCameraList"
                 MinWidth="200"
-                AutomationProperties.Name="Camera Device" />
+                TabIndex="0"
+                AutomationProperties.Name="Camera Device"
+                AutomationProperties.AutomationId="CameraListAutomationId" />
             <Button
                 Content="Initialize Device"
                 Click="BtnInitializeDevice_Click"
-                AutomationProperties.Name="InitializeDeviceButton" />
+                TabIndex="1"
+                AccessKey="I"
+                AutomationProperties.Name="InitializeDeviceButton"
+                AutomationProperties.AutomationId="InitializeDeviceButtonAutomationId" />
         </StackPanel>
     </Grid>
 </Page>
