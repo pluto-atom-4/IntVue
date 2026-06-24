@@ -1,6 +1,7 @@
-namespace IntVue.Tests.Views;
 
 using System.Xml.Linq;
+
+namespace IntVue.Tests.Views;
 
 [TestClass]
 public sealed class MainPageUIAutomationTests
