@@ -10,6 +10,8 @@
     <Platforms>x86;x64;ARM64</Platforms>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <RuntimeIdentifier Condition=" '$(RuntimeIdentifier)' == '' ">win-x64</RuntimeIdentifier>
+    <!-- Run as framework-dependent app for testing -->
+    <SelfContained>false</SelfContained>
     <!-- Ignores the always-true assertion rule so dotnet format can finish without errors -->
     <NoWarn>$(NoWarn);MSTEST0032</NoWarn>
   </PropertyGroup>
