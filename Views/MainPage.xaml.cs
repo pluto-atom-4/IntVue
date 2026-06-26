@@ -28,23 +28,25 @@ namespace IntVue.Views;
 /// </summary>
 public sealed partial class MainPage : Page, IDisposable
 {
-    private MediaCapture? mediaCapture;
-    private MediaPlayer? mediaPlayer;
-    private List<DeviceInformation>? deviceList;
-    private List<MediaFrameSource>? previewSourceList;
-    private MediaFrameSource? currentPreviewSource;
-    private StringBuilder logBuilder = new StringBuilder();
-    private LowLagMediaRecording? mediaRecording;
-    private StorageFile? recordedFile;
-    private bool isRecording;
-    private bool disposed;
-
     private enum LogMessageType
     {
         Message,
         Success,
         Error,
     }
+
+#pragma warning disable SA1201 // Elements should appear in the correct order
+    private MediaCapture? _mediaCapture;
+    private MediaPlayer? _mediaPlayer;
+    private List<DeviceInformation>? _deviceList;
+    private List<MediaFrameSource>? _previewSourceList;
+    private MediaFrameSource? _currentPreviewSource;
+    private StringBuilder _logBuilder = new StringBuilder();
+    private LowLagMediaRecording? _mediaRecording;
+    private StorageFile? _recordedFile;
+    private bool _isRecording;
+    private bool _disposed;
+#pragma warning restore SA1201 // Elements should appear in the correct order
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainPage"/> class.
@@ -62,17 +64,17 @@ public sealed partial class MainPage : Page, IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (this.disposed)
+        if (this._disposed)
         {
             return;
         }
 
-        this.mediaPlayer?.Dispose();
-        this.mediaCapture?.Dispose();
-        this.mediaRecording = null;
-        this.recordedFile = null;
+        this._mediaPlayer?.Dispose();
+        this._mediaCapture?.Dispose();
+        this._mediaRecording = null;
+        this._recordedFile = null;
 
-        this.disposed = true;
+        this._disposed = true;
         GC.SuppressFinalize(this);
     }
 
@@ -88,22 +90,22 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
-            this.deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
+            this._deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
 
-            if (this.deviceList.Count == 0)
+            if (this._deviceList.Count == 0)
             {
                 this.Log("No camera devices found!", LogMessageType.Error);
                 return;
             }
 
-            foreach (var device in this.deviceList)
+            foreach (var device in this._deviceList)
             {
                 this.CbCameraList.Items.Add(device.Name);
                 this.Log($"Found device: {device.Name} (ID: {device.Id})", LogMessageType.Message);
             }
 
             this.CbCameraList.SelectedIndex = 0;
-            this.Log($"Found {this.deviceList.Count} camera(s)", LogMessageType.Success);
+            this.Log($"Found {this._deviceList.Count} camera(s)", LogMessageType.Success);
         }
         catch (Exception ex)
         {
@@ -133,22 +135,22 @@ public sealed partial class MainPage : Page, IDisposable
         try
         {
             int deviceIdx = this.CbCameraList.SelectedIndex;
-            if (this.deviceList == null || deviceIdx < 0)
+            if (this._deviceList == null || deviceIdx < 0)
             {
                 this.Log("Select device before starting", LogMessageType.Error);
                 return;
             }
 
-            this.mediaCapture = new MediaCapture();
+            this._mediaCapture = new MediaCapture();
 
             var settings = new MediaCaptureInitializationSettings
             {
-                VideoDeviceId = this.deviceList[deviceIdx].Id,
+                VideoDeviceId = this._deviceList[deviceIdx].Id,
                 StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo,
             };
 
             this.Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
-            await this.mediaCapture.InitializeAsync(settings);
+            await this._mediaCapture.InitializeAsync(settings);
 
             await this.PopulatePreviewSources();
         }
@@ -156,10 +158,10 @@ public sealed partial class MainPage : Page, IDisposable
         {
             this.Log($"MediaCapture initialization failed: {ex.Message}", LogMessageType.Error);
 
-            if (this.mediaCapture != null)
+            if (this._mediaCapture != null)
             {
-                this.mediaCapture.Dispose();
-                this.mediaCapture = null;
+                this._mediaCapture.Dispose();
+                this._mediaCapture = null;
             }
         }
     }
@@ -170,26 +172,26 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
-            if (this.mediaCapture == null)
+            if (this._mediaCapture == null)
             {
                 return;
             }
 
-            this.previewSourceList = new List<MediaFrameSource>();
+            this._previewSourceList = new List<MediaFrameSource>();
 
-            foreach (var source in this.mediaCapture.FrameSources.Values)
+            foreach (var source in this._mediaCapture.FrameSources.Values)
             {
                 if (source.Info.MediaStreamType == MediaStreamType.VideoPreview ||
                     source.Info.MediaStreamType == MediaStreamType.VideoRecord)
                 {
-                    this.previewSourceList.Add(source);
+                    this._previewSourceList.Add(source);
                     this.Log($"Found preview source: {source.Info.SourceKind}", LogMessageType.Message);
                 }
             }
 
-            if (this.previewSourceList.Count > 0)
+            if (this._previewSourceList.Count > 0)
             {
-                this.Log($"Found {this.previewSourceList.Count} preview source(s)", LogMessageType.Success);
+                this.Log($"Found {this._previewSourceList.Count} preview source(s)", LogMessageType.Success);
             }
             else
             {
@@ -220,29 +222,29 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
-            if (this.mediaCapture == null)
+            if (this._mediaCapture == null)
             {
                 this.Log("MediaCapture not initialized", LogMessageType.Error);
                 return false;
             }
 
-            if (this.previewSourceList == null || this.previewSourceList.Count == 0)
+            if (this._previewSourceList == null || this._previewSourceList.Count == 0)
             {
                 this.Log("No preview sources available", LogMessageType.Error);
                 return false;
             }
 
-            this.currentPreviewSource = this.previewSourceList[0];
+            this._currentPreviewSource = this._previewSourceList[0];
 
-            this.mediaPlayer = new MediaPlayer
+            this._mediaPlayer = new MediaPlayer
             {
                 RealTimePlayback = true,
                 AutoPlay = false,
-                Source = MediaSource.CreateFromMediaFrameSource(this.currentPreviewSource),
+                Source = MediaSource.CreateFromMediaFrameSource(this._currentPreviewSource),
             };
 
-            this.PreviewControl.SetMediaPlayer(this.mediaPlayer);
-            this.mediaPlayer.Play();
+            this.PreviewControl.SetMediaPlayer(this._mediaPlayer);
+            this._mediaPlayer.Play();
 
             this.BtnPreview.Content = "Stop Preview";
 
@@ -269,10 +271,10 @@ public sealed partial class MainPage : Page, IDisposable
                 return;
             }
 
-            if (this.mediaPlayer != null)
+            if (this._mediaPlayer != null)
             {
-                this.mediaPlayer.Pause();
-                this.mediaPlayer = null;
+                this._mediaPlayer.Pause();
+                this._mediaPlayer = null;
             }
 
             this.BtnPreview.Content = "Start Preview";
@@ -287,13 +289,13 @@ public sealed partial class MainPage : Page, IDisposable
 
     private async void BtnRecord_Click(object sender, RoutedEventArgs e)
     {
-        if (this.mediaCapture == null)
+        if (this._mediaCapture == null)
         {
             this.Log("Initialize MediaCapture before recording.", LogMessageType.Error);
             return;
         }
 
-        if (!this.isRecording)
+        if (!this._isRecording)
         {
             await this.StartRecordingAsync();
         }
@@ -317,17 +319,17 @@ public sealed partial class MainPage : Page, IDisposable
             StorageLibrary myVideos = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Videos);
 
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
-            this.recordedFile = file;
+            this._recordedFile = file;
             MediaEncodingProfile encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto);
 
-            this.mediaCapture!.RecordLimitationExceeded += this.OnMediaCaptureRecordLimitationExceeded;
+            this._mediaCapture!.RecordLimitationExceeded += this.OnMediaCaptureRecordLimitationExceeded;
 
             this.Log("Initializing recording profile...", LogMessageType.Message);
-            this.mediaRecording = await this.mediaCapture.PrepareLowLagRecordToStorageFileAsync(encodingProfile, file);
+            this._mediaRecording = await this._mediaCapture.PrepareLowLagRecordToStorageFileAsync(encodingProfile, file);
 
-            await this.mediaRecording.StartAsync();
+            await this._mediaRecording.StartAsync();
 
-            this.isRecording = true;
+            this._isRecording = true;
             this.BtnRecord.Content = "Stop Recording";
             this.BtnPlay.IsEnabled = false;
             this.BtnPlay.Content = "Play Recording";
@@ -337,14 +339,14 @@ public sealed partial class MainPage : Page, IDisposable
         catch (Exception ex)
         {
             this.Log($"Failed to start recording: {ex.Message}", LogMessageType.Error);
-            this.isRecording = false;
+            this._isRecording = false;
             this.BtnRecord.Content = "Start Recording";
         }
     }
 
     private async Task StopRecordingAsync()
     {
-        if (this.mediaRecording == null || !this.isRecording)
+        if (this._mediaRecording == null || !this._isRecording)
         {
             return;
         }
@@ -352,12 +354,12 @@ public sealed partial class MainPage : Page, IDisposable
         try
         {
             this.Log("Sending stop session token command...", LogMessageType.Message);
-            await this.mediaRecording.StopAsync();
+            await this._mediaRecording.StopAsync();
 
             this.Log("Invoking finalization file IO flushes...", LogMessageType.Message);
-            await this.mediaRecording.FinishAsync();
+            await this._mediaRecording.FinishAsync();
 
-            if (this.recordedFile != null)
+            if (this._recordedFile != null)
             {
                 this.BtnPlay.IsEnabled = true;
                 this.BtnDelete.IsEnabled = true;
@@ -370,13 +372,13 @@ public sealed partial class MainPage : Page, IDisposable
         }
         finally
         {
-            if (this.mediaCapture != null)
+            if (this._mediaCapture != null)
             {
-                this.mediaCapture.RecordLimitationExceeded -= this.OnMediaCaptureRecordLimitationExceeded;
+                this._mediaCapture.RecordLimitationExceeded -= this.OnMediaCaptureRecordLimitationExceeded;
             }
 
-            this.mediaRecording = null;
-            this.isRecording = false;
+            this._mediaRecording = null;
+            this._isRecording = false;
             this.BtnRecord.Content = "Start Recording";
             this.BtnRecord.IsEnabled = false;
             this.Log("Recording pipeline dropped and saved clean.", LogMessageType.Success);
@@ -395,7 +397,7 @@ public sealed partial class MainPage : Page, IDisposable
 
     private async Task PlayRecordingAsync()
     {
-        if (this.recordedFile == null)
+        if (this._recordedFile == null)
         {
             return;
         }
@@ -403,20 +405,20 @@ public sealed partial class MainPage : Page, IDisposable
         try
         {
             // Stop live preview before switching to playback
-            if (this.mediaPlayer != null)
+            if (this._mediaPlayer != null)
             {
-                this.mediaPlayer.Pause();
+                this._mediaPlayer.Pause();
                 this.PreviewControl.SetMediaPlayer(null);
-                this.mediaPlayer = null;
+                this._mediaPlayer = null;
             }
 
-            this.mediaPlayer = new MediaPlayer();
-            this.mediaPlayer.Source = MediaSource.CreateFromStorageFile(this.recordedFile);
-            this.mediaPlayer.MediaEnded += this.OnPlaybackEnded;
+            this._mediaPlayer = new MediaPlayer();
+            this._mediaPlayer.Source = MediaSource.CreateFromStorageFile(this._recordedFile);
+            this._mediaPlayer.MediaEnded += this.OnPlaybackEnded;
 
-            this.PreviewControl.SetMediaPlayer(this.mediaPlayer);
+            this.PreviewControl.SetMediaPlayer(this._mediaPlayer);
             this.PreviewControl.AreTransportControlsEnabled = true;
-            this.mediaPlayer.Play();
+            this._mediaPlayer.Play();
 
             // Update UI
             this.BtnPlay.Content = "Stop Playback";
@@ -434,19 +436,19 @@ public sealed partial class MainPage : Page, IDisposable
 
     private void StopPlayback()
     {
-        if (this.mediaPlayer != null)
+        if (this._mediaPlayer != null)
         {
-            this.mediaPlayer.MediaEnded -= this.OnPlaybackEnded;
-            this.mediaPlayer.Pause();
+            this._mediaPlayer.MediaEnded -= this.OnPlaybackEnded;
+            this._mediaPlayer.Pause();
             this.PreviewControl.SetMediaPlayer(null);
-            this.mediaPlayer.Dispose();
-            this.mediaPlayer = null;
+            this._mediaPlayer.Dispose();
+            this._mediaPlayer = null;
         }
 
         this.PreviewControl.AreTransportControlsEnabled = false;
         this.BtnPlay.Content = "Play Recording";
-        this.BtnPlay.IsEnabled = this.recordedFile != null;
-        this.BtnDelete.IsEnabled = this.recordedFile != null;
+        this.BtnPlay.IsEnabled = this._recordedFile != null;
+        this.BtnDelete.IsEnabled = this._recordedFile != null;
         this.BtnPreview.Content = "Start Preview";
         this.BtnPreview.IsEnabled = true;
         this.BtnRecord.Content = "Start Recording";
@@ -480,7 +482,7 @@ public sealed partial class MainPage : Page, IDisposable
     private async Task DeleteRecordingAsync()
     {
         // Validate recorded file exists
-        if (this.recordedFile == null)
+        if (this._recordedFile == null)
         {
             this.Log("No recording available to delete", LogMessageType.Error);
             return;
@@ -496,11 +498,11 @@ public sealed partial class MainPage : Page, IDisposable
             }
 
             // Delete file
-            this.Log($"Deleting recorded file: {this.recordedFile.Name}", LogMessageType.Message);
-            await this.recordedFile.DeleteAsync();
+            this.Log($"Deleting recorded file: {this._recordedFile.Name}", LogMessageType.Message);
+            await this._recordedFile.DeleteAsync();
 
             // Clear reference
-            this.recordedFile = null;
+            this._recordedFile = null;
 
             // Update UI state
             this.BtnDelete.IsEnabled = false;
@@ -515,7 +517,7 @@ public sealed partial class MainPage : Page, IDisposable
         catch (FileNotFoundException ex)
         {
             this.Log($"File already deleted externally: {ex.Message}", LogMessageType.Error);
-            this.recordedFile = null;
+            this._recordedFile = null;
             this.BtnDelete.IsEnabled = false;
             this.BtnPlay.IsEnabled = false;
             this.BtnRecord.IsEnabled = true;
@@ -535,7 +537,7 @@ public sealed partial class MainPage : Page, IDisposable
         var timestamp = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
         var logEntry = $"[{timestamp}] {message}\n";
 
-        this.logBuilder.Append(logEntry);
+        this._logBuilder.Append(logEntry);
 
 #if DEBUG
         var typeStr = type switch

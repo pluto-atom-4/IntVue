@@ -16,9 +16,9 @@ namespace IntVue.Services;
 /// </summary>
 public class ConsentService : IConsentService
 {
-    private const string ConsentGivenKey = "CameraConsentGiven";
-    private const string ConsentTimestampKey = "CameraConsentTimestamp";
-    private const string ConsentDialogDismissedKey = "ConsentDialogDismissed";
+    private const string _consentGivenKey = "CameraConsentGiven";
+    private const string _consentTimestampKey = "CameraConsentTimestamp";
+    private const string _consentDialogDismissedKey = "ConsentDialogDismissed";
 
     /// <inheritdoc/>
     public bool HasGivenConsent
@@ -26,7 +26,7 @@ public class ConsentService : IConsentService
         get
         {
             var settings = ApplicationData.Current.LocalSettings;
-            return (bool?)settings.Values[ConsentGivenKey] ?? false;
+            return (bool?)settings.Values[_consentGivenKey] ?? false;
         }
     }
 
@@ -36,7 +36,7 @@ public class ConsentService : IConsentService
         get
         {
             var settings = ApplicationData.Current.LocalSettings;
-            var value = settings.Values[ConsentTimestampKey];
+            var value = settings.Values[_consentTimestampKey];
             if (value is string timestamp && DateTime.TryParse(timestamp, out var result))
             {
                 return result;
@@ -57,7 +57,7 @@ public class ConsentService : IConsentService
 
         // If dialog was already dismissed this session, don't show again
         var settings = ApplicationData.Current.LocalSettings;
-        if ((bool?)settings.Values[ConsentDialogDismissedKey] ?? false)
+        if ((bool?)settings.Values[_consentDialogDismissedKey] ?? false)
         {
             return false;
         }
@@ -75,7 +75,7 @@ public class ConsentService : IConsentService
         var result = await dialog.ShowAsync();
 
         // Mark dialog as dismissed this session
-        settings.Values[ConsentDialogDismissedKey] = true;
+        settings.Values[_consentDialogDismissedKey] = true;
 
         // Check if user clicked "I Agree" button
         if (result == ContentDialogResult.Primary)
@@ -92,9 +92,9 @@ public class ConsentService : IConsentService
     public void RevokeConsent()
     {
         var settings = ApplicationData.Current.LocalSettings;
-        settings.Values[ConsentGivenKey] = false;
-        settings.Values[ConsentTimestampKey] = null;
-        settings.Values[ConsentDialogDismissedKey] = false;
+        settings.Values[_consentGivenKey] = false;
+        settings.Values[_consentTimestampKey] = null;
+        settings.Values[_consentDialogDismissedKey] = false;
     }
 
     /// <summary>
@@ -103,8 +103,8 @@ public class ConsentService : IConsentService
     private static void SetConsentGiven()
     {
         var settings = ApplicationData.Current.LocalSettings;
-        settings.Values[ConsentGivenKey] = true;
-        settings.Values[ConsentTimestampKey] = DateTime.Now.ToString("O");  // ISO 8601 format
+        settings.Values[_consentGivenKey] = true;
+        settings.Values[_consentTimestampKey] = DateTime.Now.ToString("O");  // ISO 8601 format
     }
 
     /// <summary>

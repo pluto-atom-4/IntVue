@@ -46,6 +46,10 @@ dotnet_naming_symbols.private_fields.required_modifiers =
 dotnet_naming_style.underscore_prefix_style.required_prefix = _
 dotnet_naming_style.underscore_prefix_style.capitalization = camel_case
 
+# Suppress StyleCop SA1309: Field names starting with underscore are allowed per project convention
+dotnet_diagnostic.SA1309.severity = none
+dotnet_diagnostic.SA1101.severity = none
+
 [**/obj/**/*.cs]
 generated_code = true
 
