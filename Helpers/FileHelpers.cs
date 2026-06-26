@@ -12,7 +12,7 @@ namespace IntVue.Helpers;
 public static class FileHelpers
 {
     // Allowed characters: letters, digits, dash, underscore, dot
-    private static readonly Regex InvalidChars = new Regex("[^A-Za-z0-9_.-]+", RegexOptions.Compiled);
+    private static readonly Regex _invalidChars = new Regex("[^A-Za-z0-9_.-]+", RegexOptions.Compiled);
 
     /// <summary>
     /// Sanitize a user-provided filename by removing path separators and invalid characters
@@ -30,7 +30,7 @@ public static class FileHelpers
 
         // Remove path separators and invalid chars
         name = name.Replace("\\", "_").Replace("/", "_");
-        name = InvalidChars.Replace(name, "_");
+        name = _invalidChars.Replace(name, "_");
 
         // Trim to max length (preserve extension if present)
         if (name.Length > maxLength)

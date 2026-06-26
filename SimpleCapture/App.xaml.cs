@@ -1,20 +1,19 @@
-namespace SimpleCapture
+using Microsoft.UI.Xaml;
+
+namespace SimpleCapture;
+
+public partial class App : Application
 {
-    using Microsoft.UI.Xaml;
-
-    public partial class App : Application
+    public App()
     {
-        public App()
-        {
-            this.InitializeComponent();
-        }
-
-        protected override void OnLaunched(LaunchActivatedEventArgs args)
-        {
-            m_window = new MainWindow();
-            m_window.Activate();
-        }
-
-        private Window? m_window;
+        this.InitializeComponent();
     }
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        _window = new MainWindow();
+        _window.Activate();
+    }
+
+    private Window? _window;
 }

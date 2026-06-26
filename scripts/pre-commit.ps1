@@ -104,13 +104,21 @@ try {
     }
 
     # 3) Run tests (optional -- will ensure test suite still passes)
-    # Running tests can be slow; if you prefer to skip tests in pre-commit, comment the following block out.
-    Write-Host 'Running dotnet test (tests may be slow)...'
-    $testArgs = @('test','-c','Debug',"-p:Platform=$Platform")
-    $proc = Start-Process -FilePath 'dotnet' -ArgumentList $testArgs -NoNewWindow -Wait -PassThru
-    if ($proc.ExitCode -ne 0) {
-        Write-Host "dotnet test failed (exit code $($proc.ExitCode)). Fix failing tests before committing." -ForegroundColor Red
-        Exit $proc.ExitCode
+    # Running tests can be slow; set RUN_TESTS=0 to skip or SKIP_TESTS_ON_FAILURE=1 to warn instead of block.
+    if ($env:RUN_TESTS -eq '0') {
+        Write-Host 'Skipping tests (RUN_TESTS=0).' -ForegroundColor Yellow
+    } else {
+        Write-Host 'Running dotnet test (tests may be slow)...'
+        $testArgs = @('test','-c','Debug',"-p:Platform=$Platform")
+        $proc = Start-Process -FilePath 'dotnet' -ArgumentList $testArgs -NoNewWindow -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+            if ($env:SKIP_TESTS_ON_FAILURE -eq '1') {
+                Write-Host "dotnet test failed (exit code $($proc.ExitCode)). Tests are failing but commit allowed (SKIP_TESTS_ON_FAILURE=1)." -ForegroundColor Yellow
+            } else {
+                Write-Host "dotnet test failed (exit code $($proc.ExitCode)). Fix failing tests before committing. Set SKIP_TESTS_ON_FAILURE=1 to bypass." -ForegroundColor Red
+                Exit $proc.ExitCode
+            }
+        }
     }
 
     Write-Host 'Pre-commit checks passed.' -ForegroundColor Green

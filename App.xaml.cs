@@ -18,7 +18,7 @@ public partial class App : Application
     /// <summary>
     /// Backing field for the main application window.
     /// </summary>
-    private Window? window;
+    private Window? _window;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="App"/> class.
@@ -43,8 +43,8 @@ public partial class App : Application
     /// <inheritdoc/>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        this.window = new MainWindow();
-        this.window.Activate();
+        this._window = new MainWindow();
+        this._window.Activate();
     }
 
     /// <summary>

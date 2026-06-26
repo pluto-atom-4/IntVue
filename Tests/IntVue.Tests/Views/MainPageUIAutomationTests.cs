@@ -8,12 +8,27 @@ public sealed class MainPageUIAutomationTests
 {
     private XDocument? _xamlDocument;
 
+    private static string FindProjectRoot()
+    {
+        var dir = new DirectoryInfo(
+            Path.GetDirectoryName(typeof(MainPageUIAutomationTests).Assembly.Location)!);
+        while (dir != null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "IntVue.csproj")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate IntVue project root (no IntVue.csproj found in parent hierarchy)");
+    }
+
     [TestInitialize]
     public void TestInitialize()
     {
-        var projectRoot = Path.GetFullPath(Path.Combine(
-            Path.GetDirectoryName(typeof(MainPageUIAutomationTests).Assembly.Location) ?? "",
-            "../../../../"));
+        var projectRoot = FindProjectRoot();
         var xamlPath = Path.Combine(projectRoot, "Views", "MainPage.xaml");
 
         if (!File.Exists(xamlPath))
@@ -137,7 +152,7 @@ public sealed class MainPageUIAutomationTests
         foreach (var control in interactiveControls)
         {
             var automationId = control.Attributes()
-                .FirstOrDefault(a => a.Name.LocalName == "AutomationId");
+                .FirstOrDefault(a => a.Name.LocalName == "AutomationProperties.AutomationId");
 
             Assert.IsNotNull(automationId,
                 $"Control {control.Attribute(xNamespace + "Name")?.Value} missing AutomationProperties.AutomationId");
@@ -162,7 +177,7 @@ public sealed class MainPageUIAutomationTests
         foreach (var control in interactiveControls)
         {
             var automationName = control.Attributes()
-                .FirstOrDefault(a => a.Name.LocalName == "Name");
+                .FirstOrDefault(a => a.Name.LocalName == "AutomationProperties.Name");
 
             Assert.IsNotNull(automationName,
                 $"Control {control.Attribute(xNamespace + "Name")?.Value} missing AutomationProperties.Name");
@@ -178,7 +193,7 @@ public sealed class MainPageUIAutomationTests
 
         var automationIds = _xamlDocument!
             .Descendants()
-            .Select(e => e.Attributes().FirstOrDefault(a => a.Name.LocalName == "AutomationId"))
+            .Select(e => e.Attributes().FirstOrDefault(a => a.Name.LocalName == "AutomationProperties.AutomationId"))
             .Where(attr => attr != null)
             .Select(attr => attr!.Value)
             .ToList();
@@ -241,7 +256,7 @@ public sealed class MainPageUIAutomationTests
             }
 
             var automationId = control.Attributes()
-                .FirstOrDefault(a => a.Name.LocalName == "AutomationId")?.Value;
+                .FirstOrDefault(a => a.Name.LocalName == "AutomationProperties.AutomationId")?.Value;
             Assert.AreEqual(expectedAutomationId, automationId, $"{controlName} AutomationId mismatch");
         }
     }
