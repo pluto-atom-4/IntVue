@@ -36,6 +36,7 @@
                 AutomationProperties.Name="Camera Device"
                 AutomationProperties.AutomationId="CameraListAutomationId" />
             <Button
+                x:Name="BtnInitializeDevice"
                 Content="Initialize Device"
                 Click="BtnInitializeDevice_Click"
                 TabIndex="1"
