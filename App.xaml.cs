@@ -4,6 +4,8 @@ using System;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
+using IntVue.Services;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
@@ -48,11 +50,12 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Configure dependency injection services (currently minimal for MVP).
+    /// Configure dependency injection services.
     /// </summary>
     private static ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
+        services.AddSingleton<ICountdownService, CountdownService>();
         return services.BuildServiceProvider();
     }
 }
