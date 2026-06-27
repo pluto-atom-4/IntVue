@@ -2,12 +2,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using IntVue.Services;
+using IntVue.ViewModels;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -54,10 +58,19 @@ public sealed partial class MainPage : Page, IDisposable
     public MainPage()
     {
         this.InitializeComponent();
+        this.ViewModel = new MainViewModel(new CountdownService());
+        this.DataContext = this.ViewModel;
+        this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
+        this.ViewModel.PropertyChanged += this.OnViewModelPropertyChanged;
         this.InitializeUI();
         this.Log("Application started", LogMessageType.Message);
         this.Unloaded += (s, e) => this.Dispose();
     }
+
+    /// <summary>
+    /// Gets the main view model for data binding.
+    /// </summary>
+    public MainViewModel ViewModel { get; private set; }
 
     /// <summary>
     /// Disposes resources owned by the page.
@@ -297,7 +310,10 @@ public sealed partial class MainPage : Page, IDisposable
 
         if (!this._isRecording)
         {
-            await this.StartRecordingAsync();
+            if (!this.ViewModel.IsCountingDown)
+            {
+                await this.ViewModel.StartCountdownAsync();
+            }
         }
         else
         {
@@ -548,5 +564,23 @@ public sealed partial class MainPage : Page, IDisposable
         };
         Trace.WriteLine($"[IntVue] {typeStr} {message}");
 #endif
+    }
+
+    private async void OnCountdownCompleted(object? sender, EventArgs e)
+    {
+        this.Log("Countdown completed, starting recording...", LogMessageType.Message);
+        await this.StartRecordingAsync();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.IsCountingDown))
+        {
+            bool counting = this.ViewModel.IsCountingDown;
+            this.BtnRecord.IsEnabled = !counting && this._mediaCapture != null && !this._isRecording;
+            this.BtnPreview.IsEnabled = !counting;
+            this.BtnPlay.IsEnabled = !counting && this._recordedFile != null && !this._isRecording;
+            this.BtnDelete.IsEnabled = !counting && this._recordedFile != null && !this._isRecording;
+        }
     }
 }
