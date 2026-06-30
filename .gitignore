@@ -1,6 +1,93 @@
+# Build artifacts
 bin/
 obj/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.dll
+*.exe
+*.pdb
+
+# Package management
 /packages/
-riderModule.iml
-/_ReSharper.Caches/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Visual Studio cache/options
+.vs/
+.vscode/
+*.sln.iml
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Visual Studio Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# JetBrains Rider
+.idea/
 *.DotSettings.user
+*.csproj.user
+riderModule.iml
+_ReSharper.Caches/
+/_ReSharper.Caches/
+
+# Test artifacts
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+.coverage
+
+# WinUI 3 / Windows App SDK specific
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+*.appxsym
+*.appxupload
+*.msix
+*.msixbundle
+*.pfx
+
+# Local environment
+.env
+.env.local
+.env.*.local
+secrets.json
+appsettings.local.json
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Developer tools
+.editorconfig.user
+.StyleCop.Cache
+.roslyn
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
+*.swp
+*.swo
+
+# NuGet
+.nupkg
+*.lock.json
+
+# User-specific IDE settings (keep the shared ones in git)
+*.DotSettings
+!.idea/runConfigurations/
