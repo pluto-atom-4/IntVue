@@ -15,7 +15,11 @@ public class BoolToVisibilityConverter : IValueConverter
     /// <summary>
     /// Converts a boolean to Visibility.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="value">The boolean value to convert.</param>
+    /// <param name="targetType">The target type (Visibility).</param>
+    /// <param name="parameter">Optional converter parameter (unused).</param>
+    /// <param name="language">The language/culture string (unused).</param>
+    /// <returns>Visibility.Visible if value is true; otherwise Visibility.Collapsed.</returns>
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is bool boolValue)
@@ -29,7 +33,12 @@ public class BoolToVisibilityConverter : IValueConverter
     /// <summary>
     /// Not implemented; conversion is one-way only.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="value">The Visibility value to convert back (unused).</param>
+    /// <param name="targetType">The target type (unused).</param>
+    /// <param name="parameter">Optional converter parameter (unused).</param>
+    /// <param name="language">The language/culture string (unused).</param>
+    /// <returns>Throws NotImplementedException.</returns>
+    /// <exception cref="NotImplementedException">This converter does not support back conversion.</exception>
     public object ConvertBack(object value, Type targetType, object parameter, string language)
         => throw new NotImplementedException();
 }

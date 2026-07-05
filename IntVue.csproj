@@ -10,6 +10,8 @@
         <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
         <UseWinUI>true</UseWinUI>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <InformationalVersion>1.0.0</InformationalVersion>
         <WinUISDKReferences>false</WinUISDKReferences>
         <EnableMsixTooling>true</EnableMsixTooling>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -38,8 +40,9 @@
         <!-- Do not treat warnings as errors by default; team can opt-in via CI -->
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
         <Nullable>enable</Nullable>
-        <!-- Suppress CA1416 (platform compatibility) warnings - this is a Windows-only app -->
-        <NoWarn>$(NoWarn);CA1416</NoWarn>
+        <!-- Suppress CA1016 (assembly version) - already set in PropertyGroup above -->
+        <!-- Suppress CA1416 (platform compatibility) - this is a Windows-only app -->
+        <NoWarn>$(NoWarn);CA1016;CA1416</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

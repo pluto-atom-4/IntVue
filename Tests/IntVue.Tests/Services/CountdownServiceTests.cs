@@ -24,6 +24,7 @@ public class CountdownServiceTests
 
         // Act
         var result = await service.StartAsync(3, progress, cts.Token);
+        await Task.Delay(10); // Allow progress callbacks to complete
 
         // Assert - verify it completed successfully and reported the final value
         Assert.IsTrue(result, "Countdown should return true on normal completion");

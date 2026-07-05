@@ -23,10 +23,13 @@ public class CountdownService : ICountdownService
     /// <summary>
     /// Starts the countdown timer.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <param name="seconds">The number of seconds to count down from.</param>
+    /// <param name="progress">An IProgress callback that reports countdown seconds (seconds down to 0).</param>
+    /// <param name="cancellationToken">A cancellation token to stop the countdown early.</param>
+    /// <returns>A <see cref="Task{Boolean}"/> representing the asynchronous operation. Returns true if countdown completed; false if cancelled.</returns>
     public async Task<bool> StartAsync(int seconds, IProgress<int> progress, CancellationToken cancellationToken)
     {
-        for (int i = seconds; i >= 1; i--)
+        for (int i = seconds; i >= 0; i--)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -35,17 +38,19 @@ public class CountdownService : ICountdownService
 
             progress.Report(i);
 
-            try
+            if (i > 0)
             {
-                await Task.Delay(this._tickInterval, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                return false;
+                try
+                {
+                    await Task.Delay(this._tickInterval, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
             }
         }
 
-        progress.Report(0);
         return true;
     }
 }

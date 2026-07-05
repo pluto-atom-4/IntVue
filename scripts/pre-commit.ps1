@@ -35,23 +35,27 @@ try {
     function Get-FormatWorkspace {
         param([string]$root)
 
-        # Look for solution files (*.sln, *.slnx) at repo root
-        $sln = Get-ChildItem -Path $root -Filter *.sln -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        if (-not $sln) {
-            $sln = Get-ChildItem -Path $root -Filter *.slnx -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        }
-        if ($sln) { return $sln.FullName }
+        # Priority 1: Look for IntVue.csproj (main project)
+        $mainProj = Join-Path $root 'IntVue.csproj'
+        if (Test-Path $mainProj) { return $mainProj }
 
-        # Look for a project file in repo root
-        $projRoot = Get-ChildItem -Path $root -Filter *.csproj -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        # Priority 2: Look for any csproj in repo root that matches repo name
+        $repoName = Split-Path -Leaf $root
+        $projRoot = Get-ChildItem -Path $root -Filter "$repoName.csproj" -File -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($projRoot) { return $projRoot.FullName }
 
-        # Otherwise, try to find a csproj whose name matches the repository folder name
-        $repoName = Split-Path -Leaf $root
-        $matching = Get-ChildItem -Path $root -Recurse -Filter *.csproj -File -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $repoName } | Select-Object -First 1
-        if ($matching) { return $matching.FullName }
+        # Priority 3: Look for solution files (*.slnx, *.sln) at repo root
+        $slnx = Get-ChildItem -Path $root -Filter *.slnx -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($slnx) { return $slnx.FullName }
 
-        # Fall back to any csproj in the tree
+        $sln = Get-ChildItem -Path $root -Filter *.sln -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($sln) { return $sln.FullName }
+
+        # Priority 4: Fall back to any csproj in repo root
+        $anyRootProj = Get-ChildItem -Path $root -MaxDepth 1 -Filter *.csproj -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($anyRootProj) { return $anyRootProj.FullName }
+
+        # Priority 5: Fall back to any csproj in the tree
         $anyProj = Get-ChildItem -Path $root -Recurse -Filter *.csproj -File -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($anyProj) { return $anyProj.FullName }
 
@@ -76,21 +80,27 @@ try {
         } else {
             if ($workspace) {
                 Write-Host "Using workspace for dotnet format: $workspace"
+                if (-not (Test-Path $workspace)) {
+                    Write-Host "ERROR: Workspace file not found: $workspace" -ForegroundColor Red
+                    Exit 1
+                }
                 $workspaceArg = @($workspace)
             } else {
-                Write-Host "No .sln or .csproj found; running 'dotnet format' in repository root (may require explicit workspace)." -ForegroundColor Yellow
+                Write-Host "No .sln or .csproj found; running 'dotnet format' in repository root." -ForegroundColor Yellow
                 $workspaceArg = @()
             }
 
             $formatArgs = @('format','--verify-no-changes') + $workspaceArg
+            Write-Host "Running: dotnet $($formatArgs -join ' ')"
             $proc = Start-Process -FilePath $formatExe -ArgumentList $formatArgs -NoNewWindow -Wait -PassThru
             if ($proc.ExitCode -ne 0) {
-                Write-Host "dotnet format detected formatting issues (exit code $($proc.ExitCode)). Please run 'dotnet format' to fix." -ForegroundColor Yellow
+                Write-Host "dotnet format detected formatting issues (exit code $($proc.ExitCode)). Please run 'dotnet format $($workspaceArg -join ' ')' to fix." -ForegroundColor Yellow
                 Exit $proc.ExitCode
             }
         }
     } catch {
-        Write-Host "Failed to run 'dotnet format'. Ensure dotnet-format is available (dotnet tool install -g dotnet-format) and that the workspace can be resolved." -ForegroundColor Red
+        Write-Host "Failed to run 'dotnet format': $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Ensure dotnet-format is available (dotnet tool install -g dotnet-format) and IntVue.csproj exists." -ForegroundColor Red
         Exit 1
     }
 
