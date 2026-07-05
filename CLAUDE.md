@@ -16,7 +16,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Working with Agents & Automation
+
+**This guide is for Claude Code.** If you are an **autonomous agent** or writing instructions for agents, read **[AGENTS.md](./AGENTS.md)** instead. It contains the comprehensive agent onboarding guide with mandatory workflows.
+
+### When to Consult CLAUDE.md vs AGENTS.md
+
+| Scenario | Read... | Why |
+|---|---|---|
+| **You are Claude Code (claude.ai/code)** using this repo manually | CLAUDE.md (this file) | Quick reference for platform detection, build commands, architecture |
+| **You are an autonomous agent or writing agent instructions** | AGENTS.md | Comprehensive workflows, mandatory file-reading rules, build/run procedures |
+| **Working on a specific scope** (Services/, Views/, ViewModels/) | Both CLAUDE.md and AGENTS.md, then the scoped CLAUDE.md file | Scope-specific guidance applies to both Claude Code and agents |
+| **UI generation, design tokens, theming** | DESIGN.md first, then `.claude/rules/design-*.rules.md` | Visual design system (referenced by both CLAUDE.md and AGENTS.md) |
+
+### Key Differences
+
+**CLAUDE.md** focuses on:
+- Quick-start platform detection and build commands
+- Architecture overview for manual exploration
+- Rules Router for finding the right instruction file
+- Immediate troubleshooting steps
+
+**AGENTS.md** includes:
+- Detailed agent workflows (Before/While/After Writing Code)
+- **Mandatory file reading rules** for instruction files (steps 5-8)
+- Comprehensive Build, Run & Deploy procedures with all options
+- Troubleshooting escalation order (web search → samples → WinMD)
+- Windows AI prerequisites
+- **Project.csproj reading guidance** (source of truth for versions)
+
+### Critical: Platform Detection is Mandatory for All Agents
+
+**Before running ANY build, test, or deployment command**, you (and all agents) **must** detect your platform:
+
+```powershell
+$arch = $env:PROCESSOR_ARCHITECTURE
+$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
+```
+
+See **[AGENTS.md § Detect Platform](./AGENTS.md#detect-platform)** for detailed platform detection and all build/run variants. This is **not optional** — hardcoding a platform value will cause cross-architecture failures.
+
+### Instruction Files Apply to ALL Agents
+
+All files in `.github/instructions/` contain **mandatory rules** that apply to:
+- Claude Code (manual use)
+- Autonomous agents
+- Any contributor using this repository
+
+See **[AGENTS.md § Instruction Files Index](./AGENTS.md#instruction-files-index)** for the complete index and **[§ Core Agent Workflow](./AGENTS.md#core-agent-workflow)** for when to read each file (steps 5-8 are mandatory).
+
+---
+
 ## NEVER DO THIS
+
+**These constraints apply to all agents and contributors.** For additional agent-specific guard rails, see **[AGENTS.md § Key Rules](./AGENTS.md#key-rules-always-enforced)**.
 
 Hard constraints that must never be violated:
 
@@ -32,6 +85,8 @@ Hard constraints that must never be violated:
 
 ## Development Commands
 
+> **For comprehensive build/run/deploy procedures, see [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy).** This section provides quick-reference commands; AGENTS.md contains all variants, troubleshooting, and prerequisites.
+
 ### Platform Detection
 Always detect your CPU architecture first—never hardcode `x64` or `x86`:
 
@@ -39,6 +94,8 @@ Always detect your CPU architecture first—never hardcode `x64` or `x86`:
 $arch = $env:PROCESSOR_ARCHITECTURE
 $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
 ```
+
+**Key Point:** Platform detection is mandatory. Hardcoding a platform value causes cross-architecture failures. See **[AGENTS.md § Detect Platform](./AGENTS.md#detect-platform)** for full details and all supported variants.
 
 ### Build, Test, Run
 ```powershell
@@ -123,9 +180,14 @@ For UI generation tasks: Read `DESIGN.md` first (philosophy & overview), then re
 - **Windows APIs** (API lookup, sample-first rule) → `.github/instructions/windows-apis.instructions.md`
 
 ### Scoped Rules (When Modifying Specific Areas)
+
+**Before starting work on any scope, consult BOTH CLAUDE.md and AGENTS.md**, then the scoped `CLAUDE.md` file (if it exists). All rules in `.github/instructions/` apply equally to Claude Code and all autonomous agents.
+
 - **Services/** (media capture, recording, file operations) → `Services/CLAUDE.md` (planned)
-- **Views/** & **Controls/** (XAML, accessibility, theming, localization) → `Views/CLAUDE.md` (planned)
+- **Views/** & **Controls/** (XAML, accessibility, theming, localization) → [Views/CLAUDE.md](./Views/CLAUDE.md) (reference available)
 - **ViewModels/** (MVVM patterns, async commands, testing) → `ViewModels/CLAUDE.md` (planned)
+
+See **[AGENTS.md § Instruction Files Index](./AGENTS.md#instruction-files-index)** for a complete table of mandatory instruction files and when to read each one (steps 5-8 in **[Core Agent Workflow](./AGENTS.md#core-agent-workflow)**).
 
 ### Specialized Guidance
 - **WinUI 3 & Architecture** → `.github/instructions/winui-best-practices.instructions.md`
@@ -134,12 +196,54 @@ For UI generation tasks: Read `DESIGN.md` first (philosophy & overview), then re
 
 ---
 
+## Agent Coordination & Multi-Agent Safety
+
+When working with multiple agents or coordinating agent workflows:
+
+### Before Handing Off to Another Agent
+
+1. **Document your changes** — Leave clear commit messages that describe what was implemented and why.
+2. **Run the full test suite** — Agents will assume `dotnet test -c Debug -p:Platform=$Platform` passes before they start.
+3. **Verify the app runs** — Use `dotnet run -c Debug -p:Platform=$Platform` to confirm the latest changes work in the live app.
+4. **Check the instruction files** — If you added a new capability or changed a core system, update the relevant `.github/instructions/` file.
+
+### Mandatory Checks for All Agents
+
+Every autonomous agent **must** follow **[AGENTS.md § Core Agent Workflow](./AGENTS.md#core-agent-workflow)** before writing code:
+
+1. ✓ Review the original goal
+2. ✓ Check existing code (DRY)
+3. ✓ Find the right API (Windows APIs catalog)
+4. ✓ Plan the approach (SOLID)
+5. ✓ **Read design-principles.instructions.md** (mandatory)
+6. ✓ **Read applicable instruction files** based on scope (mandatory — steps 6a-6d)
+7. ✓ **Read code-quality.instructions.md** (mandatory)
+8. ✓ **Read winui-best-practices.instructions.md** (mandatory)
+9. ✓ Remove unused code
+10. ✓ Write unit tests
+11. ✓ Build: `dotnet build -c Debug -p:Platform=$Platform`
+12. ✓ Run tests: `dotnet test -c Debug -p:Platform=$Platform`
+13. ✓ Run the app: `dotnet run -c Debug -p:Platform=$Platform`
+14. ✓ Re-review against original goal
+
+**If any mandatory file (steps 5-8) is not read, the implementation is incomplete.**
+
+### Instruction Files are Always Required
+
+- **Never skip reading** `.github/instructions/` files when they apply to your scope.
+- **Never assume** you can infer the rules — read the actual file (AGENTS.md steps 5-8 are mandatory, not optional).
+- **If a build fails**, follow the **[AGENTS.md § Troubleshooting Build Errors](./AGENTS.md#troubleshooting-build-errors)** escalation order: Web Search → Sample Repos → WinMD/Decompiler.
+
+---
+
 ## Quick Start Checklist
 
-- [ ] Detect your platform (see Platform Detection command above)
-- [ ] Read AGENTS.md for detailed agent workflows
-- [ ] Enable Windows Developer Mode
+- [ ] **Read this file (CLAUDE.md)** for quick reference
+- [ ] **If you are an agent, read [AGENTS.md](./AGENTS.md)** for the comprehensive workflow
+- [ ] Detect your platform using the command in § Development Commands
+- [ ] Enable Windows Developer Mode (Settings → System → For developers → Developer Mode → On)
 - [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
 - [ ] Test: `cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform`
 - [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
-- [ ] Always consult the relevant instruction files before making changes
+- [ ] **Before making changes, consult BOTH this file and the relevant `.github/instructions/` file**
+- [ ] **See [DESIGN.md](./DESIGN.md) for UI/visual design tasks**
