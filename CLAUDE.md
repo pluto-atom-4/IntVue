@@ -105,6 +105,15 @@ The app uses `Windows.Media.Capture.MediaCapture` with:
 
 For detailed guidance, consult the relevant section below:
 
+### Design System & Visual Tokens
+- **Design Philosophy & Index** → `DESIGN.md`
+- **Color & Theme Tokens** → `.claude/rules/design-colors.rules.md`
+- **Spacing, Sizing & Layout** → `.claude/rules/design-spacing.rules.md`
+- **Typography Tokens** → `.claude/rules/design-typography.rules.md`
+- **Component & Pattern Rules** → `.claude/rules/design-components.rules.md`
+
+For UI generation tasks: Read `DESIGN.md` first (philosophy & overview), then reference specific rule files as needed.
+
 ### Project-Wide Rules (All Code Changes)
 - **Design Principles** (DRY, KISS, SOLID, YAGNI) → `.github/instructions/design-principles.instructions.md`
 - **Code Quality** (StyleCop, naming, cleanup) → `.github/instructions/code-quality.instructions.md`

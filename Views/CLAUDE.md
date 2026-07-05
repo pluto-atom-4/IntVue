@@ -31,22 +31,30 @@ See `.github/instructions/performance.instructions.md` for details on binding pe
 ## Theming & Colors
 
 - **Never hard-code colors** in XAML or C#. Always use WinUI 3 theme resources.
-- **Use theme resources** to support light, dark, and high-contrast themes automatically.
+- **Use semantic token names** (e.g., `text-primary`, `surface-primary`) as the single source of truth for styling.
+- **Consult DESIGN.md** for complete token definitions, mappings, and usage guidelines.
 
 ```xml
-<!-- GOOD: Theme resource -->
+<!-- GOOD: Theme resource via semantic token -->
 <TextBlock Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-<Button Background="{ThemeResource AccentButtonBackground}" />
+<Button Style="{ThemeResource AccentButtonStyle}" Content="Start Recording" />
 
 <!-- AVOID: Hard-coded colors -->
 <TextBlock Foreground="#000000" />
 <Button Background="#0078D4" />
 ```
 
-**Common theme resources:**
-- Text: `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`
-- Backgrounds: `SolidBackgroundFillColorBaseBrush`, `ControlFillColorDefaultBrush`
-- Buttons: `AccentButtonBackground`, `AccentButtonBackgroundPointerOver`
+**Common theme resources (see DESIGN.md for complete list):**
+- Text: `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`, `TextFillColorDisabledBrush`
+- Backgrounds: `SolidBackgroundFillColorBaseBrush`, `ControlStrongFillColorDefaultBrush`
+- Buttons: `AccentButtonBackground`, `AccentButtonBackgroundPointerOver` (use `Style` instead of `Background`)
+- Semantic: `SystemFillColorSuccessBrush`, `SystemFillColorCriticalBrush`, `SystemFillColorCautionBrush`
+
+**For complete token reference:**
+- **Color & Theme Tokens:** `.claude/rules/design-colors.rules.md` (27 tokens with light/dark examples)
+- **Spacing & Layout:** `.claude/rules/design-spacing.rules.md` (8px grid scale)
+- **Typography:** `.claude/rules/design-typography.rules.md` (5 font size tiers)
+- **Component Patterns:** `.claude/rules/design-components.rules.md` (buttons, forms, accessibility)
 
 Test your UI in **light, dark, and high-contrast themes** to ensure readability and visual consistency.
 
