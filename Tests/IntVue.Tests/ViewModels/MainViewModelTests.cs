@@ -134,6 +134,7 @@ public class MainViewModelTests
 
         // Act
         await viewModel.StartCountdownAsync();
+        await Task.Delay(10); // Allow progress callbacks to complete
         finalCountdownValue = viewModel.CountdownSeconds;
 
         // Assert - verify countdown ended at 0

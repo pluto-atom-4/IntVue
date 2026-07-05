@@ -171,6 +171,16 @@ For detailed guidance, consult the relevant section below:
 
 For UI generation tasks: Read `DESIGN.md` first (philosophy & overview), then reference specific rule files as needed.
 
+### Git Hooks & Automation
+
+**Important:** The project uses Git hooks that block commits/pushes with formatting, build, or test errors.
+
+- **Hook Strategy & Escalation** → `.claude/rules/hook-strategy.rules.md`
+- **Quick Fix Checklist** (use when blocked) → `.claude/rules/hook-quick-fix.rules.md`
+- **Detailed Error Resolution Guide** → `.claude/rules/hook-resolution.rules.md`
+
+**When you encounter a commit block:** Open `hook-quick-fix.rules.md` for your error type (5-step checklist, 2-30 min resolution).
+
 ### Project-Wide Rules (All Code Changes)
 - **Design Principles** (DRY, KISS, SOLID, YAGNI) → `.github/instructions/design-principles.instructions.md`
 - **Code Quality** (StyleCop, naming, cleanup) → `.github/instructions/code-quality.instructions.md`
@@ -240,6 +250,7 @@ Every autonomous agent **must** follow **[AGENTS.md § Core Agent Workflow](./AG
 
 - [ ] **Read this file (CLAUDE.md)** for quick reference
 - [ ] **If you are an agent, read [AGENTS.md](./AGENTS.md)** for the comprehensive workflow
+- [ ] **Bookmark `.claude/rules/hook-quick-fix.rules.md`** — you'll use it if commits are blocked
 - [ ] Detect your platform using the command in § Development Commands
 - [ ] Enable Windows Developer Mode (Settings → System → For developers → Developer Mode → On)
 - [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
@@ -247,3 +258,4 @@ Every autonomous agent **must** follow **[AGENTS.md § Core Agent Workflow](./AG
 - [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
 - [ ] **Before making changes, consult BOTH this file and the relevant `.github/instructions/` file**
 - [ ] **See [DESIGN.md](./DESIGN.md) for UI/visual design tasks**
+- [ ] **Before committing, run:** `dotnet format`, `dotnet build`, `dotnet test` (prevents hook blocks)

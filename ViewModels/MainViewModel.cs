@@ -14,10 +14,23 @@ namespace IntVue.ViewModels;
 /// <summary>
 /// Main application view model with countdown and recording logic.
 /// </summary>
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ICountdownService _countdownService;
     private CancellationTokenSource? _countdownCts;
+    private bool _disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainViewModel"/> class.
+    /// </summary>
+    /// <param name="countdownService">The countdown service used to manage countdown timers.</param>
+    public MainViewModel(ICountdownService countdownService)
+        => this._countdownService = countdownService;
+
+    /// <summary>
+    /// Fired when countdown completes successfully (not cancelled).
+    /// </summary>
+    public event EventHandler? CountdownCompleted;
 
     [ObservableProperty]
     public partial string Title { get; set; } = "IntVue";
@@ -29,20 +42,9 @@ public partial class MainViewModel : ObservableObject
     public partial bool IsCountingDown { get; set; }
 
     /// <summary>
-    /// Fired when countdown completes successfully (not cancelled).
-    /// </summary>
-    public event EventHandler? CountdownCompleted;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MainViewModel"/> class.
-    /// </summary>
-    public MainViewModel(ICountdownService countdownService)
-        => this._countdownService = countdownService;
-
-    /// <summary>
     /// Starts the countdown timer. Fires CountdownCompleted event when done.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task StartCountdownAsync()
     {
         this._countdownCts?.Dispose();
@@ -58,6 +60,34 @@ public partial class MainViewModel : ObservableObject
         {
             this.CountdownCompleted?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    /// <summary>
+    /// Disposes the view model and releases resources.
+    /// </summary>
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the view model resources.
+    /// </summary>
+    /// <param name="disposing">True if disposing managed resources; false if finalizing.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (this._disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            this._countdownCts?.Dispose();
+        }
+
+        this._disposed = true;
     }
 
     /// <summary>

@@ -15,7 +15,11 @@ public class CountdownColorConverter : IValueConverter
     /// <summary>
     /// Converts a countdown value to a theme brush.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="value">The countdown seconds (3, 2, 1, or 0).</param>
+    /// <param name="targetType">The target type (Brush).</param>
+    /// <param name="parameter">Optional converter parameter (unused).</param>
+    /// <param name="language">The language/culture string (unused).</param>
+    /// <returns>A Brush resource: Caution (3), Attention (2), Critical (1), or Primary text color (0+).</returns>
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var resources = Microsoft.UI.Xaml.Application.Current.Resources;
@@ -33,7 +37,12 @@ public class CountdownColorConverter : IValueConverter
     /// <summary>
     /// Not implemented; conversion is one-way only.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="value">The Brush value to convert back (unused).</param>
+    /// <param name="targetType">The target type (unused).</param>
+    /// <param name="parameter">Optional converter parameter (unused).</param>
+    /// <param name="language">The language/culture string (unused).</param>
+    /// <returns>Throws NotImplementedException.</returns>
+    /// <exception cref="NotImplementedException">This converter does not support back conversion.</exception>
     public object ConvertBack(object value, Type targetType, object parameter, string language)
         => throw new NotImplementedException();
 }
