@@ -56,6 +56,7 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
         services.AddSingleton<ICountdownService, CountdownService>();
+        services.AddSingleton<IProductReviewService, ProductReviewService>();
         return services.BuildServiceProvider();
     }
 }
