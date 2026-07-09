@@ -108,6 +108,12 @@
     <ItemGroup>
       <Compile Remove="Tests\**\*.cs" />
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="gh-issue-content.md" />
+      <None Remove="gh-issue-draft-rev1.md" />
+      <None Remove="gh-issue-draft.md" />
+      <None Remove="issue-content.json" />
+    </ItemGroup>
     <!--
       Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
       Explorer "Package and Publish" context menu entry to be enabled for this project even if
