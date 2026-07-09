@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ProductReviewPage.xaml - Phase 4 XAML Skeleton
+    Product Review feature: Play pre-recorded interview questions with countdown timer
+
+    Key Features:
+    - 4-row grid layout
+    - MediaPlayerElement with countdown overlay
+    - Playlist navigation controls (Previous/Shuffle/Loop/Repeat/Next)
+    - Action buttons (Preview/Record/Cancel/Play/Delete)
+    - Design system compliance (theme resources, spacing scale, typography)
+    - Full accessibility (TabIndex, AutomationProperties, AccessKeys)
+
+    Dependencies:
+    - ProductReviewViewModel (Phase 3)
+    - Converters: CountdownColorConverter, BoolToVisibilityConverter,
+                  FilePathToDisplayNameConverter, etc.
+-->
+<Page
+    x:Class="IntVue.Views.ProductReviewPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/winfx/2006/xaml/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:converters="using:IntVue.Converters"
+    xmlns:vm="using:IntVue.ViewModels"
+    mc:Ignorable="d"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded">
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- Page Resources: Converters                                   -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <Page.Resources>
+        <!-- Countdown color progression: Green (4-10s) → Orange (2-3s) → Red (0-1s) -->
+        <converters:CountdownColorConverter x:Key="CountdownColorConverter" />
+
+        <!-- Boolean to Visibility: True=Visible, False=Collapsed -->
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
+        <!-- File path to display name: "C:\Questions\q2.webm" → "q2.webm" -->
+        <converters:FilePathToDisplayNameConverter x:Key="FilePathToDisplayNameConverter" />
+
+        <!-- Object to bool: null=false, not-null=true (for IsEnabled binding) -->
+        <converters:NotNullToBoolConverter x:Key="NotNullToBoolConverter" />
+
+        <!-- String to Visibility: empty=Collapsed, non-empty=Visible -->
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+
+        <!-- Question index formatter: formats index and total count -->
+        <converters:QuestionIndexFormatterConverter x:Key="QuestionIndexFormatterConverter" />
+    </Page.Resources>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- Main Grid: 4 Rows                                            -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />          <!-- Row 0: MediaPlayer (flex) -->
+            <RowDefinition Height="Auto" />       <!-- Row 1: Question Display + Controls (auto) -->
+            <RowDefinition Height="Auto" />       <!-- Row 2: Error Message (auto) -->
+            <RowDefinition Height="Auto" />       <!-- Row 3: Action Buttons (auto) -->
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ROW 0: MediaPlayerElement + Countdown Overlay           -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+            <!-- MediaPlayerElement: WebM video playback -->
+            <controls:MediaPlayerElement
+                x:Name="MediaPlayer"
+                AreTransportControlsEnabled="True"
+                AutomationProperties.Name="Video player"
+                AutomationProperties.AutomationId="MediaPlayerAutomationId" />
+
+            <!-- Countdown Overlay: Centered 72pt countdown timer -->
+            <Grid
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Visibility="{x:Bind ViewModel.IsCountingDown, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <TextBlock
+                    x:Name="TxtCountdown"
+                    AutomationProperties.Name="Countdown timer"
+                    AutomationProperties.AutomationId="CountdownTimerAutomationId"
+                    Text="{x:Bind ViewModel.CountdownSeconds, Mode=OneWay}"
+                    FontSize="72"
+                    FontWeight="Bold"
+                    Foreground="{x:Bind ViewModel.CountdownSeconds, Mode=OneWay, Converter={StaticResource CountdownColorConverter}}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    LineHeight="108" />
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ROW 1: Question Display + Playlist Controls             -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <StackPanel
+            Grid.Row="1"
+            Orientation="Horizontal"
+            Spacing="12"
+            Padding="12"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+
+            <!-- Left: Question Display (Index + Filename) -->
+            <StackPanel
+                VerticalAlignment="Center"
+                Spacing="4">
+
+                <!-- Question Index: "1 of 3" -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.CurrentQuestionIndex, Mode=OneWay}"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                    <TextBlock
+                        Text="of"
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.TotalQuestions, Mode=OneWay}"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        AutomationProperties.Name="Question index"
+                        AutomationProperties.AutomationId="QuestionIndexAutomationId" />
+                </StackPanel>
+
+                <!-- Filename: "q1.webm" -->
+                <TextBlock
+                    Text="{x:Bind ViewModel.CurrentQuestionPath, Mode=OneWay, Converter={StaticResource FilePathToDisplayNameConverter}}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    AutomationProperties.Name="Question filename"
+                    AutomationProperties.AutomationId="FilenameAutomationId" />
+            </StackPanel>
+
+            <!-- Right: Playlist Controls (Previous/Shuffle/Loop/Repeat/Next) -->
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center">
+
+                <!-- Previous Question Button (◀) -->
+                <Button
+                    x:Name="BtnPrevious"
+                    Content="◀"
+                    Command="{x:Bind ViewModel.MoveToPreviousCommand}"
+                    ToolTipService.ToolTip="Previous question (Shift+P)"
+                    AccessKey="P"
+                    TabIndex="10"
+                    AutomationProperties.Name="Previous question"
+                    AutomationProperties.AutomationId="PreviousButtonAutomationId" />
+
+                <!-- Shuffle Button (🔀) -->
+                <Button
+                    x:Name="BtnShuffle"
+                    Content="🔀"
+                    ToolTipService.ToolTip="Shuffle questions (Alt+H)"
+                    AccessKey="H"
+                    TabIndex="11"
+                    AutomationProperties.Name="Shuffle questions"
+                    AutomationProperties.AutomationId="ShuffleButtonAutomationId" />
+
+                <!-- Loop Button (🔁) -->
+                <Button
+                    x:Name="BtnLoop"
+                    Content="🔁"
+                    ToolTipService.ToolTip="Loop mode (Alt+L)"
+                    AccessKey="L"
+                    TabIndex="12"
+                    AutomationProperties.Name="Loop mode"
+                    AutomationProperties.AutomationId="LoopButtonAutomationId" />
+
+                <!-- Repeat Button (🔂) -->
+                <Button
+                    x:Name="BtnRepeat"
+                    Content="🔂"
+                    ToolTipService.ToolTip="Repeat mode (Alt+E)"
+                    AccessKey="E"
+                    TabIndex="13"
+                    AutomationProperties.Name="Repeat mode"
+                    AutomationProperties.AutomationId="RepeatButtonAutomationId" />
+
+                <!-- Next Question Button (▶) -->
+                <Button
+                    x:Name="BtnNext"
+                    Content="▶"
+                    Command="{x:Bind ViewModel.MoveToNextCommand}"
+                    ToolTipService.ToolTip="Next question (Shift+N)"
+                    AccessKey="N"
+                    TabIndex="14"
+                    AutomationProperties.Name="Next question"
+                    AutomationProperties.AutomationId="NextButtonAutomationId" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ROW 2: Error/Status Message (Conditional)               -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <TextBlock
+            Grid.Row="2"
+            Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+            FontSize="12"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            Visibility="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}"
+            Padding="12"
+            TextWrapping="Wrap"
+            AutomationProperties.Name="Error message"
+            AutomationProperties.AutomationId="ErrorMessageAutomationId" />
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ROW 3: Action Buttons                                    -->
+        <!-- Preview | Record ⭐ | Cancel | Play | Delete            -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <StackPanel
+            Grid.Row="3"
+            Orientation="Horizontal"
+            Spacing="8"
+            Padding="12"
+            HorizontalAlignment="Center"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+
+            <!-- Start Preview Button -->
+            <Button
+                x:Name="BtnPreview"
+                Content="Start Preview"
+                IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
+                ToolTipService.ToolTip="Preview question (Alt+V)"
+                AccessKey="V"
+                TabIndex="20"
+                AutomationProperties.Name="Start preview"
+                AutomationProperties.AutomationId="PreviewButtonAutomationId" />
+
+            <!-- Start Recording Button (Primary/Accent) -->
+            <Button
+                x:Name="BtnRecord"
+                Content="Start Recording"
+                Style="{ThemeResource AccentButtonStyle}"
+                IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
+                ToolTipService.ToolTip="Record response (Alt+R)"
+                AccessKey="R"
+                TabIndex="21"
+                AutomationProperties.Name="Start recording"
+                AutomationProperties.AutomationId="RecordButtonAutomationId" />
+
+            <!-- Cancel Countdown Button (Conditional Visibility) -->
+            <Button
+                x:Name="BtnCancelCountdown"
+                Content="Cancel Countdown"
+                Visibility="{x:Bind ViewModel.IsCountingDown, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                ToolTipService.ToolTip="Cancel countdown (Alt+C)"
+                AccessKey="C"
+                TabIndex="22"
+                AutomationProperties.Name="Cancel countdown"
+                AutomationProperties.AutomationId="CancelCountdownButtonAutomationId" />
+
+            <!-- Play Recording Button -->
+            <Button
+                x:Name="BtnPlay"
+                Content="Play Recording"
+                IsEnabled="False"
+                ToolTipService.ToolTip="Play recording (Alt+P)"
+                AccessKey="P"
+                TabIndex="23"
+                AutomationProperties.Name="Play recording"
+                AutomationProperties.AutomationId="PlayButtonAutomationId" />
+
+            <!-- Delete Recording Button -->
+            <Button
+                x:Name="BtnDelete"
+                Content="Delete Recording"
+                IsEnabled="False"
+                ToolTipService.ToolTip="Delete recording (Alt+D)"
+                AccessKey="D"
+                TabIndex="24"
+                AutomationProperties.Name="Delete recording"
+                AutomationProperties.AutomationId="DeleteButtonAutomationId" />
+        </StackPanel>
+    </Grid>
+</Page>
