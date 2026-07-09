@@ -59,6 +59,7 @@ public partial class App : Application
         services.AddSingleton<IProductReviewService, ProductReviewService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IPlaylistService, PlaylistService>();
+        services.AddTransient<IntVue.ViewModels.ProductReviewViewModel>();
         return services.BuildServiceProvider();
     }
 }
