@@ -17,6 +17,7 @@ namespace IntVue.ViewModels;
 public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ICountdownService _countdownService;
+    private readonly IFeatureFlagService _featureFlagService;
     private CancellationTokenSource? _countdownCts;
     private bool _disposed;
 
@@ -24,8 +25,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// Initializes a new instance of the <see cref="MainViewModel"/> class.
     /// </summary>
     /// <param name="countdownService">The countdown service used to manage countdown timers.</param>
-    public MainViewModel(ICountdownService countdownService)
-        => this._countdownService = countdownService;
+    /// <param name="featureFlagService">The feature flag service for enabling/disabling features.</param>
+    public MainViewModel(ICountdownService countdownService, IFeatureFlagService featureFlagService)
+    {
+        this._countdownService = countdownService;
+        this._featureFlagService = featureFlagService;
+        this.IsProductReviewEnabled = featureFlagService.IsProductReviewEnabled();
+    }
 
     /// <summary>
     /// Fired when countdown completes successfully (not cancelled).
@@ -40,6 +46,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     public partial bool IsCountingDown { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsProductReviewEnabled { get; set; }
 
     /// <summary>
     /// Starts the countdown timer. Fires CountdownCompleted event when done.

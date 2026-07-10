@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 using IntVue.Services;
 using IntVue.ViewModels;
+using IntVue.Views;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -58,7 +59,9 @@ public sealed partial class MainPage : Page, IDisposable
     public MainPage()
     {
         this.InitializeComponent();
-        this.ViewModel = new MainViewModel(new CountdownService());
+        var countdownService = (ICountdownService?)App.Services.GetService(typeof(ICountdownService)) ?? new CountdownService();
+        var featureFlagService = (IFeatureFlagService?)App.Services.GetService(typeof(IFeatureFlagService)) ?? new FeatureFlagService();
+        this.ViewModel = new MainViewModel(countdownService, featureFlagService);
         this.DataContext = this.ViewModel;
         this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
         this.ViewModel.PropertyChanged += this.OnViewModelPropertyChanged;
@@ -493,6 +496,22 @@ public sealed partial class MainPage : Page, IDisposable
     private async void BtnDelete_Click(object sender, RoutedEventArgs e)
     {
         await this.DeleteRecordingAsync();
+    }
+
+    private void BtnProductReview_Click(object sender, RoutedEventArgs e)
+    {
+        var mainWindow = Window.Current as MainWindow;
+        var frame = mainWindow?.Content as Frame;
+
+        if (frame != null)
+        {
+            frame.Navigate(typeof(ProductReviewPage));
+            this.Log("Navigating to Product Review page", LogMessageType.Message);
+        }
+        else
+        {
+            this.Log("Error: Cannot navigate to ProductReviewPage - Frame not found", LogMessageType.Error);
+        }
     }
 
     private async Task DeleteRecordingAsync()
