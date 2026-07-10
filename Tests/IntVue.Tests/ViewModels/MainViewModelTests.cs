@@ -12,6 +12,23 @@ namespace IntVue.Tests.ViewModels;
 public class MainViewModelTests
 {
     /// <summary>
+    /// Creates a mock IFeatureFlagService for testing.
+    /// </summary>
+    /// <param name="isProductReviewEnabled">Whether Product Review feature is enabled.</param>
+    /// <returns>Mocked IFeatureFlagService.</returns>
+    private static IFeatureFlagService CreateMockFeatureFlagService(bool isProductReviewEnabled = false)
+    {
+        var mockService = new Mock<IFeatureFlagService>();
+        mockService
+            .Setup(s => s.IsProductReviewEnabled())
+            .Returns(isProductReviewEnabled);
+        mockService
+            .Setup(s => s.SetProductReviewEnabled(It.IsAny<bool>()))
+            .Returns(Task.CompletedTask);
+        return mockService.Object;
+    }
+
+    /// <summary>
     /// Test that StartCountdownAsync sets IsCountingDown to true during countdown.
     /// </summary>
     [TestMethod]
@@ -34,7 +51,7 @@ public class MainViewModelTests
                 return true;
             });
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
         var isCountingDuringCountdown = false;
 
         // Act
@@ -67,7 +84,7 @@ public class MainViewModelTests
             })
             .ReturnsAsync(true);
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
         var eventFired = false;
         viewModel.CountdownCompleted += (s, e) => eventFired = true;
 
@@ -97,7 +114,7 @@ public class MainViewModelTests
             })
             .ReturnsAsync(true);
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
 
         // Act
         await viewModel.StartCountdownAsync();
@@ -130,7 +147,7 @@ public class MainViewModelTests
                 return true;
             });
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
 
         // Act
         await viewModel.StartCountdownAsync();
@@ -163,7 +180,7 @@ public class MainViewModelTests
             })
             .ReturnsAsync(false);
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
         var countdownTask = viewModel.StartCountdownAsync();
 
         // Wait a bit for countdown to start
@@ -189,7 +206,7 @@ public class MainViewModelTests
             .Setup(s => s.StartAsync(3, It.IsAny<IProgress<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var viewModel = new MainViewModel(mockService.Object);
+        var viewModel = new MainViewModel(mockService.Object, CreateMockFeatureFlagService());
         var eventFired = false;
         viewModel.CountdownCompleted += (s, e) => eventFired = true;
 
