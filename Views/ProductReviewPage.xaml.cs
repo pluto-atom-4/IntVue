@@ -52,4 +52,22 @@ public sealed partial class ProductReviewPage : Page
     {
         // ViewModel disposal handled by DI container if needed
     }
+
+    /// <summary>
+    /// Back button click handler - Navigate back to previous page.
+    /// </summary>
+    private void BtnBack_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (Frame?.CanGoBack == true)
+            {
+                Frame.GoBack();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Navigation back failed: {ex.Message}");
+        }
+    }
 }

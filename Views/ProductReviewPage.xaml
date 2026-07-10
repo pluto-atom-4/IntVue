@@ -215,15 +215,31 @@
 
         <!-- ═══════════════════════════════════════════════════════ -->
         <!-- ROW 3: Action Buttons                                    -->
-        <!-- Preview | Record ⭐ | Cancel | Play | Delete            -->
+        <!-- Back | Preview | Record ⭐ | Cancel | Play | Delete     -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <StackPanel
+        <Grid
             Grid.Row="3"
-            Orientation="Horizontal"
-            Spacing="8"
             Padding="12"
-            HorizontalAlignment="Center"
             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+
+            <!-- Back Button (Left side) -->
+            <Button
+                x:Name="BtnBack"
+                Content="← Back"
+                Command="{x:Bind ViewModel.GoBackCommand}"
+                Click="BtnBack_Click"
+                ToolTipService.ToolTip="Return to main screen (Alt+B)"
+                AccessKey="B"
+                TabIndex="25"
+                HorizontalAlignment="Left"
+                AutomationProperties.Name="Go back to main screen"
+                AutomationProperties.AutomationId="BackButtonAutomationId" />
+
+            <!-- Action Buttons (Center) -->
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8"
+                HorizontalAlignment="Center">
 
             <!-- Start Preview Button -->
             <Button
@@ -280,6 +296,7 @@
                 TabIndex="24"
                 AutomationProperties.Name="Delete recording"
                 AutomationProperties.AutomationId="DeleteButtonAutomationId" />
-        </StackPanel>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

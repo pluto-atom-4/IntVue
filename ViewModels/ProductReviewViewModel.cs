@@ -286,6 +286,27 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Navigates back to the main screen.
+    /// </summary>
+    [RelayCommand]
+    public void GoBack()
+    {
+        try
+        {
+            // Cancel any ongoing countdown
+            _countdownCts?.Cancel();
+            IsCountingDown = false;
+
+            // Request navigation back via Frame.GoBack()
+            // This will be handled in the code-behind (ProductReviewPage.xaml.cs)
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to go back: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Disposes the view model and releases resources.
     /// </summary>
     public void Dispose()
