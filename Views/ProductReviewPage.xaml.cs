@@ -27,6 +27,7 @@ public sealed partial class ProductReviewPage : Page
     /// <summary>
     /// Gets viewModel instance providing UI state, commands, and business logic.
     /// </summary>
+#pragma warning disable CA1822 // Member does not access instance data - Pattern: Instance property for ViewModel access
     public ProductReviewViewModel ViewModel
     {
         get
@@ -35,6 +36,7 @@ public sealed partial class ProductReviewPage : Page
             return viewModel ?? throw new InvalidOperationException("ProductReviewViewModel not registered");
         }
     }
+#pragma warning restore CA1822
 
     /// <summary>
     /// Page loaded - Initialize ViewModel and MediaPlayerElement bindings.
