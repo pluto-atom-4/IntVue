@@ -574,6 +574,22 @@ public sealed partial class MainPage : Page, IDisposable
 
         this._logBuilder.Append(logEntry);
 
+        // Display in UI notification bar
+        this.NotificationBar.Message = message;
+        this.NotificationBar.Severity = type switch
+        {
+            LogMessageType.Success => InfoBarSeverity.Success,
+            LogMessageType.Error => InfoBarSeverity.Error,
+            _ => InfoBarSeverity.Informational,
+        };
+        this.NotificationBar.Title = type switch
+        {
+            LogMessageType.Success => "Success",
+            LogMessageType.Error => "Error",
+            _ => "Status",
+        };
+        this.NotificationBar.IsOpen = true;
+
 #if DEBUG
         var typeStr = type switch
         {

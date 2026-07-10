@@ -21,6 +21,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Preview host -->
@@ -44,8 +45,24 @@
                 VerticalAlignment="Center" />
         </Grid>
 
+        <!-- Error/Status Notification -->
+        <controls:InfoBar
+            x:Name="NotificationBar"
+            Grid.Row="1"
+            Title="Status"
+            Message="Ready"
+            IsOpen="False"
+            Severity="Informational"
+            IsIconVisible="True"
+            IsClosable="True"
+            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+            Margin="0"
+            Padding="12"
+            AutomationProperties.Name="Status notification"
+            AutomationProperties.AutomationId="NotificationBarAutomationId" />
+
         <!-- Controls -->
-        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Padding="12" Spacing="8">
+        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center" Padding="12" Spacing="8">
             <Button x:Name="BtnPreview" Content="Start Preview" Click="BtnPreview_Click" IsEnabled="False" TabIndex="2" AccessKey="V" AutomationProperties.Name="PreviewButton" AutomationProperties.AutomationId="PreviewButtonAutomationId" />
             <Button x:Name="BtnRecord" Content="Start Recording" Click="BtnRecord_Click" IsEnabled="False" TabIndex="3" AccessKey="R" AutomationProperties.Name="RecordButton" AutomationProperties.AutomationId="RecordButtonAutomationId" />
             <Button x:Name="BtnCancelCountdown" Content="Cancel Countdown" Command="{x:Bind ViewModel.CancelCountdownCommand}" Visibility="{x:Bind ViewModel.IsCountingDown, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" AccessKey="C" AutomationProperties.Name="CancelCountdownButton" AutomationProperties.AutomationId="CancelCountdownButtonAutomationId" />
@@ -55,7 +72,7 @@
         </StackPanel>
 
         <!-- Device initialization -->
-        <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="8" Padding="12">
+        <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="8" Padding="12">
             <ComboBox
                 x:Name="CbCameraList"
                 MinWidth="200"
