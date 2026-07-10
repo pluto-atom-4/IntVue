@@ -106,7 +106,9 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
+            var stopwatch = Stopwatch.StartNew();
             this._deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
+            stopwatch.Stop();
 
             if (this._deviceList.Count == 0)
             {
@@ -121,7 +123,7 @@ public sealed partial class MainPage : Page, IDisposable
             }
 
             this.CbCameraList.SelectedIndex = 0;
-            this.Log($"Found {this._deviceList.Count} camera(s)", LogMessageType.Success);
+            this.Log($"Found {this._deviceList.Count} camera(s) in {stopwatch.ElapsedMilliseconds}ms", LogMessageType.Success);
         }
         catch (Exception ex)
         {
@@ -166,7 +168,10 @@ public sealed partial class MainPage : Page, IDisposable
             };
 
             this.Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
+            var stopwatch = Stopwatch.StartNew();
             await this._mediaCapture.InitializeAsync(settings);
+            stopwatch.Stop();
+            this.Log($"MediaCapture initialized in {stopwatch.ElapsedMilliseconds}ms (target: <3000ms)", LogMessageType.Message);
 
             await this.PopulatePreviewSources();
         }
