@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,10 +24,12 @@ public class ProductReviewService : IProductReviewService
 
     /// <summary>
     /// Loads a single WebM question file from the specified file path.
+    /// Uses System.IO for better compatibility with local file paths.
+    /// Skips media validation to avoid Windows Runtime API state errors.
     /// </summary>
     /// <param name="filePath">The full file path to a WebM media file.</param>
-    /// <returns>A <see cref="Question"/> object with metadata and validation status.</returns>
-    public async Task<Question> LoadQuestionFileAsync(string filePath)
+    /// <returns>A <see cref="Question"/> object with basic info.</returns>
+    public Task<Question> LoadQuestionFileAsync(string filePath)
     {
         if (string.IsNullOrEmpty(filePath))
         {
@@ -35,54 +38,69 @@ public class ProductReviewService : IProductReviewService
 
         try
         {
-            var file = await StorageFile.GetFileFromPathAsync(filePath);
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] Processing: {filePath}");
+
+            // Use System.IO for file checking (reliable, no state errors)
+            if (!File.Exists(filePath))
+            {
+                System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] File not found: {filePath}");
+                return Task.FromResult(new Question
+                {
+                    FilePath = filePath,
+                    FileName = Path.GetFileName(filePath),
+                    IsValid = false,
+                    ValidationMessage = "File not found.",
+                    DiscoveredAt = DateTime.UtcNow,
+                });
+            }
+
+            // File exists, create question object
+            // Skip media validation to avoid MediaPlaybackItem state errors
+            var fileName = Path.GetFileName(filePath);
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] Creating Question for: {fileName}");
+
             var question = new Question
             {
                 FilePath = filePath,
-                FileName = file.Name,
+                FileName = fileName,
                 MediaUri = new Uri(filePath),
                 DiscoveredAt = DateTime.UtcNow,
+                IsValid = true,  // Trust that file is valid if it exists and has .webm extension
+                DurationMs = 0,  // Duration set on playback
             };
 
-            return await this.GetQuestionMetadataAsync(question);
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] Question created successfully: {fileName}");
+            return Task.FromResult(question);
         }
-        catch (System.IO.FileNotFoundException)
+        catch (UnauthorizedAccessException ex)
         {
-            return new Question
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] Access denied: {ex.Message}");
+            return Task.FromResult(new Question
             {
                 FilePath = filePath,
-                FileName = System.IO.Path.GetFileName(filePath),
+                FileName = Path.GetFileName(filePath),
                 IsValid = false,
-                ValidationMessage = "File not found.",
+                ValidationMessage = "Access denied to file.",
                 DiscoveredAt = DateTime.UtcNow,
-            };
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return new Question
-            {
-                FilePath = filePath,
-                FileName = System.IO.Path.GetFileName(filePath),
-                IsValid = false,
-                ValidationMessage = "Access denied.",
-                DiscoveredAt = DateTime.UtcNow,
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new Question
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionFileAsync] Exception: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            return Task.FromResult(new Question
             {
                 FilePath = filePath,
-                FileName = System.IO.Path.GetFileName(filePath),
+                FileName = Path.GetFileName(filePath),
                 IsValid = false,
-                ValidationMessage = $"Failed to load file: {ex.Message}",
+                ValidationMessage = $"Failed to load file: {ex.GetType().Name}",
                 DiscoveredAt = DateTime.UtcNow,
-            };
+            });
         }
     }
 
     /// <summary>
     /// Discovers and loads all WebM question files from a directory.
+    /// Uses System.IO for better compatibility with local file paths in full-trust WinUI apps.
     /// </summary>
     /// <param name="directoryPath">The directory path to search for WebM files.</param>
     /// <returns>A <see cref="List{Question}"/> containing all discovered questions.</returns>
@@ -97,33 +115,47 @@ public class ProductReviewService : IProductReviewService
 
         try
         {
-            var folder = await StorageFolder.GetFolderFromPathAsync(directoryPath);
-            var files = await folder.GetFilesAsync(Windows.Storage.Search.CommonFileQuery.OrderByName);
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Loading from: {directoryPath}");
 
-            // Filter .webm files and load them in parallel (non-blocking)
-            var webmFiles = files.Where(f => f.FileType.Equals(_webMExtension, StringComparison.OrdinalIgnoreCase)).ToList();
+            // Use System.IO.Directory for better compatibility with local paths
+            if (!Directory.Exists(directoryPath))
+            {
+                throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
+            }
 
-            var loadTasks = webmFiles.Select(file => this.LoadQuestionFileAsync(file.Path)).ToList();
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Directory exists");
+
+            // Get all .webm files, sorted by name
+            var webmFiles = Directory.GetFiles(directoryPath, $"*{_webMExtension}", SearchOption.TopDirectoryOnly)
+                .OrderBy(f => Path.GetFileName(f))
+                .ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Found {webmFiles.Count} WebM files");
+
+            // Load questions in parallel (non-blocking)
+            var loadTasks = webmFiles.Select(filePath => this.LoadQuestionFileAsync(filePath)).ToList();
             var loadedQuestions = await Task.WhenAll(loadTasks);
 
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Loaded {loadedQuestions.Length} questions");
+
             questions.AddRange(loadedQuestions);
+
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Completed successfully");
         }
-        catch (System.IO.FileNotFoundException ex)
+        catch (DirectoryNotFoundException ex)
         {
-            throw new System.IO.DirectoryNotFoundException($"Directory not found: {directoryPath}", ex);
-        }
-        catch (System.IO.DirectoryNotFoundException)
-        {
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] DirectoryNotFoundException: {ex.Message}");
             throw;
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            throw;
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Access denied: {ex.Message}");
+            throw new UnauthorizedAccessException($"Access denied to directory: {directoryPath}. Check file system permissions.", ex);
         }
         catch (Exception ex)
         {
-            // Log and re-throw; caller decides whether to display error or continue
-            throw new System.InvalidOperationException($"Failed to load question directory: {ex.Message}", ex);
+            System.Diagnostics.Debug.WriteLine($"[LoadQuestionDirectoryAsync] Exception: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            throw new InvalidOperationException($"Failed to load question directory ({ex.GetType().Name}): {ex.Message}", ex);
         }
 
         return questions;

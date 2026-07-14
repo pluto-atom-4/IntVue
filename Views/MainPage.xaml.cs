@@ -106,7 +106,9 @@ public sealed partial class MainPage : Page, IDisposable
 
         try
         {
+            var stopwatch = Stopwatch.StartNew();
             this._deviceList = (await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture)).ToList();
+            stopwatch.Stop();
 
             if (this._deviceList.Count == 0)
             {
@@ -121,7 +123,7 @@ public sealed partial class MainPage : Page, IDisposable
             }
 
             this.CbCameraList.SelectedIndex = 0;
-            this.Log($"Found {this._deviceList.Count} camera(s)", LogMessageType.Success);
+            this.Log($"Found {this._deviceList.Count} camera(s) in {stopwatch.ElapsedMilliseconds}ms", LogMessageType.Success);
         }
         catch (Exception ex)
         {
@@ -166,7 +168,10 @@ public sealed partial class MainPage : Page, IDisposable
             };
 
             this.Log("Calling MediaCapture.InitializeAsync()...", LogMessageType.Message);
+            var stopwatch = Stopwatch.StartNew();
             await this._mediaCapture.InitializeAsync(settings);
+            stopwatch.Stop();
+            this.Log($"MediaCapture initialized in {stopwatch.ElapsedMilliseconds}ms (target: <3000ms)", LogMessageType.Message);
 
             await this.PopulatePreviewSources();
         }
@@ -500,17 +505,41 @@ public sealed partial class MainPage : Page, IDisposable
 
     private void BtnProductReview_Click(object sender, RoutedEventArgs e)
     {
-        var mainWindow = Window.Current as MainWindow;
-        var frame = mainWindow?.Content as Frame;
-
-        if (frame != null)
+        try
         {
-            frame.Navigate(typeof(ProductReviewPage));
-            this.Log("Navigating to Product Review page", LogMessageType.Message);
+            if (this.Frame != null)
+            {
+                this.Frame.Navigate(typeof(ProductReviewPage));
+                this.Log("Navigating to Product Review page", LogMessageType.Message);
+            }
+            else
+            {
+                this.Log("Error: Cannot navigate to ProductReviewPage - Frame not available", LogMessageType.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            this.Log("Error: Cannot navigate to ProductReviewPage - Frame not found", LogMessageType.Error);
+            this.Log($"Navigation error: {ex.Message}", LogMessageType.Error);
+        }
+    }
+
+    private void BtnMediaPlayerTest_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (this.Frame != null)
+            {
+                this.Frame.Navigate(typeof(MediaPlayerTestPage));
+                this.Log("Navigating to Media Player Test page", LogMessageType.Message);
+            }
+            else
+            {
+                this.Log("Error: Cannot navigate to MediaPlayerTestPage - Frame not available", LogMessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            this.Log($"Navigation error: {ex.Message}", LogMessageType.Error);
         }
     }
 
@@ -573,6 +602,22 @@ public sealed partial class MainPage : Page, IDisposable
         var logEntry = $"[{timestamp}] {message}\n";
 
         this._logBuilder.Append(logEntry);
+
+        // Display in UI notification bar
+        this.NotificationBar.Message = message;
+        this.NotificationBar.Severity = type switch
+        {
+            LogMessageType.Success => InfoBarSeverity.Success,
+            LogMessageType.Error => InfoBarSeverity.Error,
+            _ => InfoBarSeverity.Informational,
+        };
+        this.NotificationBar.Title = type switch
+        {
+            LogMessageType.Success => "Success",
+            LogMessageType.Error => "Error",
+            _ => "Status",
+        };
+        this.NotificationBar.IsOpen = true;
 
 #if DEBUG
         var typeStr = type switch

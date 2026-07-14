@@ -73,21 +73,49 @@ public class PlaylistService : IPlaylistService
     {
         ArgumentNullException.ThrowIfNull(questions);
 
-        _questions.Clear();
-        _originalQuestions = new List<Question>(questions);
+        System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Starting with {questions.Count} questions");
 
-        // Load saved sort mode from settings service
-        var sortModeValue = _settingsService.GetSetting(_sortModeSettingKey);
-        if (sortModeValue != null && Enum.TryParse<SortMode>(sortModeValue.ToString(), out var savedMode))
+        try
         {
-            _currentSortMode = savedMode;
+            _questions.Clear();
+            _originalQuestions = new List<Question>(questions);
+
+            // Load saved sort mode from settings service
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Getting sort mode from settings...");
+                var sortModeValue = _settingsService.GetSetting(_sortModeSettingKey);
+                if (sortModeValue != null && Enum.TryParse<SortMode>(sortModeValue.ToString(), out var savedMode))
+                {
+                    _currentSortMode = savedMode;
+                    System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Loaded saved sort mode: {_currentSortMode}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Using default sort mode: {_currentSortMode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Error loading sort mode: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Using default sort mode: {_currentSortMode}");
+            }
+
+            // Apply the saved sort mode
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Calling ApplySortAsync({_currentSortMode})");
+            await this.ApplySortAsync(_currentSortMode);
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] ApplySortAsync completed");
+
+            // Set current index to 0 if not empty
+            _currentIndex = _questions.Count > 0 ? 0 : -1;
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Playlist initialized: {_questions.Count} questions, CurrentIndex={_currentIndex}");
         }
-
-        // Apply the saved sort mode
-        await this.ApplySortAsync(_currentSortMode);
-
-        // Set current index to 0 if not empty
-        _currentIndex = _questions.Count > 0 ? 0 : -1;
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] StackTrace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     /// <summary>
@@ -169,6 +197,7 @@ public class PlaylistService : IPlaylistService
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task ApplySortAsync(SortMode sortMode)
     {
+        System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Starting with sort mode: {sortMode}");
         _currentSortMode = sortMode;
 
         // Clear and re-populate questions based on sort mode
@@ -182,6 +211,8 @@ public class PlaylistService : IPlaylistService
             _ => _originalQuestions,
         };
 
+        System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Sorted into {sortedQuestions.Count} questions");
+
         foreach (var question in sortedQuestions)
         {
             _questions.Add(question);
@@ -189,9 +220,21 @@ public class PlaylistService : IPlaylistService
 
         // Reset current index to 0
         _currentIndex = _questions.Count > 0 ? 0 : -1;
+        System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Questions collection updated: {_questions.Count} items, CurrentIndex={_currentIndex}");
 
-        // Persist sort mode to settings service
-        await _settingsService.SetSettingAsync(_sortModeSettingKey, sortMode.ToString());
+        // Persist sort mode to settings service (non-blocking failure)
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Persisting sort mode to settings...");
+            await _settingsService.SetSettingAsync(_sortModeSettingKey, sortMode.ToString());
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Sort mode persisted successfully");
+        }
+        catch (Exception ex)
+        {
+            // Log but don't throw - playlist is already populated correctly
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Warning: Failed to persist sort mode: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.ApplySortAsync] Playlist continues to work; sort preference won't persist across sessions");
+        }
     }
 
     /// <summary>
