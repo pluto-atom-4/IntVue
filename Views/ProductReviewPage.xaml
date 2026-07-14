@@ -257,6 +257,7 @@
                 x:Name="BtnRecord"
                 Content="Start Recording"
                 Style="{ThemeResource AccentButtonStyle}"
+                Click="BtnRecord_Click"
                 IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
                 ToolTipService.ToolTip="Record response (Alt+R)"
                 AccessKey="R"

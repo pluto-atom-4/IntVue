@@ -21,6 +21,45 @@ MVP: Video Interview Practice
 - Scope: camera preview, start/stop recording to ApplicationData.LocalFolder, countdown/think-time, immediate in-app playback, and unit tests for ViewModel and service abstractions.
 - Security & Privacy (MVP): recordings saved to ApplicationData.LocalFolder (private); show a concise privacy notice before first camera/microphone access; sanitize filenames; avoid logging PII or file paths.
 
+### Features (Phases 1-5 Complete)
+
+**Phase 1-4: Core Recording & Playback**
+- ✅ Camera preview with frame selection
+- ✅ Countdown timer (3-second think time)
+- ✅ Video recording to local storage
+- ✅ Immediate playback of recordings
+- ✅ Recording deletion and cleanup
+- ✅ Camera device enumeration and selection
+
+**Phase 5: Product Review (Optional Feature)**
+- ✅ Feature flag system (CLI-controlled)
+- ✅ Pre-recorded question playback
+- ✅ Playlist navigation (Sequential/Loop/RepeatCurrent modes)
+- ✅ Countdown timer integration for practice responses
+- ✅ Back navigation to main screen
+
+### Getting Started with Product Review Feature
+
+Launch with the feature enabled:
+```powershell
+dotnet run -c Debug -p:Platform=$Platform -- --feature:product-review
+```
+
+The Product Review button will appear on the main screen. Prepare a directory with `.webm` video files (questions) and select it to start practicing responses.
+
+Without the CLI flag, the Product Review feature is disabled by default:
+```powershell
+dotnet run -c Debug -p:Platform=$Platform
+```
+
+### Testing
+
+All features have 85+ unit and UI automation tests:
+```powershell
+cd Tests/IntVue.Tests
+dotnet test -c Debug -p:Platform=$Platform
+```
+
 For full implementation plan and phase breakdown, see: Docs/ImplementationPlanning/impl-mvp.md
 
 ---

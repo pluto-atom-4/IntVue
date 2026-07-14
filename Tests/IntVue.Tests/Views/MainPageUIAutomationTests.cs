@@ -98,7 +98,8 @@ public sealed class MainPageUIAutomationTests
             ("BtnRecord", 3),
             ("BtnPlay", 4),
             ("BtnDelete", 5),
-            ("BtnProductReview", 6)
+            ("BtnProductReview", 6),
+            ("BtnMediaPlayerTest", 7)
         };
 
         Assert.AreEqual(expectedOrder.Length, controlsByTabIndex.Count, "TabIndex count mismatch");

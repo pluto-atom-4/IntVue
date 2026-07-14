@@ -69,6 +69,7 @@
             <Button x:Name="BtnPlay" Content="Play Recording" Click="BtnPlay_Click" IsEnabled="False" TabIndex="4" AccessKey="P" AutomationProperties.Name="PlayButton" AutomationProperties.AutomationId="PlayButtonAutomationId" />
             <Button x:Name="BtnDelete" Content="Delete Recording" Click="BtnDelete_Click" IsEnabled="False" TabIndex="5" AccessKey="D" AutomationProperties.Name="DeleteButton" AutomationProperties.AutomationId="DeleteRecordingButtonAutomationId" />
             <Button x:Name="BtnProductReview" Content="Product Review" Click="BtnProductReview_Click" TabIndex="6" AccessKey="O" Visibility="{x:Bind ViewModel.IsProductReviewEnabled, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" AutomationProperties.Name="Product Review" AutomationProperties.AutomationId="ProductReviewButtonAutomationId" />
+            <Button x:Name="BtnMediaPlayerTest" Content="Media Player Test" Click="BtnMediaPlayerTest_Click" TabIndex="7" AutomationProperties.Name="Media Player Test" AutomationProperties.AutomationId="MediaPlayerTestButtonAutomationId" />
         </StackPanel>
 
         <!-- Device initialization -->

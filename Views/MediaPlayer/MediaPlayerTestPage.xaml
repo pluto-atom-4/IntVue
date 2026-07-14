@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IntVue.Views.MediaPlayerTestPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+
+    <Grid RowSpacing="16" Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock
+            Grid.Row="0"
+            Text="Media Player Test"
+            FontSize="28"
+            FontWeight="Bold"
+            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+        <!-- Filename Display -->
+        <StackPanel Grid.Row="1" Spacing="4">
+            <TextBlock
+                Text="Current File:"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock
+                x:Name="TxtFilename"
+                Text="(no file loaded)"
+                FontSize="16"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+        </StackPanel>
+
+        <!-- Media Player -->
+        <MediaPlayerElement
+            Grid.Row="2"
+            x:Name="MediaPlayer"
+            AreTransportControlsEnabled="True"
+            Stretch="Uniform"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center" />
+
+        <!-- Status Message -->
+        <TextBlock
+            Grid.Row="3"
+            x:Name="TxtStatus"
+            Text="Loading..."
+            FontSize="12"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+    </Grid>
+</Page>
