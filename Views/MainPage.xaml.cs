@@ -505,17 +505,21 @@ public sealed partial class MainPage : Page, IDisposable
 
     private void BtnProductReview_Click(object sender, RoutedEventArgs e)
     {
-        var mainWindow = Window.Current as MainWindow;
-        var frame = mainWindow?.Content as Frame;
-
-        if (frame != null)
+        try
         {
-            frame.Navigate(typeof(ProductReviewPage));
-            this.Log("Navigating to Product Review page", LogMessageType.Message);
+            if (this.Frame != null)
+            {
+                this.Frame.Navigate(typeof(ProductReviewPage));
+                this.Log("Navigating to Product Review page", LogMessageType.Message);
+            }
+            else
+            {
+                this.Log("Error: Cannot navigate to ProductReviewPage - Frame not available", LogMessageType.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            this.Log("Error: Cannot navigate to ProductReviewPage - Frame not found", LogMessageType.Error);
+            this.Log($"Navigation error: {ex.Message}", LogMessageType.Error);
         }
     }
 

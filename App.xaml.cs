@@ -48,7 +48,8 @@ public partial class App : Application
     {
         // Parse CLI arguments and configure feature flags
         var featureFlagService = Services.GetRequiredService<IFeatureFlagService>();
-        bool productReviewEnabled = ParseCliArgs(args.Arguments ?? string.Empty);
+        string cliArgs = string.Join(" ", Environment.GetCommandLineArgs());
+        bool productReviewEnabled = ParseCliArgs(cliArgs);
         await featureFlagService.SetProductReviewEnabled(productReviewEnabled);
 
         this._window = new MainWindow();
