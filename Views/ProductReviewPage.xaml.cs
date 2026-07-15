@@ -22,7 +22,9 @@ namespace IntVue.Views;
 /// ProductReviewPage - XAML view for playing pre-recorded interview questions with countdown timer.
 /// Supports WebM video playback, playlist navigation, and countdown-based recording workflow.
 /// </summary>
+#pragma warning disable CA1001 // Page disposes _recordingService in OnUnloaded; WinUI pattern
 public sealed partial class ProductReviewPage : Page
+#pragma warning restore CA1001
 {
     private ProductReviewViewModel? _viewModel;
     private ProductReviewRecordingService? _recordingService;
@@ -138,6 +140,7 @@ public sealed partial class ProductReviewPage : Page
             {
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.InitializeRecordingAsync] No camera devices found");
                 this.ViewModel.ErrorMessage = "No camera devices found. Recording will not be available.";
+                this.ViewModel.HasCamera = false;
                 return;
             }
 
@@ -217,6 +220,33 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
+    /// Stop Recording button click handler - Stops the active recording session.
+    /// </summary>
+    private async void BtnStop_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] Stopping recording");
+
+            if (_recordingService?.IsRecording == true)
+            {
+                await _recordingService.StopRecordingAsync();
+                this.ViewModel.IsRecordingNow = false;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] Recording stopped successfully");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] No active recording to stop");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnStop_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to stop recording: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Start Recording button click handler - Starts video playback, then countdown, then recording.
     /// Sequence: Video plays → Countdown (3s) → Recording starts.
     /// </summary>
@@ -271,12 +301,14 @@ public sealed partial class ProductReviewPage : Page
                 {
                     System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnCountdownCompleted] Starting recording...");
                     await _recordingService.StartRecordingAsync("product_review_response");
+                    this.ViewModel.IsRecordingNow = true;
                     System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnCountdownCompleted] Recording started successfully");
                 }
                 catch (Exception recordEx)
                 {
                     System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnCountdownCompleted] Recording error: {recordEx.Message}");
                     this.ViewModel.ErrorMessage = $"Failed to start recording: {recordEx.Message}";
+                    this.ViewModel.IsRecordingNow = false;
                 }
             }
             else

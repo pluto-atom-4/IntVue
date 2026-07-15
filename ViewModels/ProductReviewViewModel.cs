@@ -75,6 +75,12 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Sequential;
 
+    [ObservableProperty]
+    public partial bool IsRecordingNow { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasCamera { get; set; } = true;
+
     /// <summary>
     /// Gets the current question, or null if playlist is empty.
     /// </summary>
