@@ -15,6 +15,7 @@ using Microsoft.UI.Xaml.Controls;
 
 using Windows.Devices.Enumeration;
 using Windows.Media.Core;
+using Windows.Media.Playback;
 
 namespace IntVue.Views;
 
@@ -68,6 +69,12 @@ public sealed partial class ProductReviewPage : Page
             // Subscribe to ViewModel property changes to detect when CurrentQuestion changes
             this.ViewModel.PropertyChanged += this.OnViewModelPropertyChanged;
 
+            // Subscribe to media player events
+            if (this.MediaPlayer?.MediaPlayer != null)
+            {
+                this.MediaPlayer.MediaPlayer.MediaEnded += this.OnMediaEnded;
+            }
+
             // Initialize recording service
             await this.InitializeRecordingAsync();
 
@@ -108,6 +115,12 @@ public sealed partial class ProductReviewPage : Page
             // Unsubscribe from ViewModel property changes
             this.ViewModel.PropertyChanged -= this.OnViewModelPropertyChanged;
             this.ViewModel.CountdownCompleted -= this.OnCountdownCompleted;
+
+            // Unsubscribe from media player events
+            if (this.MediaPlayer?.MediaPlayer != null)
+            {
+                this.MediaPlayer.MediaPlayer.MediaEnded -= this.OnMediaEnded;
+            }
 
             // Dispose recording service
             _recordingService?.Dispose();
@@ -247,10 +260,10 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
-    /// Start Recording button click handler - Starts video playback, then countdown, then recording.
-    /// Sequence: Video plays → Countdown (3s) → Recording starts.
+    /// Start Recording button click handler - Starts video playback.
+    /// Sequence: Video plays → Video finishes → Countdown (3s) → Recording starts.
     /// </summary>
-    private async void BtnRecord_Click(object sender, RoutedEventArgs e)
+    private void BtnRecord_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -265,25 +278,40 @@ public sealed partial class ProductReviewPage : Page
             else
             {
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Warning: MediaPlayer not available");
+                this.ViewModel.ErrorMessage = "MediaPlayer not available";
             }
-
-            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Starting countdown");
-
-            // Subscribe to countdown completion event
-            this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
-
-            // Start the countdown (recording will start when countdown completes)
-            await this.ViewModel.StartCountdownCommand.ExecuteAsync(null);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Error: {ex.Message}");
-            this.ViewModel.ErrorMessage = $"Failed to start recording: {ex.Message}";
+            this.ViewModel.ErrorMessage = $"Failed to start playback: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Handles countdown completion - starts recording (video already playing).
+    /// Media player event - Fires when video finishes playing. Starts countdown timer.
+    /// </summary>
+    private async void OnMediaEnded(MediaPlayer sender, object args)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnMediaEnded] Video finished, starting countdown");
+
+            // Subscribe to countdown completion event
+            this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
+
+            // Start the countdown (will trigger OnCountdownCompleted when done)
+            await this.ViewModel.StartCountdownCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnMediaEnded] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Countdown error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Handles countdown completion - starts recording after countdown finishes.
     /// </summary>
     private async void OnCountdownCompleted(object? sender, EventArgs e)
     {
