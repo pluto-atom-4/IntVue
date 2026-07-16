@@ -50,6 +50,9 @@
 
         <!-- Question index formatter: formats index and total count -->
         <converters:QuestionIndexFormatterConverter x:Key="QuestionIndexFormatterConverter" />
+
+        <!-- Recording state to button text: true → "Stop Recording", false → "Start Recording" -->
+        <converters:RecordingStateToButtonTextConverter x:Key="RecordingStateToButtonTextConverter" />
     </Page.Resources>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
@@ -282,42 +285,31 @@
                 AutomationProperties.Name="Start preview"
                 AutomationProperties.AutomationId="PreviewButtonAutomationId" />
 
-            <!-- Start Recording Button (Primary/Accent) -->
+            <!-- Recording Action Button (Consolidated: Start/Stop Recording) -->
             <Button
                 x:Name="BtnRecord"
-                Content="Start Recording"
+                Content="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource RecordingStateToButtonTextConverter}}"
                 Style="{ThemeResource AccentButtonStyle}"
                 Click="BtnRecord_Click"
                 IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
                 Visibility="{x:Bind ViewModel.HasCamera, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                ToolTipService.ToolTip="Record response (Alt+R)"
+                ToolTipService.ToolTip="Start or stop recording (Alt+R)"
                 AccessKey="R"
                 TabIndex="21"
-                AutomationProperties.Name="Start recording"
+                AutomationProperties.Name="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource RecordingStateToButtonTextConverter}}"
                 AutomationProperties.AutomationId="RecordButtonAutomationId" />
 
             <!-- Cancel Countdown Button (Conditional Visibility) -->
             <Button
                 x:Name="BtnCancelCountdown"
                 Content="Cancel Countdown"
+                Command="{x:Bind ViewModel.CancelCountdownCommand}"
                 Visibility="{x:Bind ViewModel.IsCountingDown, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 ToolTipService.ToolTip="Cancel countdown (Alt+C)"
                 AccessKey="C"
                 TabIndex="22"
                 AutomationProperties.Name="Cancel countdown"
                 AutomationProperties.AutomationId="CancelCountdownButtonAutomationId" />
-
-            <!-- Stop Recording Button (Conditional Visibility) -->
-            <Button
-                x:Name="BtnStopRecording"
-                Content="Stop Recording"
-                Click="BtnStop_Click"
-                Visibility="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                ToolTipService.ToolTip="Stop recording (Alt+S)"
-                AccessKey="S"
-                TabIndex="22"
-                AutomationProperties.Name="Stop recording"
-                AutomationProperties.AutomationId="StopRecordingButtonAutomationId" />
 
             <!-- Play Recording Button -->
             <Button

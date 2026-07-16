@@ -258,65 +258,89 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
-    /// Stop Recording button click handler - Stops the active recording session.
+    /// Recording action button click handler - Consolidates start and stop recording.
+    /// If not recording: Starts video playback sequence (Video plays → Countdown → Recording starts).
+    /// If recording: Stops the active recording session.
     /// </summary>
-    private async void BtnStop_Click(object sender, RoutedEventArgs e)
+    private async void BtnRecord_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] Stopping recording");
+            if (this.ViewModel.IsRecordingNow)
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Stopping recording");
+                await this.StopRecordingAsync();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Starting video playback");
+                this.StartVideoPlayback();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Exception: {ex.GetType().Name}: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to handle recording action: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Helper method to stop recording.
+    /// </summary>
+    private async Task StopRecordingAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StopRecordingAsync] Stopping recording");
 
             if (_recordingService?.IsRecording == true)
             {
                 await _recordingService.StopRecordingAsync();
                 this.ViewModel.IsRecordingNow = false;
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] Recording stopped successfully");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StopRecordingAsync] Recording stopped successfully");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnStop_Click] No active recording to stop");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StopRecordingAsync] No active recording to stop");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnStop_Click] Error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.StopRecordingAsync] Error: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Failed to stop recording: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Start Recording button click handler - Starts video playback.
-    /// Sequence: Video plays → Video finishes → Countdown (3s) → Recording starts.
+    /// Helper method to start video playback.
     /// </summary>
-    private void BtnRecord_Click(object sender, RoutedEventArgs e)
+    private void StartVideoPlayback()
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Starting video playback");
-
             // Start video playback immediately
             if (this.MediaPlayer?.MediaPlayer != null)
             {
                 var mediaPlayer = this.MediaPlayer.MediaPlayer;
                 var playbackSession = mediaPlayer.PlaybackSession;
 
-                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] MediaPlayer state: PlaybackState={playbackSession?.PlaybackState}, Duration={playbackSession?.NaturalDuration.TotalSeconds}s");
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.StartVideoPlayback] MediaPlayer state: PlaybackState={playbackSession?.PlaybackState}, Duration={playbackSession?.NaturalDuration.TotalSeconds}s");
 
                 mediaPlayer.Play();
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Play() called, video playback started");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartVideoPlayback] Play() called, video playback started");
 
                 // Start timer to monitor when video finishes
                 this.StartVideoPlaybackMonitor();
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] ERROR: MediaPlayer is null");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartVideoPlayback] ERROR: MediaPlayer is null");
                 this.ViewModel.ErrorMessage = "MediaPlayer not available";
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Exception: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.StartVideoPlayback] Exception: {ex.GetType().Name}: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Failed to start playback: {ex.Message}";
         }
     }
