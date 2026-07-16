@@ -72,7 +72,16 @@ public sealed partial class ProductReviewPage : Page
             // Subscribe to media player events
             if (this.MediaPlayer?.MediaPlayer != null)
             {
-                this.MediaPlayer.MediaPlayer.MediaEnded += this.OnMediaEnded;
+                var mediaPlayer = this.MediaPlayer.MediaPlayer;
+                mediaPlayer.MediaEnded += this.OnMediaEnded;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] Subscribed to MediaPlayer.MediaEnded event");
+
+                // Also subscribe to PlaybackStateChanged as backup
+                if (mediaPlayer.PlaybackSession != null)
+                {
+                    mediaPlayer.PlaybackSession.PlaybackStateChanged += this.OnPlaybackStateChanged;
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] Subscribed to PlaybackSession.PlaybackStateChanged event");
+                }
             }
 
             // Initialize recording service
@@ -120,6 +129,11 @@ public sealed partial class ProductReviewPage : Page
             if (this.MediaPlayer?.MediaPlayer != null)
             {
                 this.MediaPlayer.MediaPlayer.MediaEnded -= this.OnMediaEnded;
+
+                if (this.MediaPlayer.MediaPlayer.PlaybackSession != null)
+                {
+                    this.MediaPlayer.MediaPlayer.PlaybackSession.PlaybackStateChanged -= this.OnPlaybackStateChanged;
+                }
             }
 
             // Dispose recording service
@@ -272,19 +286,83 @@ public sealed partial class ProductReviewPage : Page
             // Start video playback immediately
             if (this.MediaPlayer?.MediaPlayer != null)
             {
-                this.MediaPlayer.MediaPlayer.Play();
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Video playback started");
+                var mediaPlayer = this.MediaPlayer.MediaPlayer;
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] MediaPlayer state: IsPlaying={mediaPlayer.PlaybackSession?.PlaybackState}, Source={mediaPlayer.Source?.ToString() ?? "null"}");
+
+                mediaPlayer.Play();
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Play() called, video playback started");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Warning: MediaPlayer not available");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] ERROR: MediaPlayer is null");
                 this.ViewModel.ErrorMessage = "MediaPlayer not available";
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Exception: {ex.GetType().Name}: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Failed to start playback: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Playback state changed event - Fires when playback state changes. Detects when video finishes.
+    /// </summary>
+    private async void OnPlaybackStateChanged(MediaPlaybackSession sender, object args)
+    {
+        try
+        {
+            var state = sender?.PlaybackState;
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnPlaybackStateChanged] PlaybackState changed to: {state}");
+
+            // Check if playback has ended
+            if (state == MediaPlaybackState.None)
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnPlaybackStateChanged] Playback ended (state=None), starting countdown");
+                await this.StartCountdownAfterVideo();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnPlaybackStateChanged] Error: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to start countdown after video finishes.
+    /// </summary>
+    private async Task StartCountdownAfterVideo()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] Starting countdown sequence");
+
+            if (this.ViewModel == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] ERROR: ViewModel is null");
+                return;
+            }
+
+            // Subscribe to countdown completion event
+            this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] Subscribed to CountdownCompleted event");
+
+            // Start the countdown (will trigger OnCountdownCompleted when done)
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] Executing StartCountdownCommand");
+            if (this.ViewModel.StartCountdownCommand.CanExecute(null))
+            {
+                await this.ViewModel.StartCountdownCommand.ExecuteAsync(null);
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] Countdown command executed successfully");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartCountdownAfterVideo] ERROR: StartCountdownCommand cannot execute");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.StartCountdownAfterVideo] Error: {ex.GetType().Name}: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Countdown error: {ex.Message}";
         }
     }
 
@@ -295,18 +373,12 @@ public sealed partial class ProductReviewPage : Page
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnMediaEnded] Video finished, starting countdown");
-
-            // Subscribe to countdown completion event
-            this.ViewModel.CountdownCompleted += this.OnCountdownCompleted;
-
-            // Start the countdown (will trigger OnCountdownCompleted when done)
-            await this.ViewModel.StartCountdownCommand.ExecuteAsync(null);
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnMediaEnded] MediaEnded event fired");
+            await this.StartCountdownAfterVideo();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnMediaEnded] Error: {ex.Message}");
-            this.ViewModel.ErrorMessage = $"Countdown error: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnMediaEnded] Error: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
