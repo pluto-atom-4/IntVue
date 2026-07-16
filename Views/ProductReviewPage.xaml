@@ -64,7 +64,7 @@
         </Grid.RowDefinitions>
 
         <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- ROW 0: MediaPlayerElement + Countdown Overlay           -->
+        <!-- ROW 0: MediaPlayerElement + Countdown Overlay + Recording Indicator -->
         <!-- ═══════════════════════════════════════════════════════ -->
         <Grid Grid.Row="0" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
             <!-- MediaPlayerElement: WebM video playback -->
@@ -92,6 +92,36 @@
                     VerticalAlignment="Center"
                     LineHeight="108" />
             </Grid>
+
+            <!-- Recording Indicator: Red box with "● Recording" (top-right) -->
+            <Border
+                Background="{ThemeResource SystemFillColorCriticalBrush}"
+                CornerRadius="4"
+                Padding="8,4"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="12"
+                Visibility="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <AutomationProperties.Name>Recording in progress</AutomationProperties.Name>
+
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <!-- Red dot indicator -->
+                    <Ellipse
+                        Width="8"
+                        Height="8"
+                        Fill="{ThemeResource TextFillColorPrimaryBrush}"
+                        VerticalAlignment="Center" />
+
+                    <!-- "Recording" text -->
+                    <TextBlock
+                        Text="Recording"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        FontWeight="Bold"
+                        VerticalAlignment="Center"
+                        FontSize="14" />
+                </StackPanel>
+            </Border>
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════ -->
@@ -259,6 +289,7 @@
                 Style="{ThemeResource AccentButtonStyle}"
                 Click="BtnRecord_Click"
                 IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
+                Visibility="{x:Bind ViewModel.HasCamera, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 ToolTipService.ToolTip="Record response (Alt+R)"
                 AccessKey="R"
                 TabIndex="21"
@@ -275,6 +306,18 @@
                 TabIndex="22"
                 AutomationProperties.Name="Cancel countdown"
                 AutomationProperties.AutomationId="CancelCountdownButtonAutomationId" />
+
+            <!-- Stop Recording Button (Conditional Visibility) -->
+            <Button
+                x:Name="BtnStopRecording"
+                Content="Stop Recording"
+                Click="BtnStop_Click"
+                Visibility="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                ToolTipService.ToolTip="Stop recording (Alt+S)"
+                AccessKey="S"
+                TabIndex="22"
+                AutomationProperties.Name="Stop recording"
+                AutomationProperties.AutomationId="StopRecordingButtonAutomationId" />
 
             <!-- Play Recording Button -->
             <Button
