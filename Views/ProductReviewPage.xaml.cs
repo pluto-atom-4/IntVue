@@ -10,6 +10,7 @@ using IntVue.Services;
 using IntVue.ViewModels;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -30,6 +31,7 @@ public sealed partial class ProductReviewPage : Page
     private ProductReviewViewModel? _viewModel;
     private ProductReviewRecordingService? _recordingService;
     private List<DeviceInformation>? _deviceList;
+    private DispatcherTimer? _videoPlaybackTimer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductReviewPage"/> class.
@@ -124,6 +126,15 @@ public sealed partial class ProductReviewPage : Page
             // Unsubscribe from ViewModel property changes
             this.ViewModel.PropertyChanged -= this.OnViewModelPropertyChanged;
             this.ViewModel.CountdownCompleted -= this.OnCountdownCompleted;
+
+            // Stop video playback monitor timer
+            if (this._videoPlaybackTimer != null)
+            {
+                this._videoPlaybackTimer.Stop();
+                this._videoPlaybackTimer.Tick -= this.OnVideoPlaybackTimerTick;
+                this._videoPlaybackTimer = null;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnUnloaded] Video playback timer stopped");
+            }
 
             // Unsubscribe from media player events
             if (this.MediaPlayer?.MediaPlayer != null)
@@ -287,10 +298,15 @@ public sealed partial class ProductReviewPage : Page
             if (this.MediaPlayer?.MediaPlayer != null)
             {
                 var mediaPlayer = this.MediaPlayer.MediaPlayer;
-                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] MediaPlayer state: IsPlaying={mediaPlayer.PlaybackSession?.PlaybackState}, Source={mediaPlayer.Source?.ToString() ?? "null"}");
+                var playbackSession = mediaPlayer.PlaybackSession;
+
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] MediaPlayer state: PlaybackState={playbackSession?.PlaybackState}, Duration={playbackSession?.NaturalDuration.TotalSeconds}s");
 
                 mediaPlayer.Play();
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRecord_Click] Play() called, video playback started");
+
+                // Start timer to monitor when video finishes
+                this.StartVideoPlaybackMonitor();
             }
             else
             {
@@ -302,6 +318,90 @@ public sealed partial class ProductReviewPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRecord_Click] Exception: {ex.GetType().Name}: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Failed to start playback: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Starts a timer to monitor video playback and detect when it finishes.
+    /// </summary>
+    private void StartVideoPlaybackMonitor()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartVideoPlaybackMonitor] Starting video playback monitor timer");
+
+            // Stop any existing timer
+            if (this._videoPlaybackTimer != null)
+            {
+                this._videoPlaybackTimer.Stop();
+                this._videoPlaybackTimer.Tick -= this.OnVideoPlaybackTimerTick;
+                this._videoPlaybackTimer = null;
+            }
+
+            // Create and start new timer (check every 500ms)
+            this._videoPlaybackTimer = new DispatcherTimer();
+            this._videoPlaybackTimer.Interval = TimeSpan.FromMilliseconds(500);
+            this._videoPlaybackTimer.Tick += this.OnVideoPlaybackTimerTick;
+            this._videoPlaybackTimer.Start();
+
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StartVideoPlaybackMonitor] Timer started, checking every 500ms");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.StartVideoPlaybackMonitor] Error: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Timer tick handler - Checks if video playback has finished.
+    /// </summary>
+    private async void OnVideoPlaybackTimerTick(object? sender, object e)
+    {
+        try
+        {
+            var mediaPlayer = this.MediaPlayer?.MediaPlayer;
+            if (mediaPlayer == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnVideoPlaybackTimerTick] MediaPlayer is null, stopping timer");
+                if (this._videoPlaybackTimer != null)
+                {
+                    this._videoPlaybackTimer.Stop();
+                }
+
+                return;
+            }
+
+            var playbackSession = mediaPlayer.PlaybackSession;
+            if (playbackSession == null)
+            {
+                return;
+            }
+
+            var currentPosition = playbackSession.Position.TotalSeconds;
+            var duration = playbackSession.NaturalDuration.TotalSeconds;
+            var playbackState = playbackSession.PlaybackState;
+
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnVideoPlaybackTimerTick] Position: {currentPosition:F2}s / {duration:F2}s, State: {playbackState}");
+
+            // Check if video has finished (position >= duration - 0.5 second buffer)
+            if (duration > 0 && currentPosition >= (duration - 0.5))
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnVideoPlaybackTimerTick] Video finished! Position={currentPosition:F2}s, Duration={duration:F2}s");
+
+                // Stop timer
+                if (this._videoPlaybackTimer != null)
+                {
+                    this._videoPlaybackTimer.Stop();
+                    this._videoPlaybackTimer = null;
+                }
+
+                // Start countdown
+                await this.StartCountdownAfterVideo();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnVideoPlaybackTimerTick] Error: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
