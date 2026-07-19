@@ -17,6 +17,87 @@ The design is guided by **Fluent Design System** principles (Microsoft's modern 
 
 ---
 
+## System Architecture
+
+### High-Level Data Flow
+
+```
+User Input (Views/XAML)
+    ↓
+ViewModel (State + Commands)
+    ↓
+Services (Business Logic)
+    ↓
+Models (Data)
+    ↓
+Storage/Media (File I/O, MediaCapture)
+```
+
+**Key Pattern:** MVVM + Dependency Injection. Services handle media, file I/O, navigation. ViewModels expose UI state via `[ObservableProperty]`. Views bind via `x:Bind` (never `{Binding}`).
+
+### Core Entities
+
+| Entity | Responsibility | Lifecycle |
+|---|---|---|
+| `MainViewModel` | Coordinating app state, profile selection | App lifetime |
+| `RecordingService` | MediaCapture, recording control, file saving | Session-based |
+| `CountdownService` | Timer state, progress reporting | Per-countdown |
+| `Recording` (Model) | Metadata: name, date, duration, file path | Persistent (file-backed) |
+
+### State Machines
+
+**MediaCapture Lifecycle:**
+```
+Uninitialized → Initializing → Preview → Recording → Saving → Idle
+    ↓ Error
+  Faulted
+```
+
+**Recording State:**
+```
+Ready → CountingDown → Recording → Completed → Playback
+```
+
+**Countdown FSM (0–10 seconds):**
+```
+Armed (4–10s) → Warning (2–3s) → Critical (0–1s) → Start Recording
+   (green)        (orange)         (red)
+```
+
+### Technology Boundaries
+
+| Boundary | Constraint | Reason |
+|---|---|---|
+| **XAML Binding** | Use `x:Bind` only; never `{Binding}` | Performance, safety, compile-time validation |
+| **Colors** | `{ThemeResource ...Brush}` only | Theme support (light/dark/high-contrast) |
+| **Namespaces** | `Microsoft.UI.Xaml` only; never `Windows.UI.Xaml` | WinUI 3 requirement |
+| **MediaCapture** | Never hold open during suspend/resume | Resource limits, battery drain |
+| **Testing** | 80%+ coverage on ViewModels/Services | Reliability, maintainability |
+| **Dependencies** | Constructor injection preferred | Testability, explicit graph |
+| **Async** | Never block UI thread | Responsiveness |
+
+### Integration Points
+
+| System | Integration | Notes |
+|---|---|---|
+| **File I/O** | RecordingService → Models.Recording | Saves .mp4 to Documents/IntVue |
+| **Media Capture** | RecordingService → Windows.Media.Capture.MediaCapture | Frame-based preview + LowLagMediaRecording |
+| **Permissions** | App manifest + runtime checks | Camera, microphone, file system access |
+| **Localization** | Views reference .resw (x:Uid) | Multi-language support |
+| **Settings** | App.xaml.cs DI configuration | Service registration, defaults |
+
+### Hard Constraints
+
+**Architecture:** Strict MVVM—no business logic in Views or ViewModels. Services own domain logic.
+
+**Resource Management:** Dispose MediaCapture properly on suspend/resume. Use `IDisposable` with `using` statements.
+
+**Error Handling:** Validate at system boundaries (user input, file I/O, media). Internal code can assume valid preconditions.
+
+**Code Generation:** No speculative features (YAGNI). Implement only what's explicitly requested.
+
+---
+
 ## Three Core Design Rules
 
 ### Rule 1: Semantic Tokens (Role-Based Naming)
