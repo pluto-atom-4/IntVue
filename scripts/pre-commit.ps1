@@ -131,6 +131,19 @@ try {
         }
     }
 
+    # 4) Context token validation (warning, not blocking)
+    if (Test-Path 'scripts/count-context-tokens.ps1') {
+        Write-Host 'Checking context token budgets...'
+        & .\scripts\count-context-tokens.ps1 -Mode check
+        $tokenCheckExitCode = $LASTEXITCODE
+
+        if ($tokenCheckExitCode -ne 0) {
+            Write-Host "⚠️  Context token budget check FAILED (exit code $tokenCheckExitCode)." -ForegroundColor Yellow
+            Write-Host "   This is a WARNING, not blocking the commit." -ForegroundColor Yellow
+            Write-Host "   Consider optimizing context files before the next push." -ForegroundColor Yellow
+        }
+    }
+
     Write-Host 'Pre-commit checks passed.' -ForegroundColor Green
     Exit 0
 } finally {

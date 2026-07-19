@@ -1,0 +1,180 @@
+name: Context Architecture Validation
+
+on:
+  push:
+    branches:
+      - main
+      - chore/issue-98-ai-config
+      - '*/context*'
+    paths:
+      - 'CLAUDE.md'
+      - 'DESIGN.md'
+      - 'AGENTS.md'
+      - '.claude/**'
+      - '.github/copilot-instructions.md'
+      - 'INTVUE-CONTEXT-MANIFEST.json'
+      - 'scripts/count-context-tokens.ps1'
+  pull_request:
+    paths:
+      - 'CLAUDE.md'
+      - 'DESIGN.md'
+      - 'AGENTS.md'
+      - '.claude/**'
+      - '.github/copilot-instructions.md'
+      - 'INTVUE-CONTEXT-MANIFEST.json'
+      - 'scripts/count-context-tokens.ps1'
+
+jobs:
+  context-validation:
+    name: Validate Context Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Write-Host "Working directory: $(Get-Location)"
+
+      - name: Verify Context Files Exist
+        shell: pwsh
+        run: |
+          $requiredFiles = @(
+            'CLAUDE.md',
+            'DESIGN.md',
+            'AGENTS.md',
+            '.claude/profiles.json',
+            '.claude/custom-instructions.md',
+            '.github/copilot-instructions.md',
+            'INTVUE-CONTEXT-MANIFEST.json'
+          )
+
+          Write-Host "=== Verifying Required Context Files ===" -ForegroundColor Cyan
+          Write-Host ""
+
+          $missing = @()
+          foreach ($file in $requiredFiles) {
+            if (Test-Path $file) {
+              Write-Host "✅ $file" -ForegroundColor Green
+            } else {
+              Write-Host "❌ $file (MISSING)" -ForegroundColor Red
+              $missing += $file
+            }
+          }
+
+          if ($missing.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ FAILED: Missing context files:" -ForegroundColor Red
+            $missing | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+          }
+
+          Write-Host ""
+          Write-Host "✅ All required context files present" -ForegroundColor Green
+
+      - name: Check Line Count Compliance
+        shell: pwsh
+        run: |
+          Write-Host "=== Checking Line Count Compliance ===" -ForegroundColor Cyan
+          Write-Host ""
+
+          $checks = @(
+            @{ File = 'CLAUDE.md'; MaxLines = 200; Category = 'Quick Reference' },
+            @{ File = 'DESIGN.md'; MinLines = 200; MaxLines = 400; Category = 'Architecture' },
+            @{ File = 'AGENTS.md'; MaxLines = 150; Category = 'Agent Workflow' },
+            @{ File = '.github/copilot-instructions.md'; MaxLines = 60; Category = 'Copilot' }
+          )
+
+          $violations = @()
+
+          foreach ($check in $checks) {
+            $file = $check.File
+            $lines = @(Get-Content $file -ErrorAction SilentlyContinue).Count
+
+            $status = "✅"
+            $details = ""
+
+            if ($check.MaxLines -and $lines -gt $check.MaxLines) {
+              $status = "❌"
+              $details = "EXCEEDS max ($lines > $($check.MaxLines))"
+              $violations += $file
+            } elseif ($check.MinLines -and $lines -lt $check.MinLines) {
+              $status = "❌"
+              $details = "BELOW min ($lines < $($check.MinLines))"
+              $violations += $file
+            } else {
+              $details = "$lines lines (within budget)"
+            }
+
+            Write-Host "$status $file [$($check.Category)]: $details"
+          }
+
+          if ($violations.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ FAILED: Line count violations:" -ForegroundColor Red
+            $violations | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+          }
+
+          Write-Host ""
+          Write-Host "✅ All line count checks passed" -ForegroundColor Green
+
+      - name: Validate Token Budgets
+        shell: pwsh
+        run: |
+          Write-Host "=== Validating Token Budgets ===" -ForegroundColor Cyan
+          Write-Host ""
+
+          # Run token validation
+          if (Test-Path 'scripts/count-context-tokens.ps1') {
+            & .\scripts\count-context-tokens.ps1 -Mode check
+            $exitCode = $LASTEXITCODE
+
+            if ($exitCode -ne 0) {
+              Write-Host ""
+              Write-Host "❌ Token budget validation FAILED" -ForegroundColor Red
+              exit 1
+            }
+          } else {
+            Write-Host "⚠️  Token counting script not found" -ForegroundColor Yellow
+            Write-Host "   (This is optional for now)"
+          }
+
+      - name: Report Context Health
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "=== Context Health Summary ===" -ForegroundColor Cyan
+          Write-Host ""
+
+          # Count context files
+          $coreFiles = @('CLAUDE.md', 'DESIGN.md', 'AGENTS.md', '.claude/custom-instructions.md', '.github/copilot-instructions.md')
+          $designRules = Get-ChildItem '.claude/rules/*.rules.md' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count
+          $instrFiles = Get-ChildItem '.github/instructions/*.md' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count
+
+          Write-Host "Core context files: $($coreFiles.Count)"
+          Write-Host "Design rules: $designRules"
+          Write-Host "Instruction files: $instrFiles"
+          Write-Host ""
+          Write-Host "✅ Context architecture validation complete"
+
+      - name: Workflow Status
+        if: success()
+        run: |
+          echo "✅ All context validation checks passed"
+          echo "**Summary:**"
+          echo "- All required context files present"
+          echo "- All line counts within budgets"
+          echo "- Token budgets validated"
+          echo "- Context health verified"
+
+      - name: Workflow Failed
+        if: failure()
+        run: |
+          echo "❌ Context validation FAILED"
+          echo "See logs above for details."
+          exit 1
