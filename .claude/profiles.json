@@ -1,0 +1,93 @@
+{
+  "currentProfile": "local-dev",
+  "description": "AI context profiles for different work modes and agent types",
+  "version": "1.0",
+  "profiles": {
+    "local-dev": {
+      "name": "Local Development",
+      "description": "Full development mode for Claude Code and contributors",
+      "instructionsPath": ".claude/custom-instructions.md",
+      "allowedTools": [
+        "filesystem",
+        "powershell",
+        "bash",
+        "git",
+        "grep",
+        "editor",
+        "lsp"
+      ],
+      "contextBudget": 50000,
+      "readOnlyMode": false,
+      "alwaysLoadFiles": [
+        "CLAUDE.md",
+        ".claude/custom-instructions.md"
+      ]
+    },
+    "ai-audit": {
+      "name": "AI Audit & Review",
+      "description": "Read-only analysis mode for code audits and context analysis",
+      "instructionsPath": ".claude/audit-instructions.md",
+      "allowedTools": [
+        "filesystem",
+        "grep",
+        "read"
+      ],
+      "contextBudget": 80000,
+      "readOnlyMode": true,
+      "alwaysLoadFiles": [
+        "CLAUDE.md"
+      ]
+    },
+    "security-review": {
+      "name": "Security Review",
+      "description": "Security-focused analysis mode for vulnerability scanning and compliance",
+      "instructionsPath": ".claude/security-instructions.md",
+      "allowedTools": [
+        "filesystem",
+        "grep",
+        "read"
+      ],
+      "contextBudget": 60000,
+      "readOnlyMode": true,
+      "alwaysLoadFiles": [
+        "CLAUDE.md",
+        ".github/instructions/security.instructions.md"
+      ]
+    }
+  },
+  "profileSelectionStrategy": {
+    "default": "local-dev",
+    "envVar": "CLAUDE_PROFILE",
+    "cliFlag": "--profile",
+    "autoDetection": {
+      "enabled": true,
+      "rules": [
+        {
+          "env": "CI",
+          "profile": "ai-audit"
+        },
+        {
+          "env": "SECURITY_AUDIT",
+          "profile": "security-review"
+        }
+      ]
+    }
+  },
+  "contextBudgetNotes": {
+    "alwaysOnTokens": {
+      "description": "Files loaded on every turn (token cost unavoidable)",
+      "target": "<3000 tokens",
+      "includes": [
+        "CLAUDE.md",
+        "custom-instructions.md",
+        ".github/copilot-instructions.md"
+      ]
+    },
+    "onDemandTokens": {
+      "description": "Files loaded when needed (DESIGN.md, instruction files)",
+      "target": "<2000 tokens per file",
+      "strategy": "Link instead of inline; user requests DESIGN.md on demand"
+    },
+    "methodology": "Approximate: 1 line ≈ 10 tokens (code), 1 word ≈ 1.3 tokens (prose)"
+  }
+}
