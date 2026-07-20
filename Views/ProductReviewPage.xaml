@@ -315,7 +315,7 @@
             <Button
                 x:Name="BtnPlay"
                 Content="Play Recording"
-                IsEnabled="False"
+                IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
                 ToolTipService.ToolTip="Play recording (Alt+P)"
                 AccessKey="P"
                 TabIndex="23"
@@ -326,7 +326,8 @@
             <Button
                 x:Name="BtnDelete"
                 Content="Delete Recording"
-                IsEnabled="False"
+                IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
+                Click="BtnDelete_Click"
                 ToolTipService.ToolTip="Delete recording (Alt+D)"
                 AccessKey="D"
                 TabIndex="24"

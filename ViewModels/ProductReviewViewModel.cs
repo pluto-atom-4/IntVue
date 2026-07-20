@@ -81,6 +81,9 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool HasCamera { get; set; } = true;
 
+    [ObservableProperty]
+    public partial bool HasRecording { get; set; }
+
     /// <summary>
     /// Gets the current question, or null if playlist is empty.
     /// </summary>

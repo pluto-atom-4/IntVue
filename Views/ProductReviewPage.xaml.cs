@@ -297,6 +297,7 @@ public sealed partial class ProductReviewPage : Page
             {
                 await _recordingService.StopRecordingAsync();
                 this.ViewModel.IsRecordingNow = false;
+                this.ViewModel.HasRecording = true;
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StopRecordingAsync] Recording stopped successfully");
             }
             else
@@ -544,6 +545,32 @@ public sealed partial class ProductReviewPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnCountdownCompleted] Error: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Countdown completion error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Delete Recording button click handler - Deletes the recorded file.
+    /// </summary>
+    private async void BtnDelete_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Deleting recording");
+            if (_recordingService?.RecordedFile != null)
+            {
+                await _recordingService.DeleteRecordingAsync();
+                this.ViewModel.HasRecording = false;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Recording deleted successfully");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] No recording to delete");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnDelete_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to delete recording: {ex.Message}";
         }
     }
 }
