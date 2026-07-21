@@ -573,4 +573,46 @@ public sealed partial class ProductReviewPage : Page
             this.ViewModel.ErrorMessage = $"Failed to delete recording: {ex.Message}";
         }
     }
+
+    /// <summary>
+    /// Play Recording button click handler - Plays the recorded file.
+    /// </summary>
+    private void BtnPlay_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] Playing recording");
+            if (_recordingService?.RecordedFile != null)
+            {
+                var recordingPath = _recordingService.RecordedFile.Path;
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnPlay_Click] Loading recording: {recordingPath}");
+
+                // Load the recorded file into the MediaPlayerElement
+                var mediaSource = MediaSource.CreateFromUri(new Uri(recordingPath));
+                this.MediaPlayer.Source = mediaSource;
+
+                // Start playback
+                if (this.MediaPlayer?.MediaPlayer != null)
+                {
+                    this.MediaPlayer.MediaPlayer.Play();
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] Playback started");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] ERROR: MediaPlayer is null");
+                    this.ViewModel.ErrorMessage = "MediaPlayer not available";
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] No recording to play");
+                this.ViewModel.ErrorMessage = "No recording available to play";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnPlay_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to play recording: {ex.Message}";
+        }
+    }
 }

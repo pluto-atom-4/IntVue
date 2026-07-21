@@ -316,6 +316,7 @@
                 x:Name="BtnPlay"
                 Content="Play Recording"
                 IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
+                Click="BtnPlay_Click"
                 ToolTipService.ToolTip="Play recording (Alt+P)"
                 AccessKey="P"
                 TabIndex="23"
