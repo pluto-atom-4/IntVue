@@ -291,7 +291,7 @@
                 Content="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource RecordingStateToButtonTextConverter}}"
                 Style="{ThemeResource AccentButtonStyle}"
                 Click="BtnRecord_Click"
-                IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
+                IsEnabled="{x:Bind ViewModel.CanStartOrStopRecording, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasCamera, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 ToolTipService.ToolTip="Start or stop recording (Alt+R)"
                 AccessKey="R"
