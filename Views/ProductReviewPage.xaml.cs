@@ -561,12 +561,9 @@ public sealed partial class ProductReviewPage : Page
                 await _recordingService.DeleteRecordingAsync();
                 this.ViewModel.HasRecording = false;
 
-                // Clear media player to remove playback controls
-                if (this.MediaPlayer?.MediaPlayer != null)
-                {
-                    this.MediaPlayer.MediaPlayer.Source = null;
-                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Media player cleared");
-                }
+                // Reload current question media to allow user to record again without reinitializing
+                this.LoadCurrentQuestionMedia();
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Current question media reloaded");
 
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Recording deleted successfully");
             }
