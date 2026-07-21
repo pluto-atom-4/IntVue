@@ -297,6 +297,7 @@ public sealed partial class ProductReviewPage : Page
             {
                 await _recordingService.StopRecordingAsync();
                 this.ViewModel.IsRecordingNow = false;
+                this.ViewModel.HasRecording = true;
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.StopRecordingAsync] Recording stopped successfully");
             }
             else
@@ -544,6 +545,79 @@ public sealed partial class ProductReviewPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnCountdownCompleted] Error: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Countdown completion error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Delete Recording button click handler - Deletes the recorded file.
+    /// </summary>
+    private async void BtnDelete_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Deleting recording");
+            if (_recordingService?.RecordedFile != null)
+            {
+                await _recordingService.DeleteRecordingAsync();
+                this.ViewModel.HasRecording = false;
+
+                // Reload current question media to allow user to record again without reinitializing
+                this.LoadCurrentQuestionMedia();
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Current question media reloaded");
+
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Recording deleted successfully");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] No recording to delete");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnDelete_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to delete recording: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Play Recording button click handler - Plays the recorded file.
+    /// </summary>
+    private void BtnPlay_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] Playing recording");
+            if (_recordingService?.RecordedFile != null)
+            {
+                var recordingPath = _recordingService.RecordedFile.Path;
+                System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnPlay_Click] Loading recording: {recordingPath}");
+
+                // Load the recorded file into the MediaPlayerElement
+                var mediaSource = MediaSource.CreateFromUri(new Uri(recordingPath));
+                this.MediaPlayer.Source = mediaSource;
+
+                // Start playback
+                if (this.MediaPlayer?.MediaPlayer != null)
+                {
+                    this.MediaPlayer.MediaPlayer.Play();
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] Playback started");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] ERROR: MediaPlayer is null");
+                    this.ViewModel.ErrorMessage = "MediaPlayer not available";
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnPlay_Click] No recording to play");
+                this.ViewModel.ErrorMessage = "No recording available to play";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnPlay_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to play recording: {ex.Message}";
         }
     }
 }

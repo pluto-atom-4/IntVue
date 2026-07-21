@@ -473,4 +473,77 @@ public class ProductReviewViewModelTests
         Assert.IsTrue(ReferenceEquals(questions, result));
         Assert.AreEqual(2, result.Count);
     }
+
+    [TestMethod]
+    public void HasRecording_InitializesToFalse()
+    {
+        // Arrange
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+
+        // Act
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+
+        // Assert
+        Assert.IsFalse(viewModel.HasRecording);
+    }
+
+    [TestMethod]
+    public void HasRecording_CanBeSetToTrue()
+    {
+        // Arrange
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+
+        // Act
+        viewModel.HasRecording = true;
+
+        // Assert
+        Assert.IsTrue(viewModel.HasRecording);
+    }
+
+    [TestMethod]
+    public void HasRecording_CanBeSetToFalse()
+    {
+        // Arrange
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+        viewModel.HasRecording = true;
+
+        // Act
+        viewModel.HasRecording = false;
+
+        // Assert
+        Assert.IsFalse(viewModel.HasRecording);
+    }
+
+    [TestMethod]
+    public void HasRecording_RaisesPropertyChangedEvent()
+    {
+        // Arrange
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+        var propertyChanged = false;
+
+        viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ProductReviewViewModel.HasRecording))
+            {
+                propertyChanged = true;
+            }
+        };
+
+        // Act
+        viewModel.HasRecording = true;
+
+        // Assert
+        Assert.IsTrue(propertyChanged);
+    }
 }

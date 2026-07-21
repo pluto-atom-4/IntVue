@@ -81,10 +81,21 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool HasCamera { get; set; } = true;
 
+    [ObservableProperty]
+    public partial bool HasRecording { get; set; }
+
     /// <summary>
     /// Gets the current question, or null if playlist is empty.
     /// </summary>
     public Question? CurrentQuestion => _playlistService.CurrentQuestion;
+
+    /// <summary>
+    /// Gets a value indicating whether the user can start or stop recording.
+    /// Can start recording if: current question exists and no recording exists.
+    /// Can stop recording if: currently recording.
+    /// </summary>
+    public bool CanStartOrStopRecording =>
+        (CurrentQuestion != null && !HasRecording) || IsRecordingNow;
 
     /// <summary>
     /// Gets the playlist of questions.
@@ -350,5 +361,21 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
         TotalQuestions = _playlistService.TotalCount;
         CurrentQuestionPath = _playlistService.CurrentQuestion?.FilePath ?? string.Empty;
         CurrentSortMode = _playlistService.CurrentSortMode;
+    }
+
+    /// <summary>
+    /// Notifies when HasRecording property changes to update CanStartOrStopRecording binding.
+    /// </summary>
+    partial void OnHasRecordingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStartOrStopRecording));
+    }
+
+    /// <summary>
+    /// Notifies when IsRecordingNow property changes to update CanStartOrStopRecording binding.
+    /// </summary>
+    partial void OnIsRecordingNowChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStartOrStopRecording));
     }
 }

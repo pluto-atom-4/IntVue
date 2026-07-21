@@ -291,7 +291,7 @@
                 Content="{x:Bind ViewModel.IsRecordingNow, Mode=OneWay, Converter={StaticResource RecordingStateToButtonTextConverter}}"
                 Style="{ThemeResource AccentButtonStyle}"
                 Click="BtnRecord_Click"
-                IsEnabled="{x:Bind ViewModel.CurrentQuestion, Mode=OneWay, Converter={StaticResource NotNullToBoolConverter}}"
+                IsEnabled="{x:Bind ViewModel.CanStartOrStopRecording, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasCamera, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 ToolTipService.ToolTip="Start or stop recording (Alt+R)"
                 AccessKey="R"
@@ -315,7 +315,8 @@
             <Button
                 x:Name="BtnPlay"
                 Content="Play Recording"
-                IsEnabled="False"
+                IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
+                Click="BtnPlay_Click"
                 ToolTipService.ToolTip="Play recording (Alt+P)"
                 AccessKey="P"
                 TabIndex="23"
@@ -326,7 +327,8 @@
             <Button
                 x:Name="BtnDelete"
                 Content="Delete Recording"
-                IsEnabled="False"
+                IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
+                Click="BtnDelete_Click"
                 ToolTipService.ToolTip="Delete recording (Alt+D)"
                 AccessKey="D"
                 TabIndex="24"
