@@ -24,9 +24,9 @@
         <!-- Allow mixed WinUI and Windows SDK projections (required for Windows.Media APIs with WinUI 3) -->
         <EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>true</EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>
 	<!-- Prevents dotnet format from double-evaluating WinUI auto-generated files -->
-        <!-- Prevents dotnet from evaluating WinUI auto-generated files and the SimpleCapture subproject -->
-        <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**;SimpleCapture\**</DefaultItemExcludes>
-        <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);obj\**;bin\**;SimpleCapture\**</DefaultItemExcludesInProjectFolder>
+        <!-- Prevents dotnet from evaluating WinUI auto-generated files -->
+        <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
+        <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);obj\**;bin\**</DefaultItemExcludesInProjectFolder>
     </PropertyGroup>
 
     <!-- Code analysis & style enforcement settings (added per project guidelines) -->
@@ -136,8 +136,6 @@
     <Target Name="RemoveWinUIDuplicatesFromFormat" BeforeTargets="CoreCompile;ComputeCompileInputs">
       <ItemGroup>
 	<Compile Remove="Tests\**\*.cs" />
-	<!-- ADD THIS LINE TO PREVENT INTVUE FROM COMPILING SIMPLECAPTURE CODES -->
-        <Compile Remove="SimpleCapture\**\*.cs" />
         <Compile Remove="obj\**\win-x64\**\*.cs" />
         <Compile Remove="$(BaseIntermediateOutputPath)**\*.cs" />
       </ItemGroup>
