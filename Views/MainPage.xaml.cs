@@ -523,26 +523,6 @@ public sealed partial class MainPage : Page, IDisposable
         }
     }
 
-    private void BtnMediaPlayerTest_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (this.Frame != null)
-            {
-                this.Frame.Navigate(typeof(MediaPlayerTestPage));
-                this.Log("Navigating to Media Player Test page", LogMessageType.Message);
-            }
-            else
-            {
-                this.Log("Error: Cannot navigate to MediaPlayerTestPage - Frame not available", LogMessageType.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            this.Log($"Navigation error: {ex.Message}", LogMessageType.Error);
-        }
-    }
-
     private async Task DeleteRecordingAsync()
     {
         // Validate recorded file exists
