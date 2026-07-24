@@ -212,6 +212,7 @@ public sealed partial class ProductReviewPage : Page
 
     /// <summary>
     /// Loads the current question's media file into the MediaPlayerElement.
+    /// Resets MediaPlayer state before loading new source to ensure clean playback state.
     /// </summary>
     private void LoadCurrentQuestionMedia()
     {
@@ -226,6 +227,16 @@ public sealed partial class ProductReviewPage : Page
             }
 
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.LoadCurrentQuestionMedia] Loading: {currentQuestion.FilePath}");
+
+            // Reset MediaPlayer state before loading new source
+            // This ensures playback state is clean when switching media (e.g., from recording playback back to question media)
+            if (this.MediaPlayer?.MediaPlayer != null)
+            {
+                var mediaPlayer = this.MediaPlayer.MediaPlayer;
+                mediaPlayer.Pause();
+                mediaPlayer.PlaybackSession?.Position = TimeSpan.Zero;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.LoadCurrentQuestionMedia] MediaPlayer state reset (pause + position=0)");
+            }
 
             // Create media source from file path and load into MediaPlayerElement
             var mediaSource = MediaSource.CreateFromUri(new Uri(currentQuestion.FilePath));
