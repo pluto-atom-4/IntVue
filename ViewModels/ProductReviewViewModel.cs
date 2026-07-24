@@ -75,7 +75,7 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public partial SortMode CurrentSortMode { get; set; }
 
     [ObservableProperty]
-    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Sequential;
+    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Loop;
 
     [ObservableProperty]
     public partial bool IsRecordingNow { get; set; }
@@ -139,6 +139,10 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
 
             // Initialize playlist with loaded questions
             await _playlistService.InitializeAsync(questions);
+
+            // Sync ViewModel play mode with PlaylistService after initialization
+            // This ensures both layers have consistent mode (important for navigation behavior)
+            CurrentPlayMode = _playlistService.CurrentPlayMode;
 
             // Update UI state
             UpdatePlaylistState();

@@ -584,4 +584,146 @@ public class ProductReviewViewModelTests
         Assert.AreEqual(nameof(ProductReviewViewModel.CanStartOrStopRecording), changedPropertyName);
         Assert.IsTrue(viewModel.CanStartOrStopRecording, "CanStartOrStopRecording should be true when question exists and no recording");
     }
+
+    [TestMethod]
+    public void DefaultPlayMode_ShouldBeLoop()
+    {
+        // Arrange
+        var productReviewService = new Mock<IProductReviewService>();
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        var countdownService = new Mock<ICountdownService>();
+
+        // Act
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService, countdownService.Object);
+
+        // Assert
+        Assert.AreEqual(PlayMode.Loop, playlistService.CurrentPlayMode,
+            "PlaylistService default play mode should be Loop");
+        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
+            "ViewModel default play mode should be Loop");
+    }
+
+    [TestMethod]
+    public async Task LoadQuestions_ShouldSyncPlayModeWithPlaylistService()
+    {
+        // Arrange
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "q2.webm" }
+        };
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+
+        var mockReview = new Mock<IProductReviewService>();
+        mockReview.Setup(s => s.LoadQuestionDirectoryAsync(It.IsAny<string>()))
+            .ReturnsAsync(questions);
+
+        var viewModel = new ProductReviewViewModel(mockReview.Object, playlistService, new Mock<ICountdownService>().Object);
+
+        // Act
+        await viewModel.LoadQuestionsCommand.ExecuteAsync("test-dir");
+
+        // Assert
+        Assert.AreEqual(playlistService.CurrentPlayMode, viewModel.CurrentPlayMode,
+            "ViewModel play mode should match PlaylistService play mode after load");
+        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
+            "Play mode should be Loop after loading questions");
+    }
+
+    [TestMethod]
+    public void MoveToNext_WithLoopMode_ShouldWrapToBeginning()
+    {
+        // Arrange
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "q3.webm" }
+        };
+
+        var playlistService = new PlaylistService(new Mock<ISettingsService>().Object);
+        playlistService.InitializeAsync(questions).GetAwaiter().GetResult();
+        playlistService.SetPlayMode(PlayMode.Loop);
+
+        // Move to last question (index 2)
+        playlistService.SelectByIndex(2);
+        Assert.AreEqual(2, playlistService.CurrentIndex, "Should be at last question before moving");
+
+        // Act: Move to next from last question
+        var result = playlistService.MoveToNext();
+
+        // Assert: Should wrap to beginning (index 0)
+        Assert.AreEqual(0, playlistService.CurrentIndex,
+            "Should wrap to beginning (index 0) in Loop mode");
+        Assert.AreEqual("q1.webm", result?.FileName,
+            "Should be first question (q1.webm) after wrapping");
+    }
+
+    [TestMethod]
+    public async Task ShuffleCommand_ShouldUpdateCurrentQuestion()
+    {
+        // Arrange
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "q3.webm" }
+        };
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+
+        var mockReview = new Mock<IProductReviewService>();
+        mockReview.Setup(s => s.LoadQuestionDirectoryAsync(It.IsAny<string>()))
+            .ReturnsAsync(questions);
+
+        var viewModel = new ProductReviewViewModel(mockReview.Object, playlistService, new Mock<ICountdownService>().Object);
+        await viewModel.LoadQuestionsCommand.ExecuteAsync("test-dir");
+
+        var firstQuestionBefore = viewModel.CurrentQuestion;
+
+        // Act: Shuffle
+        await viewModel.ShuffleQuestionsCommand.ExecuteAsync(null);
+
+        // Assert: CurrentQuestion should be set to first question in shuffled order
+        Assert.IsNotNull(viewModel.CurrentQuestion,
+            "CurrentQuestion should not be null after shuffle");
+        Assert.AreEqual(playlistService.CurrentQuestion, viewModel.CurrentQuestion,
+            "ViewModel current question should match PlaylistService current question");
+        Assert.AreEqual(SortMode.Shuffle, viewModel.CurrentSortMode,
+            "Sort mode should be Shuffle after shuffle command");
+    }
+
+    [TestMethod]
+    public void SetPlayMode_ShouldUpdateViewModelMode()
+    {
+        // Arrange
+        var playlistService = new PlaylistService(new Mock<ISettingsService>().Object);
+        var viewModel = new ProductReviewViewModel(
+            new Mock<IProductReviewService>().Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        var modeChangedFired = false;
+        viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ProductReviewViewModel.CurrentPlayMode))
+            {
+                modeChangedFired = true;
+            }
+        };
+
+        // Act: Set play mode to RepeatCurrent
+        viewModel.SetPlayModeCommand.Execute(PlayMode.RepeatCurrent);
+
+        // Assert
+        Assert.IsTrue(modeChangedFired, "PropertyChanged should fire for CurrentPlayMode");
+        Assert.AreEqual(PlayMode.RepeatCurrent, viewModel.CurrentPlayMode,
+            "ViewModel play mode should be updated");
+        Assert.AreEqual(PlayMode.RepeatCurrent, playlistService.CurrentPlayMode,
+            "PlaylistService play mode should be updated");
+    }
 }
