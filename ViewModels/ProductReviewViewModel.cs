@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using IntVue.Models;
 using IntVue.Services;
 
+#pragma warning disable SA1201,SA1202 // Partial methods are intentionally paired with their ObservableProperty for readability
+
 namespace IntVue.ViewModels;
 
 /// <summary>
@@ -100,20 +102,18 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
         (CurrentQuestion != null && !HasRecording) || IsRecordingNow;
 
     /// <summary>
-    /// Gets the playlist of questions.
-    /// </summary>
-    public System.Collections.ObjectModel.ObservableCollection<Question> Questions => _playlistService.Questions;
-
-    /// <summary>
     /// Notifies about CanStartOrStopRecording changes when CurrentQuestion changes.
     /// Required because CanStartOrStopRecording is a computed property that depends on CurrentQuestion.
     /// </summary>
-#pragma warning disable SA1202 // 'public' members should come before 'private' members
     partial void OnCurrentQuestionChanged(Question? value)
     {
         OnPropertyChanged(nameof(CanStartOrStopRecording));
     }
-#pragma warning restore SA1202 // 'public' members should come before 'private' members
+
+    /// <summary>
+    /// Gets the playlist of questions.
+    /// </summary>
+    public System.Collections.ObjectModel.ObservableCollection<Question> Questions => _playlistService.Questions;
 
     /// <summary>
     /// Loads questions from a directory and initializes the playlist.
