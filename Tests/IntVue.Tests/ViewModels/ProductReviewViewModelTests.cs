@@ -726,4 +726,228 @@ public class ProductReviewViewModelTests
         Assert.AreEqual(PlayMode.RepeatCurrent, playlistService.CurrentPlayMode,
             "PlaylistService play mode should be updated");
     }
+
+    [TestMethod]
+    public void MoveToNext_WithRepeatMode_ShouldStayOnCurrentQuestion()
+    {
+        // Arrange
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "q3.webm" }
+        };
+
+        var playlistService = new PlaylistService(new Mock<ISettingsService>().Object);
+        playlistService.InitializeAsync(questions).GetAwaiter().GetResult();
+        playlistService.SetPlayMode(PlayMode.RepeatCurrent);
+
+        // Move to middle question (index 1)
+        playlistService.SelectByIndex(1);
+        Assert.AreEqual(1, playlistService.CurrentIndex, "Should be at q2 (index 1) before moving");
+
+        var questionBeforeMove = playlistService.CurrentQuestion;
+
+        // Act: Move to next with RepeatCurrent mode
+        var result = playlistService.MoveToNext();
+
+        // Assert: Should stay on same question (index 1)
+        Assert.AreEqual(1, playlistService.CurrentIndex,
+            "Should stay on same question (index 1) in Repeat mode");
+        Assert.AreEqual(questionBeforeMove, result,
+            "Should return same question (q2.webm)");
+        Assert.AreEqual("q2.webm", result?.FileName,
+            "Should be same question (q2.webm) after MoveToNext");
+    }
+
+    [TestMethod]
+    public void DeleteRecording_WithRepeatMode_ShouldStayOnSameQuestion()
+    {
+        // Arrange: Setup with 3 questions
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "c:\\q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "c:\\q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "c:\\q3.webm" }
+        };
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        playlistService.InitializeAsync(questions).GetAwaiter().GetResult();
+        playlistService.SetPlayMode(PlayMode.RepeatCurrent);
+
+        var viewModel = new ProductReviewViewModel(
+            new Mock<IProductReviewService>().Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        // Sync ViewModel mode with PlaylistService (normally done in LoadQuestionsAsync)
+        viewModel.CurrentPlayMode = playlistService.CurrentPlayMode;
+
+        // Select Q2
+        viewModel.SelectQuestionCommand.Execute(1);
+
+        // Capture state BEFORE delete
+        var questionBefore = viewModel.CurrentQuestion;
+        var pathBefore = viewModel.CurrentQuestionPath;
+        var indexBefore = viewModel.CurrentQuestionIndex;
+        var modeBefore = viewModel.CurrentPlayMode;
+
+        Assert.AreEqual("q2.webm", questionBefore?.FileName, "Should start on Q2");
+        Assert.AreEqual("c:\\q2.webm", pathBefore, "Path should be q2.webm");
+        Assert.AreEqual(2, indexBefore, "Index should be 2/5");
+        Assert.AreEqual(PlayMode.RepeatCurrent, modeBefore, "Mode should be RepeatCurrent");
+
+        // Simulate recording
+        viewModel.HasRecording = true;
+        Assert.IsFalse(viewModel.CanStartOrStopRecording, "Button disabled with recording");
+
+        // Act: Delete recording
+        viewModel.HasRecording = false;
+
+        // Assert: Verify ALL state properties
+        Assert.AreEqual(questionBefore, viewModel.CurrentQuestion,
+            "CurrentQuestion should STAY on Q2");
+        Assert.AreEqual(pathBefore, viewModel.CurrentQuestionPath,
+            "CurrentQuestionPath should STAY c:\\q2.webm");
+        Assert.AreEqual(indexBefore, viewModel.CurrentQuestionIndex,
+            "CurrentQuestionIndex should STAY 2/5");
+        Assert.AreEqual(modeBefore, viewModel.CurrentPlayMode,
+            "CurrentPlayMode should STAY RepeatCurrent");
+        Assert.IsFalse(viewModel.HasRecording, "HasRecording should be false");
+        Assert.IsTrue(viewModel.CanStartOrStopRecording, "Button should be enabled");
+    }
+
+    [TestMethod]
+    public async Task DeleteRecording_WithLoopMode_ShouldAdvanceToNextQuestion()
+    {
+        // Arrange: Setup with 3 questions
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "c:\\q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "c:\\q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "c:\\q3.webm" }
+        };
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        await playlistService.InitializeAsync(questions);
+        playlistService.SetPlayMode(PlayMode.Loop);
+
+        var mockReview = new Mock<IProductReviewService>();
+        var viewModel = new ProductReviewViewModel(
+            mockReview.Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        // Select Q2
+        viewModel.SelectQuestionCommand.Execute(1);
+
+        // Capture state BEFORE delete
+        var questionBefore = viewModel.CurrentQuestion;
+        var pathBefore = viewModel.CurrentQuestionPath;
+        var indexBefore = viewModel.CurrentQuestionIndex;
+        var modeBefore = viewModel.CurrentPlayMode;
+
+        Assert.AreEqual("q2.webm", questionBefore?.FileName, "Should start on Q2");
+        Assert.AreEqual("c:\\q2.webm", pathBefore, "Path should be q2.webm");
+        Assert.AreEqual(2, indexBefore, "Index should be 2/5");
+        Assert.AreEqual(PlayMode.Loop, modeBefore, "Mode should be Loop");
+
+        // Simulate recording
+        viewModel.HasRecording = true;
+        Assert.IsFalse(viewModel.CanStartOrStopRecording, "Button disabled with recording");
+
+        // Act: Delete recording (which triggers MoveToNext in Loop mode)
+        viewModel.HasRecording = false;
+        viewModel.MoveToNextCommand.Execute(null);  // Delete triggers this
+
+        // Assert: Verify ALL state properties
+        Assert.AreNotEqual(questionBefore?.FileName, viewModel.CurrentQuestion?.FileName,
+            "CurrentQuestion should CHANGE (advance)");
+        Assert.AreEqual("q3.webm", viewModel.CurrentQuestion?.FileName,
+            "CurrentQuestion should be Q3");
+        Assert.AreNotEqual(pathBefore, viewModel.CurrentQuestionPath,
+            "CurrentQuestionPath should CHANGE");
+        Assert.AreEqual("c:\\q3.webm", viewModel.CurrentQuestionPath,
+            "CurrentQuestionPath should be c:\\q3.webm");
+        Assert.AreNotEqual(indexBefore, viewModel.CurrentQuestionIndex,
+            "CurrentQuestionIndex should CHANGE");
+        Assert.AreEqual(3, viewModel.CurrentQuestionIndex, "Index should be 3/5");
+        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
+            "CurrentPlayMode should STAY Loop");
+        Assert.IsFalse(viewModel.HasRecording, "HasRecording should be false");
+        Assert.IsTrue(viewModel.CanStartOrStopRecording, "Button should be enabled");
+    }
+
+    [TestMethod]
+    public async Task DeleteRecording_WithShuffleMode_ShouldAdvanceInShuffledOrder()
+    {
+        // Arrange: Setup with 3 questions
+        var questions = new List<Question>
+        {
+            new Question { FileName = "q1.webm", FilePath = "c:\\q1.webm" },
+            new Question { FileName = "q2.webm", FilePath = "c:\\q2.webm" },
+            new Question { FileName = "q3.webm", FilePath = "c:\\q3.webm" }
+        };
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        await playlistService.InitializeAsync(questions);
+
+        var mockReview = new Mock<IProductReviewService>();
+        mockReview.Setup(s => s.LoadQuestionDirectoryAsync(It.IsAny<string>()))
+            .ReturnsAsync(questions);
+
+        var viewModel = new ProductReviewViewModel(
+            mockReview.Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        // Shuffle questions
+        await viewModel.ShuffleQuestionsCommand.ExecuteAsync(null);
+
+        // Get the shuffled order
+        var shuffledOrder = new List<string>();
+        for (int i = 0; i < viewModel.TotalQuestions; i++)
+        {
+            playlistService.SelectByIndex(i);
+            shuffledOrder.Add(playlistService.CurrentQuestion?.FileName ?? "");
+        }
+
+        // Move to second question in shuffled order (index 1)
+        playlistService.SelectByIndex(1);
+
+        // Capture state BEFORE delete
+        var questionBefore = viewModel.CurrentQuestion;
+        var pathBefore = viewModel.CurrentQuestionPath;
+        var indexBefore = viewModel.CurrentQuestionIndex;
+        var modeBefore = viewModel.CurrentSortMode;
+
+        Assert.AreEqual(SortMode.Shuffle, modeBefore, "Mode should be Shuffle");
+        Assert.IsTrue(shuffledOrder.Contains(questionBefore?.FileName ?? ""),
+            "Before question should be in shuffled order");
+
+        // Simulate recording
+        viewModel.HasRecording = true;
+        Assert.IsFalse(viewModel.CanStartOrStopRecording, "Button disabled with recording");
+
+        // Act: Delete recording (which triggers MoveToNext in Shuffle mode)
+        viewModel.HasRecording = false;
+        viewModel.MoveToNextCommand.Execute(null);  // Delete triggers this
+
+        // Assert: Verify ALL state properties
+        Assert.AreNotEqual(questionBefore?.FileName, viewModel.CurrentQuestion?.FileName,
+            "CurrentQuestion should CHANGE (advance in shuffled order)");
+        Assert.AreNotEqual(pathBefore, viewModel.CurrentQuestionPath,
+            "CurrentQuestionPath should CHANGE");
+        Assert.AreNotEqual(indexBefore, viewModel.CurrentQuestionIndex,
+            "CurrentQuestionIndex should CHANGE");
+        Assert.AreEqual(SortMode.Shuffle, viewModel.CurrentSortMode,
+            "CurrentSortMode should STAY Shuffle");
+        Assert.IsFalse(viewModel.HasRecording, "HasRecording should be false");
+        Assert.IsTrue(viewModel.CanStartOrStopRecording, "Button should be enabled");
+        Assert.IsTrue(shuffledOrder.Contains(viewModel.CurrentQuestion?.FileName ?? ""),
+            "New question should still be in shuffled order");
+    }
 }
