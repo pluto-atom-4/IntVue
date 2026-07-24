@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+using IntVue.Models;
 using IntVue.Services;
 using IntVue.ViewModels;
 
@@ -199,11 +200,12 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
-    /// Handles ViewModel property changes to reload media when CurrentQuestion changes.
+    /// Handles ViewModel property changes to reload media when CurrentQuestion or CurrentQuestionPath changes.
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestion))
+        if (e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestion) ||
+            e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestionPath))
         {
             this.LoadCurrentQuestionMedia();
         }
@@ -211,6 +213,7 @@ public sealed partial class ProductReviewPage : Page
 
     /// <summary>
     /// Loads the current question's media file into the MediaPlayerElement.
+    /// Resets MediaPlayer state before loading new source to ensure clean playback state.
     /// </summary>
     private void LoadCurrentQuestionMedia()
     {
@@ -225,6 +228,16 @@ public sealed partial class ProductReviewPage : Page
             }
 
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.LoadCurrentQuestionMedia] Loading: {currentQuestion.FilePath}");
+
+            // Reset MediaPlayer state before loading new source
+            // This ensures playback state is clean when switching media (e.g., from recording playback back to question media)
+            if (this.MediaPlayer?.MediaPlayer != null)
+            {
+                var mediaPlayer = this.MediaPlayer.MediaPlayer;
+                mediaPlayer.Pause();
+                mediaPlayer.PlaybackSession?.Position = TimeSpan.Zero;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.LoadCurrentQuestionMedia] MediaPlayer state reset (pause + position=0)");
+            }
 
             // Create media source from file path and load into MediaPlayerElement
             var mediaSource = MediaSource.CreateFromUri(new Uri(currentQuestion.FilePath));
@@ -549,7 +562,11 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
-    /// Delete Recording button click handler - Deletes the recorded file.
+    /// Delete Recording button click handler - Deletes the recorded file and advances based on play mode.
+    /// Behavior after delete depends on current play mode:
+    /// - Loop mode: Advance to next question (continue in sequence).
+    /// - Shuffle mode: Advance to next shuffled question (continue through shuffled list).
+    /// - Repeat mode: Stay on current question (allow re-record or explicit navigation).
     /// </summary>
     private async void BtnDelete_Click(object sender, RoutedEventArgs e)
     {
@@ -560,10 +577,28 @@ public sealed partial class ProductReviewPage : Page
             {
                 await _recordingService.DeleteRecordingAsync();
                 this.ViewModel.HasRecording = false;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Recording deleted");
 
-                // Reload current question media to allow user to record again without reinitializing
+                // Respect play mode when deleting
+                // Loop/Shuffle modes: Advance to next question
+                // Repeat mode: Stay on current question
+                if (this.ViewModel.CurrentPlayMode != PlayMode.RepeatCurrent)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnDelete_Click] Advancing to next question ({this.ViewModel.CurrentPlayMode} mode)");
+                    if (this.ViewModel.MoveToNextCommand.CanExecute(null))
+                    {
+                        this.ViewModel.MoveToNextCommand.Execute(null);
+                        System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Advanced to next question");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Staying on current question (Repeat mode)");
+                }
+
+                // Load media for the current question (after potential navigation)
                 this.LoadCurrentQuestionMedia();
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Current question media reloaded");
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Question media loaded");
 
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnDelete_Click] Recording deleted successfully");
             }

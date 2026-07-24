@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using IntVue.Models;
 using IntVue.Services;
 
+#pragma warning disable SA1201,SA1202 // Partial methods are intentionally paired with their ObservableProperty for readability
+
 namespace IntVue.ViewModels;
 
 /// <summary>
@@ -73,7 +75,7 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public partial SortMode CurrentSortMode { get; set; }
 
     [ObservableProperty]
-    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Sequential;
+    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Loop;
 
     [ObservableProperty]
     public partial bool IsRecordingNow { get; set; }
@@ -85,9 +87,11 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public partial bool HasRecording { get; set; }
 
     /// <summary>
-    /// Gets the current question, or null if playlist is empty.
+    /// Gets or sets the current question, or null if playlist is empty.
+    /// Fires PropertyChanged when question changes to trigger UI updates and media reload.
     /// </summary>
-    public Question? CurrentQuestion => _playlistService.CurrentQuestion;
+    [ObservableProperty]
+    public partial Question? CurrentQuestion { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the user can start or stop recording.
@@ -96,6 +100,15 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     /// </summary>
     public bool CanStartOrStopRecording =>
         (CurrentQuestion != null && !HasRecording) || IsRecordingNow;
+
+    /// <summary>
+    /// Notifies about CanStartOrStopRecording changes when CurrentQuestion changes.
+    /// Required because CanStartOrStopRecording is a computed property that depends on CurrentQuestion.
+    /// </summary>
+    partial void OnCurrentQuestionChanged(Question? value)
+    {
+        OnPropertyChanged(nameof(CanStartOrStopRecording));
+    }
 
     /// <summary>
     /// Gets the playlist of questions.
@@ -126,6 +139,10 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
 
             // Initialize playlist with loaded questions
             await _playlistService.InitializeAsync(questions);
+
+            // Sync ViewModel play mode with PlaylistService after initialization
+            // This ensures both layers have consistent mode (important for navigation behavior)
+            CurrentPlayMode = _playlistService.CurrentPlayMode;
 
             // Update UI state
             UpdatePlaylistState();
@@ -247,10 +264,60 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
         {
             _playlistService.SetPlayMode(playMode);
             CurrentPlayMode = playMode;
+            UpdatePlaylistState();
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Failed to set play mode: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Shuffles the questions in the playlist.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [RelayCommand]
+    public async Task ShuffleQuestionsAsync()
+    {
+        try
+        {
+            await this.ApplySortAsync(SortMode.Shuffle);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to shuffle questions: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Switches to Loop play mode (wraps to start at end).
+    /// </summary>
+    [RelayCommand]
+    public void ActivateLoopMode()
+    {
+        try
+        {
+            this.SetPlayMode(PlayMode.Loop);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to activate loop mode: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Switches to Repeat play mode (stays on current question).
+    /// </summary>
+    [RelayCommand]
+    public void ActivateRepeatMode()
+    {
+        try
+        {
+            this.SetPlayMode(PlayMode.RepeatCurrent);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to activate repeat mode: {ex.Message}";
         }
     }
 
@@ -354,12 +421,14 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Updates UI state properties from the playlist service.
+    /// Synchronizes display, current question, and sort mode with the playlist service state.
     /// </summary>
     private void UpdatePlaylistState()
     {
         CurrentQuestionIndex = _playlistService.CurrentIndex + 1;
         TotalQuestions = _playlistService.TotalCount;
         CurrentQuestionPath = _playlistService.CurrentQuestion?.FilePath ?? string.Empty;
+        CurrentQuestion = _playlistService.CurrentQuestion;
         CurrentSortMode = _playlistService.CurrentSortMode;
     }
 

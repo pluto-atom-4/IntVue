@@ -16,11 +16,12 @@ namespace IntVue.Services;
 public class PlaylistService : IPlaylistService
 {
     private const string _sortModeSettingKey = "PlaylistSortMode";
+    private const string _playModeSettingKey = "PlaylistPlayMode";
 
     private readonly ISettingsService _settingsService;
     private readonly ObservableCollection<Question> _questions = new ObservableCollection<Question>();
     private int _currentIndex = -1;
-    private PlayMode _currentPlayMode = PlayMode.RepeatCurrent;
+    private PlayMode _currentPlayMode = PlayMode.Loop;
     private SortMode _currentSortMode = SortMode.AscendingAlpha;
     private List<Question> _originalQuestions = new List<Question>();
     private Random? _shuffleRandom;
@@ -99,6 +100,27 @@ public class PlaylistService : IPlaylistService
             {
                 System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Error loading sort mode: {ex.GetType().Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Using default sort mode: {_currentSortMode}");
+            }
+
+            // Load saved play mode from settings service
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Getting play mode from settings...");
+                var playModeValue = _settingsService.GetSetting(_playModeSettingKey);
+                if (playModeValue != null && Enum.TryParse<PlayMode>(playModeValue.ToString(), out var savedPlayMode))
+                {
+                    _currentPlayMode = savedPlayMode;
+                    System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Loaded saved play mode: {_currentPlayMode}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Using default play mode: {_currentPlayMode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Error loading play mode: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PlaylistService.InitializeAsync] Using default play mode: {_currentPlayMode}");
             }
 
             // Apply the saved sort mode
@@ -238,12 +260,26 @@ public class PlaylistService : IPlaylistService
     }
 
     /// <summary>
-    /// Sets the play mode for the playlist.
+    /// Sets the play mode for the playlist and persists it in LocalSettings.
     /// </summary>
     /// <param name="playMode">The play mode to apply (Sequential, Loop, RepeatCurrent).</param>
     public void SetPlayMode(PlayMode playMode)
     {
         _currentPlayMode = playMode;
+
+        // Persist play mode to settings service (non-blocking failure)
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.SetPlayMode] Persisting play mode: {playMode}");
+            _settingsService.SetSettingAsync(_playModeSettingKey, playMode.ToString()).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.SetPlayMode] Play mode persisted successfully");
+        }
+        catch (Exception ex)
+        {
+            // Log but don't throw - play mode is already set correctly
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.SetPlayMode] Warning: Failed to persist play mode: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[PlaylistService.SetPlayMode] Playlist continues to work; play mode preference won't persist across sessions");
+        }
     }
 
     /// <summary>
