@@ -553,4 +553,35 @@ public class ProductReviewViewModelTests
         // Assert
         Assert.IsTrue(propertyChanged);
     }
+
+    [TestMethod]
+    public void CanStartOrStopRecording_WhenCurrentQuestionChanges_FiresPropertyChanged()
+    {
+        // Arrange
+        var question = new Question { FileName = "q1", FilePath = "q1.webm" };
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+
+        bool propertyChangedFired = false;
+        string changedPropertyName = string.Empty;
+
+        viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ProductReviewViewModel.CanStartOrStopRecording))
+            {
+                propertyChangedFired = true;
+                changedPropertyName = e.PropertyName;
+            }
+        };
+
+        // Act
+        viewModel.CurrentQuestion = question;
+
+        // Assert
+        Assert.IsTrue(propertyChangedFired, "PropertyChanged should fire for CanStartOrStopRecording when CurrentQuestion changes");
+        Assert.AreEqual(nameof(ProductReviewViewModel.CanStartOrStopRecording), changedPropertyName);
+        Assert.IsTrue(viewModel.CanStartOrStopRecording, "CanStartOrStopRecording should be true when question exists and no recording");
+    }
 }

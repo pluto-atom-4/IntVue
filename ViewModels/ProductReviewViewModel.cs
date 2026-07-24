@@ -105,6 +105,17 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public System.Collections.ObjectModel.ObservableCollection<Question> Questions => _playlistService.Questions;
 
     /// <summary>
+    /// Notifies about CanStartOrStopRecording changes when CurrentQuestion changes.
+    /// Required because CanStartOrStopRecording is a computed property that depends on CurrentQuestion.
+    /// </summary>
+#pragma warning disable SA1202 // 'public' members should come before 'private' members
+    partial void OnCurrentQuestionChanged(Question? value)
+    {
+        OnPropertyChanged(nameof(CanStartOrStopRecording));
+    }
+#pragma warning restore SA1202 // 'public' members should come before 'private' members
+
+    /// <summary>
     /// Loads questions from a directory and initializes the playlist.
     /// </summary>
     /// <param name="directoryPath">Path to directory containing question files.</param>
