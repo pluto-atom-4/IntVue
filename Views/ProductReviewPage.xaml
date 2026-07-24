@@ -193,6 +193,7 @@
                 <Button
                     x:Name="BtnShuffle"
                     Content="🔀"
+                    Command="{x:Bind ViewModel.ShuffleQuestionsCommand}"
                     ToolTipService.ToolTip="Shuffle questions (Alt+H)"
                     AccessKey="H"
                     TabIndex="11"
@@ -203,6 +204,7 @@
                 <Button
                     x:Name="BtnLoop"
                     Content="🔁"
+                    Command="{x:Bind ViewModel.ActivateLoopModeCommand}"
                     ToolTipService.ToolTip="Loop mode (Alt+L)"
                     AccessKey="L"
                     TabIndex="12"
@@ -213,6 +215,7 @@
                 <Button
                     x:Name="BtnRepeat"
                     Content="🔂"
+                    Command="{x:Bind ViewModel.ActivateRepeatModeCommand}"
                     ToolTipService.ToolTip="Repeat mode (Alt+E)"
                     AccessKey="E"
                     TabIndex="13"

@@ -431,22 +431,29 @@ public class ProductReviewViewModelTests
     }
 
     [TestMethod]
-    public void CurrentQuestion_ReturnsFromPlaylistService()
+    public void MoveToNextCommand_WhenCalled_UpdatesCurrentQuestion()
     {
         // Arrange
-        var question = new Question { FileName = "q1", FilePath = "q1.webm" };
+        var nextQuestion = new Question { FileName = "q2", FilePath = "q2.webm" };
         var productReviewService = new Mock<IProductReviewService>();
         var playlistService = new Mock<IPlaylistService>();
-        playlistService.SetupGet(s => s.CurrentQuestion).Returns(question);
+
+        // Setup PlaylistService to return next question
+        playlistService.Setup(s => s.MoveToNext()).Returns(nextQuestion);
+        playlistService.SetupGet(s => s.CurrentIndex).Returns(1);
+        playlistService.SetupGet(s => s.TotalCount).Returns(3);
+        playlistService.SetupGet(s => s.CurrentQuestion).Returns(nextQuestion);
+        playlistService.SetupGet(s => s.CurrentSortMode).Returns(SortMode.AscendingAlpha);
 
         var countdownService = new Mock<ICountdownService>();
         var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
 
         // Act
-        var result = viewModel.CurrentQuestion;
+        viewModel.MoveToNextCommand.Execute(null);
 
         // Assert
-        Assert.AreEqual(question, result);
+        Assert.AreEqual(nextQuestion, viewModel.CurrentQuestion);
+        Assert.AreEqual(2, viewModel.CurrentQuestionIndex);  // 1-based index
     }
 
     [TestMethod]

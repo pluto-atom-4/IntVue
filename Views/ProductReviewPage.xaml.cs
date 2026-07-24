@@ -199,11 +199,12 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
-    /// Handles ViewModel property changes to reload media when CurrentQuestion changes.
+    /// Handles ViewModel property changes to reload media when CurrentQuestion or CurrentQuestionPath changes.
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestion))
+        if (e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestion) ||
+            e.PropertyName == nameof(ProductReviewViewModel.CurrentQuestionPath))
         {
             this.LoadCurrentQuestionMedia();
         }
