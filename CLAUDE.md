@@ -6,9 +6,11 @@ Quick reference for Claude Code working with the IntVue project.
 
 ---
 
-## For Agents
+## 🤖 For Autonomous Agents
 
-**Agents:** Read [AGENTS.md](./AGENTS.md) instead—it has mandatory workflows, file-reading rules, and build procedures. Autonomous agents must follow **[AGENTS.md § Core Agent Workflow](./AGENTS.md#core-agent-workflow)** before writing code.
+Read [AGENTS.md](./AGENTS.md) first—it contains **mandatory Two-Gate System verification** (Plan Mode + Evidence-based checks), workflow rules, and build procedures. Agents must follow **[AGENTS.md § Core Agent Workflow](./AGENTS.md#core-agent-workflow)** (steps 1-14) before writing code.
+
+For isolated research threads: **Use sub-agent delegation** via Agent tool (see [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle) for hook integration).
 
 ---
 
@@ -22,6 +24,12 @@ $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
 ```
 
 Never hardcode—cross-architecture failures result. See **[AGENTS.md § Detect Platform](./AGENTS.md#detect-platform)** for variants.
+
+---
+
+## Context Management
+
+Use `/compact` at **50% tokens** to checkpoint. Use `/rewind` on contradictions. For multi-step tasks: spawn `Agent` tool (inherits AGENTS.md hooks). For specialized tasks: use `Skill` (e.g., `/accessibility-review`). See `.claude/skills/`.
 
 ---
 
@@ -64,13 +72,13 @@ winapp unregister && dotnet run -c Debug -p:Platform=$Platform
 
 ## Architecture Overview
 
-**Folder structure:** Models (data) → ViewModels (state) → Views (XAML) → Services (logic) → Converters, Helpers, Controls, Strings, Assets
+**Folder structure:** Models → ViewModels → Views (XAML) → Services → Converters, Helpers, Controls, Strings, Assets
 
-**MVVM pattern:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`. DI in `App.xaml.cs`. Constructor injection preferred.
+**MVVM:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`. Constructor DI in `App.xaml.cs`.
 
-**Media capture:** `MediaCapture` with `MediaFrameReader` + Win2D `CanvasControl` for preview; `LowLagMediaRecording` for recording; proper init/cleanup on suspend/resume.
+**Media capture:** `MediaCapture` + `MediaFrameReader` + Win2D for preview; `LowLagMediaRecording` for recording.
 
-**See [DESIGN.md](./DESIGN.md) for full architecture & constraints.**
+See [DESIGN.md](./DESIGN.md) for full details.
 
 ---
 
@@ -93,14 +101,24 @@ winapp unregister && dotnet run -c Debug -p:Platform=$Platform
 
 ---
 
-## Before Handing Off to an Agent
+## Unified Configuration (Cross-Tool Synergy)
+
+**Single Source of Truth:** 
+- `AGENTS.md` — autonomous agent workflows, Two-Gate System, skill discovery
+- `CLAUDE.md` — CLI quick reference (you are here)
+- `.claude/settings.json` — hook-driven automation (PreToolUse, PostToolUse, OnAgentLaunch)
+- `.github/copilot-instructions.md` — GitHub Copilot Agent Mode boundaries
+
+Both Claude Code and GitHub Copilot CLI read these files without duplication. See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle).
+
+---
+
+## Before Handing Off to Agent
 
 1. Document changes with clear commit messages
-2. Pass `dotnet test -c Debug -p:Platform=$Platform` (full suite)
+2. Pass full test suite: `dotnet test -c Debug -p:Platform=$Platform`
 3. Verify app runs: `dotnet run -c Debug -p:Platform=$Platform`
-4. Update `.github/instructions/` if adding capabilities
-
-**Agents must follow [AGENTS.md § Core Agent Workflow](./AGENTS.md#core-agent-workflow) before writing code (steps 5-8 mandatory).**
+4. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
 
 ---
 

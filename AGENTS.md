@@ -237,10 +237,218 @@ Add-AppxPackage -Register ".\<ProjectName>\bin\$Platform\Debug\<TargetFramework>
 
 If the launch fails because an old instance is still running, terminate it with `taskkill /IM <ProjectName>.exe /F` before re-running.
 
+## Two-Gate System (Evidence-Based Execution)
+
+The project enforces **two verification gates** before any task is considered complete. These gates ensure agents make decisions based on evidence (build logs, test output, LSP checks) rather than predictions.
+
+### Gate 1: Plan Mode (Before Writing Code)
+
+**When to Use:** Before implementing changes that affect >3 files OR introduce >200 lines of new code.
+
+**Process:**
+1. Invoke `EnterPlanMode` with the task description
+2. Read relevant instruction files (steps 5-8 above)
+3. Document multi-file architecture impact
+4. Identify breaking changes or dependencies
+5. Exit Plan Mode with `/exit-plan` to finalize approach
+
+**Example Gate 1 Decisions:**
+```
+Task: Add countdown recording feature
+Files affected: MainViewModel, RecordingService, MainPage.xaml, CountdownService (new)
+Breaking changes: RecordingService.StartRecording() signature changes
+Dependencies: Uses new CountdownConverter in UI binding
+Plan approved? → Yes → Proceed to implementation
+```
+
+### Gate 2: Evidence-Based Verification (Before Task Completion)
+
+**Before declaring any task complete, provide evidence:**
+
+1. **Build Evidence** (Required)
+   - Output: `dotnet build -c Debug -p:Platform=$Platform`
+   - Evidence: "Build succeeded. 0 Error(s), 0 Warning(s)"
+   - Failure: Cannot proceed; fix errors first
+
+2. **Test Evidence** (Required)
+   - Output: `dotnet test -c Debug -p:Platform=$Platform`
+   - Evidence: "Test Run Successful. All tests passed"
+   - Coverage: Show >80% coverage on changed code
+   - Failure: Cannot proceed; fix failing tests first
+
+3. **LSP Verification** (Required)
+   - No unresolved symbols in IDE
+   - No "red squiggly" errors in changed files
+   - IntelliSense works for new APIs
+
+4. **App Execution (Required)**
+   - Output: `dotnet run -c Debug -p:Platform=$Platform`
+   - Evidence: App launches and feature works as described
+   - Failure: Debug and re-test
+
+**Example Gate 2 Evidence:**
+```
+✅ Build: 0 errors, 0 warnings
+✅ Tests: 18/18 passing (86% coverage on countdown feature)
+✅ LSP: No unresolved symbols in MainViewModel or CountdownService
+✅ App: Countdown displays correctly, cancellation works, recording starts
+
+Task complete ✓
+```
+
+### Bypass Policy (Rare)
+
+Bypass Gate 2 only for:
+- Work-in-progress (WIP) features with `SKIP_TESTS_ON_FAILURE=1`
+- Documentation-only changes
+- Configuration file updates (.gitignore, .editorconfig)
+
+**Bypass is rare and documented in commit message.**
+
+---
+
+## Skill Discovery & Framework
+
+### Available Skills (in `.claude/skills/`)
+
+The following specialized skills are auto-discovered and ready to invoke:
+
+| Skill | Purpose | Usage |
+|---|---|---|
+| `accessibility-review` | Audit XAML for WCAG compliance, keyboard nav, screen reader support | `/accessibility-review` or via PostToolUse hook |
+| `feature-generation` | Scaffold new WinUI pages, ViewModels, services following MVVM | `/feature-generation --name PageName` |
+| `security-audit` | Review services for secrets, validation, PII handling | `/security-audit` or triggered on Services/* files |
+
+### Skill Metadata Format
+
+Each skill has YAML frontmatter with:
+```yaml
+---
+skill_name: accessibility-review
+description: Audit XAML UI for accessibility compliance
+tools: [grep, view, edit, bash]
+applyTo: "**/*.xaml"
+tags: [qa, accessibility]
+refersTo: accessibility.instructions.md
+---
+```
+
+### Skill Invocation
+
+Skills are triggered:
+1. **Explicit:** User invokes `/skill-name`
+2. **Implicit:** PostToolUse hook triggers on file pattern match
+3. **Agent Launch:** OnAgentLaunch hook inherits skill paths from `.claude/settings.json`
+
+---
+
+## .github/copilot/rules/ Pattern Reference System
+
+### Glob Pattern Discovery
+
+Copilot Agent Mode discovers path-specific rules via glob patterns:
+
+```yaml
+# Example: XAML files inherit accessibility rules
+---
+applyTo: "**/*.xaml"
+references:
+  - .github/instructions/accessibility.instructions.md
+  - .github/instructions/performance.instructions.md
+  - .claude/rules/design-components.rules.md
+---
+```
+
+### Pattern Matching (Most-Specific-Wins)
+
+| Pattern | Examples | Rules Applied |
+|---|---|---|
+| `**/*.xaml` | MainPage.xaml, Views/RecordingPage.xaml | XAML-specific rules (x:Bind, colors, spacing, accessibility) |
+| `ViewModels/**/*.cs` | MainViewModel.cs, CountdownViewModel.cs | MVVM pattern rules (ObservableObject, [ObservableProperty], [RelayCommand]) |
+| `Services/**/*.cs` | RecordingService.cs, MediaService.cs | Service rules (stateless, validation, async, secrets) |
+| `**/*Tests.cs` | MainViewModelTests.cs, RecordingServiceTests.cs | Test rules (MSTest, AAA pattern, naming convention) |
+| `.github/instructions/**/*.md` | code-quality.instructions.md | Apply to all instruction files themselves |
+
+### Cross-Reference Lookup
+
+When Copilot encounters a file:
+1. **Match glob pattern** (e.g., `**/*.xaml` matches `Views/MainPage.xaml`)
+2. **Fetch rule references** (accessibility.instructions.md, performance.instructions.md)
+3. **Apply rules** in order of specificity (most specific first)
+4. **Inherit hooks** from `.claude/settings.json` (PreToolUse, PostToolUse, OnFileSave)
+
+---
+
+## Unified Execution Lifecycle (Cross-Tool Synergy)
+
+Both Claude Code and GitHub Copilot CLI follow the same execution lifecycle via `.claude/settings.json` hooks:
+
+### Execution Flow
+
+```
+File Modified
+    ↓
+PreToolUse Hook
+  ├─ Validate tool (e.g., block rm -rf)
+  ├─ Warn platform detection (add $Platform variable)
+  ├─ Warn configuration flag (add -c Debug)
+    ↓
+Tool Execution
+  ├─ Edit file, build project, run tests
+    ↓
+PostToolUse Hook
+  ├─ Auto-format C# files (suggest `dotnet format`)
+  ├─ Multi-file build verification (>3 files changed)
+  ├─ XAML validation (suggest `dotnet build`)
+    ↓
+OnFileSave Hook (Background)
+  ├─ StyleCop analysis (detect SA/CA errors after 3s)
+  ├─ Test syntax validation (detect broken tests after 2s)
+    ↓
+Context Drift Monitoring
+  ├─ At 50% token usage → suggest `/compact`
+  ├─ On contradiction → suggest `/rewind`
+    ↓
+Agent Launch (if subagent spawned)
+  ├─ Inherit AGENTS.md + core instruction files
+  ├─ Inherit .claude/settings.json hooks
+  ├─ Inherit .claude/skills/ paths
+    ↓
+Task Complete
+  ├─ Gate 1: Plan Mode review ✓
+  ├─ Gate 2: Build + Test + LSP ✓
+  ├─ Result: Commit with evidence
+```
+
+### Hook Configuration Reference
+
+Hooks are configured in `.claude/settings.json`:
+
+| Hook | Trigger | Action | Example |
+|---|---|---|---|
+| `PreToolUse` | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
+| `PostToolUse` | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
+| `OnFileSave` | After file save | background | Run StyleCop analysis after 3s delay |
+| `OnContextDrift` | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
+| `OnAgentLaunch` | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
+
+### Conflict Resolution (GitHub Copilot ↔ Claude Code)
+
+**If both tools are active and disagree:**
+1. `.claude/settings.json` takes precedence (it's the harness configuration)
+2. AGENTS.md supersedes tool-specific instructions (source of truth)
+3. CLAUDE.md is for CLI users; doesn't affect Copilot Agent Mode
+4. `.github/copilot-instructions.md` is for Copilot Agent Mode only
+
+**No conflicts should arise** because files have distinct audiences and hooks keep them in sync.
+
+---
+
 ## Key Rules (Always Enforced)
 
 - **Every change must build and pass tests** -- Run `dotnet build` and `dotnet test` (see [Build, Run & Deploy](#build-run--deploy)) before considering any task complete.
 - **Follow all instruction files** -- The detailed rules in `.github/instructions/` are authoritative. **You must actually open and read them** (not just acknowledge they exist) when working within their scope. See the trigger conditions in steps 5-8 above.
+- **Two-Gate System is mandatory** -- Plan Mode for >3 files/200 LOC; Evidence-based verification (build + test + LSP + app run) before task completion.
 - **Web search before decompilation** -- When facing unknown types or build errors, always search the web / API docs first. Only use WinMD/ILDASM as a last resort (see [Troubleshooting Build Errors](#troubleshooting-build-errors)).
 - **Use `winapp` for app-identity / packaging / signing** -- Don't hand-roll `MakeAppx`/`SignTool`/`Add-AppxPackage` invocations. The CLI keeps the manifest, certificate, and registration steps in sync.
 
