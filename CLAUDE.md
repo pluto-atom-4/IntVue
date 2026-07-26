@@ -27,13 +27,9 @@ Never hardcode—cross-architecture failures result. See **[AGENTS.md § Detect 
 
 ---
 
-## Context Management (For Long Sessions)
+## Context Management
 
-**Progressive Disclosure:** As conversation grows, use `/compact` at **50% token threshold** to checkpoint and clear ephemeral state. Use `/rewind` if output contradicts prior work.
-
-**Sub-Agent Delegation:** For complex, multi-step tasks → spawn `Agent` tool. Agents inherit AGENTS.md + .claude/settings.json hooks automatically.
-
-**Skill Framework:** Specialized tasks → use `Skill` (e.g., `/accessibility-review`, `/feature-generation`). See `.claude/skills/` for available skills.
+Use `/compact` at **50% tokens** to checkpoint. Use `/rewind` on contradictions. For multi-step tasks: spawn `Agent` tool (inherits AGENTS.md hooks). For specialized tasks: use `Skill` (e.g., `/accessibility-review`). See `.claude/skills/`.
 
 ---
 
@@ -76,13 +72,13 @@ winapp unregister && dotnet run -c Debug -p:Platform=$Platform
 
 ## Architecture Overview
 
-**Folder structure:** Models (data) → ViewModels (state) → Views (XAML) → Services (logic) → Converters, Helpers, Controls, Strings, Assets
+**Folder structure:** Models → ViewModels → Views (XAML) → Services → Converters, Helpers, Controls, Strings, Assets
 
-**MVVM pattern:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`. DI in `App.xaml.cs`. Constructor injection preferred.
+**MVVM:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`. Constructor DI in `App.xaml.cs`.
 
-**Media capture:** `MediaCapture` with `MediaFrameReader` + Win2D `CanvasControl` for preview; `LowLagMediaRecording` for recording; proper init/cleanup on suspend/resume.
+**Media capture:** `MediaCapture` + `MediaFrameReader` + Win2D for preview; `LowLagMediaRecording` for recording.
 
-**See [DESIGN.md](./DESIGN.md) for full architecture & constraints.**
+See [DESIGN.md](./DESIGN.md) for full details.
 
 ---
 
@@ -117,12 +113,12 @@ Both Claude Code and GitHub Copilot CLI read these files without duplication. Se
 
 ---
 
-## Before Handing Off to an Agent
+## Before Handing Off to Agent
 
 1. Document changes with clear commit messages
-2. Pass `dotnet test -c Debug -p:Platform=$Platform` (full suite)
+2. Pass full test suite: `dotnet test -c Debug -p:Platform=$Platform`
 3. Verify app runs: `dotnet run -c Debug -p:Platform=$Platform`
-4. Agents inherit verification gates from [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
+4. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
 
 ---
 
