@@ -1,53 +1,43 @@
-# Copilot Instructions
+# GitHub Copilot Agent Mode — IntVue
 
-Style preferences for GitHub Copilot (autocomplete) in IntVue.
-
----
-
-## C# Code Style
-
-- Use modern C# 11+ syntax: switch expressions, nullable reference types, `!` operator
-- Explicit variable names: `isRecording`, `currentTime` (not `is`, `ct`)
-- MVVM pattern: ViewModels inherit `ObservableObject`, use `[ObservableProperty]` + `[RelayCommand]`
-- Async/await for all I/O operations; never block UI thread
-- Constructor injection for dependencies; no `App.Services.GetService<T>()` except in App.xaml.cs
+**Quick Links:** [CLAUDE.md](../CLAUDE.md) | [AGENTS.md](../AGENTS.md) | [Detailed Rules](./copilot/rules-detailed.md) | [Instructions](../instructions/)
 
 ---
 
-## XAML
+## Boundaries
 
-- **Binding:** Always use `x:Bind` with `Mode=OneWay` or `Mode=OneTime` (never `{Binding}`)
-- **Colors:** `{ThemeResource TextFillColorPrimaryBrush}` (never `Foreground="#000000"`)
-- **Spacing:** Use 8px base grid: `Spacing="8"`, `Padding="12"`, `Margin="16"`
-- **Accessibility:** Every button/input has `AutomationProperties.Name="Clear description"`
-- **Namespaces:** `Microsoft.UI.Xaml` only (never `Windows.UI.Xaml`)
+**✅ Auto:** Bug fixes, test additions, docs, formatting, config updates (no breaking changes)  
+**⚠️ Confirm:** Architecture, APIs, dependencies, manifest, build scripts, storage schemas  
+**🚫 Blocked:** Secrets, releases, package identity changes, cross-cutting refactors
 
 ---
 
-## Project Structure
+## Path-Specific Rules
 
-- **Views/** → XAML pages/windows (layout & styling only)
-- **ViewModels/** → UI state & commands (no business logic)
-- **Services/** → Business logic, media capture, file I/O
-- **Models/** → Data classes (POCOs, no logic)
-- **Converters/** → IValueConverter implementations
-- **Helpers/** → Static utility methods
-- **Controls/** → Custom/reusable XAML controls
-- **Assets/** → Images, icons
-- **Strings/** → Localized strings (.resw files)
+See [rules-detailed.md](./copilot/rules-detailed.md) for examples.
+
+- **XAML** (`**/*.xaml`): x:Bind only, theme colors, 8px grid, accessibility properties, no logic
+- **ViewModels** (`ViewModels/**/*.cs`): ObservableObject, [ObservableProperty], [RelayCommand], async/await
+- **Services** (`Services/**/*.cs`): Stateless, validate inputs, async I/O, no secrets hardcoded
+- **Tests** (`**/*Tests.cs`): MSTest, MethodName_Scenario_ExpectedResult naming, AAA pattern, 80%+ coverage
 
 ---
 
-## Patterns
+## Pre-Commit Checks
 
-- MVVM: Services → ViewModels → Views; never skip layers
-- DI: Register in `App.xaml.cs` via `Microsoft.Extensions.DependencyInjection`
-- Error handling: Validate at boundaries; trust internal code
-- Testing: MSTest + Moq; AAA pattern; 80%+ coverage on ViewModels/Services
-- Resource management: Dispose MediaCapture on suspend; use `using` statements
+- [ ] Build: `dotnet build -c Debug -p:Platform=$Platform` → 0 errors
+- [ ] Test: `dotnet test -c Debug -p:Platform=$Platform` → all pass, 80%+ coverage
+- [ ] Format: `dotnet format --verify-no-changes`
+- [ ] No secrets, API keys, or PII
+- [ ] Commit message references issue (`Closes #123`)
+- [ ] New public methods tested
 
 ---
 
-## More Guidance
+## Acceptance Criteria
 
-See **[CLAUDE.md](../CLAUDE.md)** for full project rules, architecture, and build commands.
+✅ Build/tests pass | ✅ Rules respected | ✅ No secrets | ✅ Issue referenced
+
+---
+
+**Last Updated:** 2026-07-25 | **Version:** 1.0

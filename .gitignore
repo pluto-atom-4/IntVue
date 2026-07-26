@@ -91,3 +91,10 @@ desktop.ini
 # User-specific IDE settings (keep the shared ones in git)
 *.DotSettings
 !.idea/runConfigurations/
+
+feat-idea.md
+issue-content.json
+gh-issue-draft.md
+issue-comment.md 
+issue-sympton.md
+chore-idea.md

@@ -109,10 +109,13 @@
       <Compile Remove="Tests\**\*.cs" />
     </ItemGroup>
     <ItemGroup>
+      <None Remove="chore-idea.md" />
+      <None Remove="feat-idea.md" />
       <None Remove="gh-issue-content.md" />
-      <None Remove="gh-issue-draft-rev1.md" />
       <None Remove="gh-issue-draft.md" />
+      <None Remove="issue-comment.md" />
       <None Remove="issue-content.json" />
+      <None Remove="issue-sympton.md" />
     </ItemGroup>
     <!--
       Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
