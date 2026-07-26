@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "project": "IntVue",
+    "lastUpdated": "2026-07-25",
+    "description": "Cross-tool automation hooks for Claude Code & Copilot CLI synergy. Enforces evidence-based execution and progressive disclosure.",
+    "compatible": ["claude-code", "github-copilot-cli"]
+  },
+  "hooks": {
+    "PreToolUse": {
+      "enabled": true,
+      "description": "Validate tool invocations before execution",
+      "rules": [
+        {
+          "id": "block-destructive-shell",
+          "pattern": "^(rm -rf|del /s|git reset --hard|Format-Volume)",
+          "action": "block",
+          "message": "⚠️ Destructive shell command blocked for safety. Use `stop_powershell` with explicit shellId instead of rm/del. If intentional, manually execute after review."
+        },
+        {
+          "id": "enforce-platform-detection",
+          "pattern": "dotnet (build|test|run)(?!.*-p:Platform)",
+          "action": "warn",
+          "message": "⚠️ Platform variable not detected. Set: $arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }; Then use: dotnet build -c Debug -p:Platform=$Platform"
+        },
+        {
+          "id": "require-configuration-flag",
+          "pattern": "dotnet (build|test)(?!.*-c)",
+          "action": "warn",
+          "message": "⚠️ Configuration flag missing. Use: -c Debug (or -c Release)"
+        }
+      ]
+    },
+    "PostToolUse": {
+      "enabled": true,
+      "description": "Validate and suggest improvements after tool execution",
+      "rules": [
+        {
+          "id": "auto-format-on-edit",
+          "trigger": "file.edit",
+          "filePattern": "**/*.cs",
+          "action": "suggest",
+          "command": "dotnet format '<file>' --verify-no-changes --include '<file>'",
+          "message": "Suggest running formatter on modified C# file"
+        },
+        {
+          "id": "verify-multi-file-build",
+          "trigger": "file.edit.multi",
+          "fileThreshold": 3,
+          "action": "suggest",
+          "command": "dotnet build -c Debug -p:Platform=$Platform --no-restore",
+          "message": "✓ Suggest build verification after 3+ files changed"
+        },
+        {
+          "id": "xaml-validation",
+          "trigger": "file.edit",
+          "filePattern": "**/*.xaml",
+          "action": "suggest",
+          "command": "dotnet build -c Debug -p:Platform=$Platform",
+          "message": "✓ Suggest build to validate XAML binding syntax"
+        }
+      ]
+    },
+    "OnFileSave": {
+      "enabled": true,
+      "description": "Run background validation after file save",
+      "rules": [
+        {
+          "id": "run-stylecop-background",
+          "filePattern": "**/*.cs",
+          "action": "background",
+          "command": "dotnet build -c Debug -p:Platform=$Platform --no-restore 2>&1 | Select-String -Pattern '(error|warning) (SA|CA|IDE)'",
+          "delayMs": 3000,
+          "message": "Background StyleCop analysis (3s delay)"
+        },
+        {
+          "id": "validate-test-syntax",
+          "filePattern": "**/*Tests.cs",
+          "action": "background",
+          "command": "dotnet build Tests/IntVue.Tests -c Debug -p:Platform=$Platform --no-restore",
+          "delayMs": 2000,
+          "message": "Background test project validation"
+        }
+      ]
+    },
+    "OnContextDrift": {
+      "enabled": true,
+      "description": "Monitor conversation context and suggest checkpoint actions",
+      "threshold": 50,
+      "action": "suggest",
+      "message": "📊 Context at 50% usage. Use `/compact` to checkpoint and clear ephemeral state, or `/rewind` if output contradicts prior work."
+    },
+    "OnAgentLaunch": {
+      "enabled": true,
+      "description": "Automatically inherit core directives when launching sub-agents",
+      "inheritFrom": [
+        "AGENTS.md",
+        ".github/instructions/design-principles.instructions.md",
+        ".github/instructions/code-quality.instructions.md",
+        ".github/instructions/winui-best-practices.instructions.md"
+      ],
+      "message": "Agent context initialized with AGENTS.md + core instruction files"
+    }
+  },
+  "toolConstraints": {
+    "powershell": {
+      "enabled": true,
+      "allowAsync": true,
+      "allowDetach": true,
+      "blockedPatterns": [
+        "rm -rf",
+        "del /s",
+        "taskkill /F /IM *.exe",
+        "reg delete HKLM",
+        "Format-Volume"
+      ],
+      "requiresExplicitShellId": true
+    },
+    "edit": {
+      "enabled": true,
+      "requiresValidation": true,
+      "prevalidation": "Check syntax before save",
+      "maxLinesPerEdit": 500,
+      "requiresContext": "old_str must match exactly"
+    },
+    "view": {
+      "enabled": true,
+      "parallelReads": true,
+      "useViewRange": "Always use view_range for files >10KB"
+    },
+    "task": {
+      "enabled": true,
+      "defaultAgent": "explore",
+      "maxConcurrentAgents": 3,
+      "requiresDescription": true,
+      "autoInheritContext": true
+    },
+    "grep": {
+      "enabled": true,
+      "useGlobPattern": "Always filter with glob patterns (e.g., '**/*.cs')",
+      "outputMode": "files_with_matches (default; use 'content' only if needed)"
+    }
+  },
+  "contextManagement": {
+    "enabled": true,
+    "compactAtPercent": 50,
+    "rewindTriggers": [
+      "drift_detected",
+      "contradiction_in_output",
+      "repetition_of_prior_steps",
+      "user_confusion"
+    ],
+    "sessionArtifacts": {
+      "workInProgress": ".claude/work-in-progress.md",
+      "researchFindings": ".claude/research-findings.md",
+      "backups": ".claude/backup/"
+    },
+    "tokenBudgets": {
+      "mainConversation": 150000,
+      "checkpointAt": 100000,
+      "subAgent": "30000-50000",
+      "bufferReserve": 10000
+    }
+  },
+  "skillFramework": {
+    "enabled": true,
+    "skillsDirectory": ".claude/skills",
+    "skillMetadata": "SKILL.md with YAML frontmatter",
+    "frontmatterSchema": {
+      "skill_name": "kebab-case identifier",
+      "description": "Short description of what skill does",
+      "tools": "Array of tools used: [grep, view, edit, powershell, etc.]",
+      "applyTo": "Glob pattern for files skill targets",
+      "tags": "Array of categories: [qa, compliance, ui, security, etc.]",
+      "maxLines": 150,
+      "refersTo": "Path to detailed documentation if skill.md is short"
+    },
+    "discoveryStrategy": "Auto-discovered; agents invoke via `skill <skill-name>`",
+    "currentSkills": [
+      "accessibility-review",
+      "feature-generation",
+      "security-audit"
+    ]
+  },
+  "buildVerification": {
+    "enabled": true,
+    "platformDetection": "Mandatory before every build/test",
+    "platformDetectionCode": "$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }",
+    "commands": {
+      "build": "dotnet build -c Debug -p:Platform=$Platform",
+      "test": "dotnet test -c Debug -p:Platform=$Platform",
+      "testFiltered": "dotnet test -c Debug -p:Platform=$Platform --filter 'FullyQualifiedName~<YourTest>'",
+      "run": "dotnet run -c Debug -p:Platform=$Platform",
+      "format": "dotnet format <file>",
+      "clean": "dotnet clean && dotnet build -c Debug -p:Platform=$Platform"
+    },
+    "gatesVerification": {
+      "gate1": "Plan mode required for >3 files or >200 LOC changes",
+      "gate2": "Evidence-based: Build + Tests must pass; LSP checks confirmed"
+    }
+  },
+  "crossToolSynergy": {
+    "copilotCliCompatibility": "GitHub Copilot CLI reads this file for hook/tool constraint alignment",
+    "sharedConfiguration": "Both tools respect PreToolUse, PostToolUse, and buildVerification",
+    "conflictResolution": "If Copilot and Claude Code disagree, .claude/settings.json takes precedence"
+  }
+}
