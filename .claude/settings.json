@@ -13,9 +13,9 @@
       "rules": [
         {
           "id": "block-destructive-shell",
-          "pattern": "^(rm -rf|del /s|git reset --hard|Format-Volume)",
+          "pattern": "^(rm -rf|del /s|git reset --hard|Format-Volume|git push --force|git push -f\\b)",
           "action": "block",
-          "message": "⚠️ Destructive shell command blocked for safety. Use `stop_powershell` with explicit shellId instead of rm/del. If intentional, manually execute after review."
+          "message": "⚠️ Destructive shell command blocked for safety. Use `stop_powershell` with explicit shellId instead of rm/del. For force-push, use `--force-with-lease` and confirm with the user first. If intentional, manually execute after review."
         },
         {
           "id": "enforce-platform-detection",
