@@ -104,24 +104,18 @@ See [DESIGN.md](./DESIGN.md) for full details.
 
 ---
 
-## Unified Configuration (Cross-Tool Synergy)
+## Configuration
 
-**Single Source of Truth:** 
-- `AGENTS.md` — autonomous agent workflows, Two-Gate System, skill discovery
-- `CLAUDE.md` — CLI quick reference (you are here)
-- `.claude/settings.json` — hook-driven automation (PreToolUse, PostToolUse, OnAgentLaunch)
-- `.github/copilot-instructions.md` — GitHub Copilot Agent Mode boundaries
-
-Both Claude Code and GitHub Copilot CLI read these files without duplication. See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle).
+See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle) for cross-tool synergy details.
 
 ---
 
 ## Before Handing Off to Agent
 
-1. Document changes with clear commit messages
-2. Pass full test suite: `dotnet test -c Debug -p:Platform=$Platform`
-3. Verify app runs: `dotnet run -c Debug -p:Platform=$Platform`
-4. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
+1. Commit with clear messages
+2. Tests: `dotnet test -c Debug -p:Platform=$Platform`
+3. Run: `dotnet run -c Debug -p:Platform=$Platform`
+4. Follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
 
 ---
 
