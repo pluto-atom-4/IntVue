@@ -128,7 +128,7 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- ROW 1: Question Display + Playlist Controls             -->
+        <!-- ROW 1: Playlist Controls + Question Display             -->
         <!-- ═══════════════════════════════════════════════════════ -->
         <StackPanel
             Grid.Row="1"
@@ -137,45 +137,10 @@
             Padding="12"
             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
-            <!-- Left: Question Display (Index + Filename) -->
-            <StackPanel
-                VerticalAlignment="Center"
-                Spacing="4">
-
-                <!-- Question Index: "1 of 3" -->
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock
-                        Text="{x:Bind ViewModel.CurrentQuestionIndex, Mode=OneWay}"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-                    <TextBlock
-                        Text="of"
-                        FontSize="14"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <TextBlock
-                        Text="{x:Bind ViewModel.TotalQuestions, Mode=OneWay}"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        AutomationProperties.Name="Question index"
-                        AutomationProperties.AutomationId="QuestionIndexAutomationId" />
-                </StackPanel>
-
-                <!-- Filename: "q1.webm" -->
-                <TextBlock
-                    Text="{x:Bind ViewModel.CurrentQuestionPath, Mode=OneWay, Converter={StaticResource FilePathToDisplayNameConverter}}"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    AutomationProperties.Name="Question filename"
-                    AutomationProperties.AutomationId="FilenameAutomationId" />
-            </StackPanel>
-
-            <!-- Right: Playlist Controls (Previous/Shuffle/Loop/Repeat/Next) -->
+            <!-- Left: Playlist Controls (Previous/Shuffle/Loop/Repeat/Next) -->
             <StackPanel
                 Orientation="Horizontal"
                 Spacing="8"
-                HorizontalAlignment="Right"
                 VerticalAlignment="Center">
 
                 <!-- Previous Question Button (◀) -->
@@ -232,6 +197,41 @@
                     TabIndex="14"
                     AutomationProperties.Name="Next question"
                     AutomationProperties.AutomationId="NextButtonAutomationId" />
+            </StackPanel>
+
+            <!-- Right: Question Display (Index + Filename) -->
+            <StackPanel
+                VerticalAlignment="Center"
+                Spacing="4"
+                HorizontalAlignment="Right">
+
+                <!-- Question Index: "1 of 3" -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.CurrentQuestionIndex, Mode=OneWay}"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                    <TextBlock
+                        Text="of"
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.TotalQuestions, Mode=OneWay}"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        AutomationProperties.Name="Question index"
+                        AutomationProperties.AutomationId="QuestionIndexAutomationId" />
+                </StackPanel>
+
+                <!-- Filename: "q1.webm" -->
+                <TextBlock
+                    Text="{x:Bind ViewModel.CurrentQuestionPath, Mode=OneWay, Converter={StaticResource FilePathToDisplayNameConverter}}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    AutomationProperties.Name="Question filename"
+                    AutomationProperties.AutomationId="FilenameAutomationId" />
             </StackPanel>
         </StackPanel>
 
