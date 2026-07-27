@@ -1,0 +1,16 @@
+# .gitleaksignore for IntVue
+# Format: GITLEAKS_ID:<path>:<tag>
+# This prevents false positives on test data, example credentials, and hardcoded safe values
+
+# Test data — mock credentials and example values in unit tests
+**/Tests/**:*:test-credentials
+**/Tests/**:*:mock-password
+**/Tests/**:*:example-key
+
+# Documentation — code examples in README/docs
+**/README.md:*:code-example
+**/*.md:*:sample-credentials
+
+# Configuration templates — .env.example, appsettings.example.json
+**.example.*:*:example-config
+**/appsettings.*.json:*:example-credentials

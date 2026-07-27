@@ -64,6 +64,9 @@ dotnet run -c Debug -p:Platform=$Platform
 
 # Troubleshoot (reset package)
 winapp unregister && dotnet run -c Debug -p:Platform=$Platform
+
+# Secret scanning (pre-push hook runs automatically)
+gitleaks detect --source . -v                  # Manual scan
 ```
 
 **For comprehensive procedures, see [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy).**
@@ -101,35 +104,37 @@ See [DESIGN.md](./DESIGN.md) for full details.
 
 ---
 
-## Unified Configuration (Cross-Tool Synergy)
+## Configuration
 
-**Single Source of Truth:** 
-- `AGENTS.md` — autonomous agent workflows, Two-Gate System, skill discovery
-- `CLAUDE.md` — CLI quick reference (you are here)
-- `.claude/settings.json` — hook-driven automation (PreToolUse, PostToolUse, OnAgentLaunch)
-- `.github/copilot-instructions.md` — GitHub Copilot Agent Mode boundaries
-
-Both Claude Code and GitHub Copilot CLI read these files without duplication. See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle).
+See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle) for cross-tool synergy details.
 
 ---
 
 ## Before Handing Off to Agent
 
-1. Document changes with clear commit messages
-2. Pass full test suite: `dotnet test -c Debug -p:Platform=$Platform`
-3. Verify app runs: `dotnet run -c Debug -p:Platform=$Platform`
-4. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
+1. Commit with clear messages
+2. Tests: `dotnet test -c Debug -p:Platform=$Platform`
+3. Run: `dotnet run -c Debug -p:Platform=$Platform`
+4. Follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
 
 ---
 
 ## Quick Start
 
-- [ ] Enable Windows Developer Mode (Settings → For developers → Developer Mode)
+### Setup
 - [ ] Detect platform: `$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }`
+- [ ] Install tools: GitHub CLI + gitleaks (see Quick Commands below)
+
+### First Build
+- [ ] `winget install GitHub.cli && gh auth login`
+- [ ] `winget install gitleaks && gitleaks version`
+
+### Commands
 - [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
 - [ ] Test: `cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform`
 - [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
 - [ ] Before changes: Read relevant instruction file from Rules Router above
 - [ ] UI work? Read [DESIGN.md](./DESIGN.md) first
-- [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test` (prevents hook blocks)
+- [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test`
+- [ ] Before push: `gitleaks detect --source . -v` (secret scanning blocks push if secrets found)
 - [ ] Blocked? See `.claude/rules/hook-quick-fix.rules.md` (2-30 min fix)
