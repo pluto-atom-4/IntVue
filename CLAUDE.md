@@ -64,9 +64,29 @@ dotnet run -c Debug -p:Platform=$Platform
 
 # Troubleshoot (reset package)
 winapp unregister && dotnet run -c Debug -p:Platform=$Platform
+
+# GitHub CLI (repo admin tasks)
+gh auth login                                  # Authenticate (do once)
+gh repo edit --enable-issues --enable-projects  # Configure repo
+gh api repos/pluto-atom-4/IntVue/branches/main/protection  # View branch protection
+
+# Secret scanning
+gitleaks detect --source . -v                  # Detect secrets in git history
+gitleaks detect --source . -v --log-opts="HEAD~10..HEAD"  # Last 10 commits only
 ```
 
 **For comprehensive procedures, see [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy).**
+
+---
+
+## GitHub CLI Auth Scopes
+
+When running `gh auth login`, accept the default scopes:
+- `repo` — Full repository access (branch protection, labels, security settings)
+- `admin:public_key` — SSH key management
+- `workflow` — GitHub Actions automation
+
+These are required by `.claude/skills/secure-github-repo/scripts/` and repo hardening automation.
 
 ---
 
@@ -118,18 +138,29 @@ Both Claude Code and GitHub Copilot CLI read these files without duplication. Se
 1. Document changes with clear commit messages
 2. Pass full test suite: `dotnet test -c Debug -p:Platform=$Platform`
 3. Verify app runs: `dotnet run -c Debug -p:Platform=$Platform`
-4. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
+4. Secret scan: `gitleaks detect --source . -v` (before pushing, catches secrets)
+5. Agents follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
 
 ---
 
 ## Quick Start
 
+### Environment Setup
 - [ ] Enable Windows Developer Mode (Settings → For developers → Developer Mode)
 - [ ] Detect platform: `$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }`
+
+### Required Tools (First Time)
+- [ ] Install GitHub CLI: `winget install GitHub.cli` or https://cli.github.com
+- [ ] Authenticate: `gh auth login` (accept default scopes: repo, admin:public_key, workflow)
+- [ ] Install gitleaks: `winget install gitleaks` or https://github.com/gitleaks/gitleaks
+- [ ] Verify: `gitleaks version` (should show version number)
+
+### Development Workflow
 - [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
 - [ ] Test: `cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform`
 - [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
 - [ ] Before changes: Read relevant instruction file from Rules Router above
 - [ ] UI work? Read [DESIGN.md](./DESIGN.md) first
 - [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test` (prevents hook blocks)
+- [ ] Before push: `gitleaks detect --source . -v` (secret scanning blocks push if secrets found)
 - [ ] Blocked? See `.claude/rules/hook-quick-fix.rules.md` (2-30 min fix)

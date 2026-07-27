@@ -38,6 +38,34 @@ try {
         }
     }
 
+    # Secret scanning (gitleaks)
+    # Block push if secrets are detected in git history
+    Write-Host 'Scanning for secrets (gitleaks)...' -ForegroundColor Cyan
+    if (-not (Get-Command gitleaks -ErrorAction SilentlyContinue)) {
+        Write-Host @"
+⚠️  gitleaks is not installed. Secret scanning will be skipped.
+
+To enable secret scanning, install gitleaks:
+  winget install gitleaks
+  https://github.com/gitleaks/gitleaks
+
+Secret scanning helps prevent credentials/keys from being pushed.
+"@ -ForegroundColor Yellow
+        # Continue without blocking (gitleaks is optional on first install)
+    } else {
+        # Run gitleaks to detect secrets in git history
+        $repoRoot = Split-Path $ScriptDir
+        & gitleaks detect --source $repoRoot -v
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Secrets detected in repository! Fix before pushing." -ForegroundColor Red
+            Write-Host "See output above for details. To bypass: SKIP_SECRET_SCAN=1 git push" -ForegroundColor Yellow
+            if ($env:SKIP_SECRET_SCAN -ne '1') {
+                Exit 1
+            }
+        }
+        Write-Host 'Secret scan passed.' -ForegroundColor Green
+    }
+
     Write-Host 'Pre-push checks passed.' -ForegroundColor Green
     Exit 0
 } finally {
