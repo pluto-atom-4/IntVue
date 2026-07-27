@@ -127,20 +127,20 @@ Both Claude Code and GitHub Copilot CLI read these files without duplication. Se
 
 ## Quick Start
 
-### Environment Setup
-- [ ] Enable Windows Developer Mode (Settings → For developers → Developer Mode)
+### Setup
 - [ ] Detect platform: `$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }`
+- [ ] Install tools: GitHub CLI + gitleaks (see Quick Commands below)
 
-### Required Tools (First Time)
-- [ ] `winget install GitHub.cli && gh auth login` (accept default scopes)
-- [ ] `winget install gitleaks && gitleaks version` (verify installation)
+### First Build
+- [ ] `winget install GitHub.cli && gh auth login`
+- [ ] `winget install gitleaks && gitleaks version`
 
-### Development Workflow
+### Commands
 - [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
 - [ ] Test: `cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform`
 - [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
 - [ ] Before changes: Read relevant instruction file from Rules Router above
 - [ ] UI work? Read [DESIGN.md](./DESIGN.md) first
-- [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test` (prevents hook blocks)
+- [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test`
 - [ ] Before push: `gitleaks detect --source . -v` (secret scanning blocks push if secrets found)
 - [ ] Blocked? See `.claude/rules/hook-quick-fix.rules.md` (2-30 min fix)
