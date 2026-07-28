@@ -75,7 +75,7 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public partial SortMode CurrentSortMode { get; set; }
 
     [ObservableProperty]
-    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Loop;
+    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.RepeatCurrent;
 
     [ObservableProperty]
     public partial bool IsRecordingNow { get; set; }

@@ -102,6 +102,20 @@ public class ProductReviewViewModelTests
     }
 
     [TestMethod]
+    public void Constructor_DefaultsCurrentPlayModeToRepeatCurrent()
+    {
+        // Arrange & Act
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+
+        // Assert
+        Assert.AreEqual(PlayMode.RepeatCurrent, viewModel.CurrentPlayMode);
+    }
+
+    [TestMethod]
     public async Task LoadQuestionsAsync_WithValidDirectory_LoadsQuestionsSuccessfully()
     {
         // Arrange
@@ -586,7 +600,7 @@ public class ProductReviewViewModelTests
     }
 
     [TestMethod]
-    public void DefaultPlayMode_ShouldBeLoop()
+    public void DefaultPlayMode_ShouldBeRepeatCurrent()
     {
         // Arrange
         var productReviewService = new Mock<IProductReviewService>();
@@ -600,8 +614,8 @@ public class ProductReviewViewModelTests
         // Assert
         Assert.AreEqual(PlayMode.Loop, playlistService.CurrentPlayMode,
             "PlaylistService default play mode should be Loop");
-        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
-            "ViewModel default play mode should be Loop");
+        Assert.AreEqual(PlayMode.RepeatCurrent, viewModel.CurrentPlayMode,
+            "ViewModel default play mode should be RepeatCurrent (for visual feedback on page load)");
     }
 
     [TestMethod]
@@ -716,14 +730,14 @@ public class ProductReviewViewModelTests
             }
         };
 
-        // Act: Set play mode to RepeatCurrent
-        viewModel.SetPlayModeCommand.Execute(PlayMode.RepeatCurrent);
+        // Act: Set play mode to Loop (different from default RepeatCurrent)
+        viewModel.SetPlayModeCommand.Execute(PlayMode.Loop);
 
         // Assert
         Assert.IsTrue(modeChangedFired, "PropertyChanged should fire for CurrentPlayMode");
-        Assert.AreEqual(PlayMode.RepeatCurrent, viewModel.CurrentPlayMode,
+        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
             "ViewModel play mode should be updated");
-        Assert.AreEqual(PlayMode.RepeatCurrent, playlistService.CurrentPlayMode,
+        Assert.AreEqual(PlayMode.Loop, playlistService.CurrentPlayMode,
             "PlaylistService play mode should be updated");
     }
 
@@ -839,6 +853,9 @@ public class ProductReviewViewModelTests
             mockReview.Object,
             playlistService,
             new Mock<ICountdownService>().Object);
+
+        // Sync ViewModel mode with playlistService mode (simulating LoadQuestionsAsync behavior)
+        viewModel.SetPlayModeCommand.Execute(PlayMode.Loop);
 
         // Select Q2
         viewModel.SelectQuestionCommand.Execute(1);

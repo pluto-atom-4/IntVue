@@ -53,6 +53,9 @@
 
         <!-- Recording state to button text: true → "Stop Recording", false → "Start Recording" -->
         <converters:RecordingStateToButtonTextConverter x:Key="RecordingStateToButtonTextConverter" />
+
+        <!-- Playback mode to background: highlights active mode button (Loop/Repeat) -->
+        <converters:ModeToBackgroundConverter x:Key="ModeToBackgroundConverter" />
     </Page.Resources>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
@@ -170,6 +173,7 @@
                     x:Name="BtnLoop"
                     Content="🔁"
                     Command="{x:Bind ViewModel.ActivateLoopModeCommand}"
+                    Background="{x:Bind ViewModel.CurrentPlayMode, Mode=OneWay, Converter={StaticResource ModeToBackgroundConverter}, ConverterParameter=Loop}"
                     ToolTipService.ToolTip="Loop mode (Alt+L)"
                     AccessKey="L"
                     TabIndex="12"
@@ -181,6 +185,7 @@
                     x:Name="BtnRepeat"
                     Content="🔂"
                     Command="{x:Bind ViewModel.ActivateRepeatModeCommand}"
+                    Background="{x:Bind ViewModel.CurrentPlayMode, Mode=OneWay, Converter={StaticResource ModeToBackgroundConverter}, ConverterParameter=RepeatCurrent}"
                     ToolTipService.ToolTip="Repeat mode (Alt+E)"
                     AccessKey="E"
                     TabIndex="13"
