@@ -5,6 +5,7 @@ using System;
 using IntVue.Models;
 
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 
 namespace IntVue.Converters;
 
@@ -39,9 +40,14 @@ public class SortModeToBackgroundConverter : IValueConverter
         }
 
         // Return transparent background for non-matching sort modes
-        return resources.TryGetValue("SystemControlTransparentBrush", out var transparent)
-            ? transparent
-            : Microsoft.UI.Colors.Transparent;
+        if (resources.TryGetValue("SystemControlTransparentBrush", out var transparentBrush))
+        {
+            return transparentBrush;
+        }
+
+        // Fallback: Create a transparent SolidColorBrush
+        var transparentColor = Microsoft.UI.Colors.Transparent;
+        return new SolidColorBrush(transparentColor);
     }
 
     /// <summary>
