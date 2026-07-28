@@ -56,6 +56,9 @@
 
         <!-- Playback mode to background: highlights active mode button (Loop/Repeat) -->
         <converters:ModeToBackgroundConverter x:Key="ModeToBackgroundConverter" />
+
+        <!-- Sort mode to background: highlights active sort button (Shuffle) -->
+        <converters:SortModeToBackgroundConverter x:Key="SortModeToBackgroundConverter" />
     </Page.Resources>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
@@ -162,6 +165,7 @@
                     x:Name="BtnShuffle"
                     Content="🔀"
                     Command="{x:Bind ViewModel.ShuffleQuestionsCommand}"
+                    Background="{x:Bind ViewModel.CurrentSortMode, Mode=OneWay, Converter={StaticResource SortModeToBackgroundConverter}, ConverterParameter=Shuffle}"
                     ToolTipService.ToolTip="Shuffle questions (Alt+H)"
                     AccessKey="H"
                     TabIndex="11"
