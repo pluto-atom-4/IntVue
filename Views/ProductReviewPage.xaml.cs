@@ -298,6 +298,57 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
+    /// Shuffle button click handler - Toggles shuffle mode on/off.
+    /// </summary>
+    private async void BtnShuffle_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnShuffle_Click] Toggling shuffle mode");
+            await this.ViewModel.ToggleShuffleAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnShuffle_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to toggle shuffle: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Loop button click handler - Toggles loop mode on/off (mutually exclusive with Repeat).
+    /// </summary>
+    private void BtnLoop_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnLoop_Click] Toggling loop mode");
+            this.ViewModel.ToggleLoopMode();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnLoop_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to toggle loop mode: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Repeat button click handler - Toggles repeat mode on/off (mutually exclusive with Loop).
+    /// </summary>
+    private void BtnRepeat_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.BtnRepeat_Click] Toggling repeat mode");
+            this.ViewModel.ToggleRepeatMode();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.BtnRepeat_Click] Error: {ex.Message}");
+            this.ViewModel.ErrorMessage = $"Failed to toggle repeat mode: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Helper method to stop recording.
     /// </summary>
     private async Task StopRecordingAsync()

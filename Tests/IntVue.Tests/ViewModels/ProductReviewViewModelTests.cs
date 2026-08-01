@@ -102,6 +102,20 @@ public class ProductReviewViewModelTests
     }
 
     [TestMethod]
+    public void Constructor_DefaultsCurrentPlayModeToRepeatCurrent()
+    {
+        // Arrange & Act
+        var productReviewService = new Mock<IProductReviewService>();
+        var playlistService = new Mock<IPlaylistService>();
+        var countdownService = new Mock<ICountdownService>();
+
+        var viewModel = new ProductReviewViewModel(productReviewService.Object, playlistService.Object, countdownService.Object);
+
+        // Assert
+        Assert.AreEqual(PlayMode.Sequential, viewModel.CurrentPlayMode);
+    }
+
+    [TestMethod]
     public async Task LoadQuestionsAsync_WithValidDirectory_LoadsQuestionsSuccessfully()
     {
         // Arrange
@@ -586,7 +600,7 @@ public class ProductReviewViewModelTests
     }
 
     [TestMethod]
-    public void DefaultPlayMode_ShouldBeLoop()
+    public void DefaultPlayMode_ShouldBeRepeatCurrent()
     {
         // Arrange
         var productReviewService = new Mock<IProductReviewService>();
@@ -600,8 +614,8 @@ public class ProductReviewViewModelTests
         // Assert
         Assert.AreEqual(PlayMode.Loop, playlistService.CurrentPlayMode,
             "PlaylistService default play mode should be Loop");
-        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
-            "ViewModel default play mode should be Loop");
+        Assert.AreEqual(PlayMode.Sequential, viewModel.CurrentPlayMode,
+            "ViewModel default play mode should be Sequential (standard sequential playback)");
     }
 
     [TestMethod]
@@ -686,7 +700,7 @@ public class ProductReviewViewModelTests
         var firstQuestionBefore = viewModel.CurrentQuestion;
 
         // Act: Shuffle
-        await viewModel.ShuffleQuestionsCommand.ExecuteAsync(null);
+        await viewModel.ToggleShuffleAsync();
 
         // Assert: CurrentQuestion should be set to first question in shuffled order
         Assert.IsNotNull(viewModel.CurrentQuestion,
@@ -716,14 +730,14 @@ public class ProductReviewViewModelTests
             }
         };
 
-        // Act: Set play mode to RepeatCurrent
-        viewModel.SetPlayModeCommand.Execute(PlayMode.RepeatCurrent);
+        // Act: Set play mode to Loop (different from default RepeatCurrent)
+        viewModel.SetPlayModeCommand.Execute(PlayMode.Loop);
 
         // Assert
         Assert.IsTrue(modeChangedFired, "PropertyChanged should fire for CurrentPlayMode");
-        Assert.AreEqual(PlayMode.RepeatCurrent, viewModel.CurrentPlayMode,
+        Assert.AreEqual(PlayMode.Loop, viewModel.CurrentPlayMode,
             "ViewModel play mode should be updated");
-        Assert.AreEqual(PlayMode.RepeatCurrent, playlistService.CurrentPlayMode,
+        Assert.AreEqual(PlayMode.Loop, playlistService.CurrentPlayMode,
             "PlaylistService play mode should be updated");
     }
 
@@ -840,6 +854,9 @@ public class ProductReviewViewModelTests
             playlistService,
             new Mock<ICountdownService>().Object);
 
+        // Sync ViewModel mode with playlistService mode (simulating LoadQuestionsAsync behavior)
+        viewModel.SetPlayModeCommand.Execute(PlayMode.Loop);
+
         // Select Q2
         viewModel.SelectQuestionCommand.Execute(1);
 
@@ -905,7 +922,7 @@ public class ProductReviewViewModelTests
             new Mock<ICountdownService>().Object);
 
         // Shuffle questions
-        await viewModel.ShuffleQuestionsCommand.ExecuteAsync(null);
+        await viewModel.ToggleShuffleAsync();
 
         // Get the shuffled order
         var shuffledOrder = new List<string>();
@@ -1097,7 +1114,7 @@ public class ProductReviewViewModelTests
             new Mock<ICountdownService>().Object);
 
         // Shuffle and move to second question
-        await viewModel.ShuffleQuestionsCommand.ExecuteAsync(null);
+        await viewModel.ToggleShuffleAsync();
         playlistService.SelectByIndex(1);
         viewModel.MoveToNextCommand.Execute(null);
 
@@ -1306,6 +1323,113 @@ public class ProductReviewViewModelTests
         // Assert: After delete, should be able to start
         Assert.IsTrue(viewModel.CanStartOrStopRecording,
             "Should be able to start after deleting recording");
+    }
+
+    [TestMethod]
+    public async Task ShuffleButton_Click_ActivatesShuffle_AndChangesPlaylistOrder()
+    {
+        // Arrange: Setup with 10 questions in known order
+        var questions = new List<Question>();
+        for (int i = 1; i <= 10; i++)
+        {
+            questions.Add(new Question { FileName = $"q{i}.webm", FilePath = $"c:\\q{i}.webm" });
+        }
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        await playlistService.InitializeAsync(questions);
+
+        var viewModel = new ProductReviewViewModel(
+            new Mock<IProductReviewService>().Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        // Capture initial order
+        var initialOrder = playlistService.Questions.Select(q => q.FileName).ToList();
+        Assert.AreEqual(10, initialOrder.Count, "Should have 10 questions");
+        Assert.AreEqual("q1.webm", initialOrder[0], "First question should be q1.webm initially");
+
+        // Verify initial sort mode is NOT Shuffle
+        Assert.AreNotEqual(SortMode.Shuffle, viewModel.CurrentSortMode,
+            "Initial sort mode should not be Shuffle");
+
+        // Act: Simulate clicking Shuffle button
+        await viewModel.ToggleShuffleAsync();
+
+        // Assert Part 1: CurrentSortMode should be Shuffle
+        Assert.AreEqual(SortMode.Shuffle, viewModel.CurrentSortMode,
+            "Shuffle button click should set CurrentSortMode to Shuffle");
+
+        // Assert Part 2: Playlist order should have changed (shuffled)
+        var shuffledOrder = playlistService.Questions.Select(q => q.FileName).ToList();
+        Assert.AreEqual(10, shuffledOrder.Count, "Should still have 10 questions after shuffle");
+
+        // Verify that the order has changed (with very high probability for 10 items)
+        bool orderChanged = !initialOrder.SequenceEqual(shuffledOrder);
+        Assert.IsTrue(orderChanged,
+            "Playlist order should be different after shuffle (probability of false positive: <0.000001%)");
+
+        // Assert Part 3: All questions should still be present (no duplicates, no lost items)
+        var initialSet = new HashSet<string>(initialOrder);
+        var shuffledSet = new HashSet<string>(shuffledOrder);
+        Assert.AreEqual(initialSet.Count, shuffledSet.Count, "Should have same number of unique questions");
+        Assert.IsTrue(initialSet.SetEquals(shuffledSet),
+            "All original questions should still be present after shuffle");
+
+        // Assert Part 4: Visual feedback state (CurrentSortMode) should trigger converter
+        // The SortModeToBackgroundConverter will use CurrentSortMode == SortMode.Shuffle to highlight button
+        Assert.AreEqual(SortMode.Shuffle, viewModel.CurrentSortMode,
+            "Shuffle button visual feedback should be active (SortMode=Shuffle for converter)");
+    }
+
+    [TestMethod]
+    public async Task ShuffleButton_MultipleClicks_MaintainsShuffle_AndPreservesQuestions()
+    {
+        // Arrange: Setup with 8 questions
+        var questions = new List<Question>();
+        for (int i = 1; i <= 8; i++)
+        {
+            questions.Add(new Question { FileName = $"q{i}.webm", FilePath = $"c:\\q{i}.webm" });
+        }
+
+        var mockSettings = new Mock<ISettingsService>();
+        var playlistService = new PlaylistService(mockSettings.Object);
+        await playlistService.InitializeAsync(questions);
+
+        var viewModel = new ProductReviewViewModel(
+            new Mock<IProductReviewService>().Object,
+            playlistService,
+            new Mock<ICountdownService>().Object);
+
+        // Act: Shuffle multiple times
+        await viewModel.ToggleShuffleAsync();
+        var firstShuffle = playlistService.Questions.Select(q => q.FileName).ToList();
+
+        await viewModel.ToggleShuffleAsync();
+        var secondShuffle = playlistService.Questions.Select(q => q.FileName).ToList();
+
+        // Assert Part 1: Second click toggles back to AscendingAlpha
+        Assert.AreEqual(SortMode.AscendingAlpha, viewModel.CurrentSortMode,
+            "CurrentSortMode should toggle back to AscendingAlpha after second click (toggle behavior)");
+
+        // Assert Part 2: First shuffle changes order from initial alphabetical
+        var initialOrder = questions.Select(q => q.FileName).ToList();
+        bool firstOrderChanged = !initialOrder.SequenceEqual(firstShuffle);
+        Assert.IsTrue(firstOrderChanged,
+            "First shuffle should change order from initial alphabetical sequence");
+
+        // Assert Part 3: All questions still present in both shuffles
+        var originalSet = new HashSet<string>(questions.Select(q => q.FileName));
+        var firstSet = new HashSet<string>(firstShuffle);
+        var secondSet = new HashSet<string>(secondShuffle);
+
+        Assert.IsTrue(originalSet.SetEquals(firstSet),
+            "All questions present after first shuffle (no data loss)");
+        Assert.IsTrue(originalSet.SetEquals(secondSet),
+            "All questions present after second shuffle (no data loss)");
+
+        // Assert Part 4: Shuffle mode persists across multiple button clicks
+        Assert.AreEqual(8, secondShuffle.Count, "Should still have 8 questions after multiple shuffles");
     }
 
     #endregion

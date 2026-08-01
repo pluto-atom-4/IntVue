@@ -53,6 +53,12 @@
 
         <!-- Recording state to button text: true → "Stop Recording", false → "Start Recording" -->
         <converters:RecordingStateToButtonTextConverter x:Key="RecordingStateToButtonTextConverter" />
+
+        <!-- Playback mode to background: highlights active mode button (Loop/Repeat) -->
+        <converters:ModeToBackgroundConverter x:Key="ModeToBackgroundConverter" />
+
+        <!-- Sort mode to background: highlights active sort button (Shuffle) -->
+        <converters:SortModeToBackgroundConverter x:Key="SortModeToBackgroundConverter" />
     </Page.Resources>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
@@ -154,38 +160,53 @@
                     AutomationProperties.Name="Previous question"
                     AutomationProperties.AutomationId="PreviousButtonAutomationId" />
 
-                <!-- Shuffle Button (🔀) -->
-                <Button
-                    x:Name="BtnShuffle"
-                    Content="🔀"
-                    Command="{x:Bind ViewModel.ShuffleQuestionsCommand}"
-                    ToolTipService.ToolTip="Shuffle questions (Alt+H)"
-                    AccessKey="H"
-                    TabIndex="11"
-                    AutomationProperties.Name="Shuffle questions"
-                    AutomationProperties.AutomationId="ShuffleButtonAutomationId" />
+                <!-- Shuffle Button (🔀) - Toggle shuffle mode -->
+                <Border
+                    Background="{x:Bind ViewModel.CurrentSortMode, Mode=OneWay, Converter={StaticResource SortModeToBackgroundConverter}, ConverterParameter='Shuffle'}"
+                    CornerRadius="4"
+                    Padding="2">
+                    <Button
+                        x:Name="BtnShuffle"
+                        Content="🔀"
+                        Click="BtnShuffle_Click"
+                        ToolTipService.ToolTip="Toggle shuffle mode (Alt+H)"
+                        AccessKey="H"
+                        TabIndex="11"
+                        AutomationProperties.Name="Toggle shuffle mode"
+                        AutomationProperties.AutomationId="ShuffleButtonAutomationId" />
+                </Border>
 
-                <!-- Loop Button (🔁) -->
-                <Button
-                    x:Name="BtnLoop"
-                    Content="🔁"
-                    Command="{x:Bind ViewModel.ActivateLoopModeCommand}"
-                    ToolTipService.ToolTip="Loop mode (Alt+L)"
-                    AccessKey="L"
-                    TabIndex="12"
-                    AutomationProperties.Name="Loop mode"
-                    AutomationProperties.AutomationId="LoopButtonAutomationId" />
+                <!-- Loop Button (🔁) - Toggle loop mode (mutually exclusive with Repeat) -->
+                <Border
+                    Background="{x:Bind ViewModel.CurrentPlayMode, Mode=OneWay, Converter={StaticResource ModeToBackgroundConverter}, ConverterParameter='Loop'}"
+                    CornerRadius="4"
+                    Padding="2">
+                    <Button
+                        x:Name="BtnLoop"
+                        Content="🔁"
+                        Click="BtnLoop_Click"
+                        ToolTipService.ToolTip="Toggle loop mode (Alt+L)"
+                        AccessKey="L"
+                        TabIndex="12"
+                        AutomationProperties.Name="Toggle loop mode"
+                        AutomationProperties.AutomationId="LoopButtonAutomationId" />
+                </Border>
 
-                <!-- Repeat Button (🔂) -->
-                <Button
-                    x:Name="BtnRepeat"
-                    Content="🔂"
-                    Command="{x:Bind ViewModel.ActivateRepeatModeCommand}"
-                    ToolTipService.ToolTip="Repeat mode (Alt+E)"
-                    AccessKey="E"
-                    TabIndex="13"
-                    AutomationProperties.Name="Repeat mode"
-                    AutomationProperties.AutomationId="RepeatButtonAutomationId" />
+                <!-- Repeat Button (🔂) - Toggle repeat mode (mutually exclusive with Loop) -->
+                <Border
+                    Background="{x:Bind ViewModel.CurrentPlayMode, Mode=OneWay, Converter={StaticResource ModeToBackgroundConverter}, ConverterParameter='RepeatCurrent'}"
+                    CornerRadius="4"
+                    Padding="2">
+                    <Button
+                        x:Name="BtnRepeat"
+                        Content="🔂"
+                        Click="BtnRepeat_Click"
+                        ToolTipService.ToolTip="Toggle repeat mode (Alt+E)"
+                        AccessKey="E"
+                        TabIndex="13"
+                        AutomationProperties.Name="Toggle repeat mode"
+                        AutomationProperties.AutomationId="RepeatButtonAutomationId" />
+                </Border>
 
                 <!-- Next Question Button (▶) -->
                 <Button

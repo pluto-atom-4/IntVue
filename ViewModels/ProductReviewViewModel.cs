@@ -72,10 +72,10 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     public partial string ErrorMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial SortMode CurrentSortMode { get; set; }
+    public partial SortMode CurrentSortMode { get; set; } = SortMode.AscendingAlpha;
 
     [ObservableProperty]
-    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Loop;
+    public partial PlayMode CurrentPlayMode { get; set; } = PlayMode.Sequential;
 
     [ObservableProperty]
     public partial bool IsRecordingNow { get; set; }
@@ -273,51 +273,68 @@ public partial class ProductReviewViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Shuffles the questions in the playlist.
+    /// Toggles shuffle mode between AscendingAlpha (off) and Shuffle (on).
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [RelayCommand]
-    public async Task ShuffleQuestionsAsync()
+    public async Task ToggleShuffleAsync()
     {
         try
         {
-            await this.ApplySortAsync(SortMode.Shuffle);
+            var newMode = CurrentSortMode == SortMode.Shuffle ? SortMode.AscendingAlpha : SortMode.Shuffle;
+            await this.ApplySortAsync(newMode);
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Failed to shuffle questions: {ex.Message}";
+            ErrorMessage = $"Failed to toggle shuffle: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Switches to Loop play mode (wraps to start at end).
+    /// Toggles Loop play mode between Sequential (off) and Loop (on).
+    /// Loop and Repeat are mutually exclusive.
     /// </summary>
     [RelayCommand]
-    public void ActivateLoopMode()
+    public void ToggleLoopMode()
     {
         try
         {
-            this.SetPlayMode(PlayMode.Loop);
+            if (CurrentPlayMode == PlayMode.Loop)
+            {
+                this.SetPlayMode(PlayMode.Sequential);
+            }
+            else
+            {
+                this.SetPlayMode(PlayMode.Loop);
+            }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Failed to activate loop mode: {ex.Message}";
+            ErrorMessage = $"Failed to toggle loop mode: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Switches to Repeat play mode (stays on current question).
+    /// Toggles Repeat play mode between Sequential (off) and RepeatCurrent (on).
+    /// Loop and Repeat are mutually exclusive.
     /// </summary>
     [RelayCommand]
-    public void ActivateRepeatMode()
+    public void ToggleRepeatMode()
     {
         try
         {
-            this.SetPlayMode(PlayMode.RepeatCurrent);
+            if (CurrentPlayMode == PlayMode.RepeatCurrent)
+            {
+                this.SetPlayMode(PlayMode.Sequential);
+            }
+            else
+            {
+                this.SetPlayMode(PlayMode.RepeatCurrent);
+            }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Failed to activate repeat mode: {ex.Message}";
+            ErrorMessage = $"Failed to toggle repeat mode: {ex.Message}";
         }
     }
 
