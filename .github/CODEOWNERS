@@ -1,0 +1,9 @@
+# Automated code review bot
+* @exp-ntamba
+
+# Context files require review
+CLAUDE.md @pluto-atom-4
+AGENTS.md @pluto-atom-4
+DESIGN.md @pluto-atom-4
+.claude/** @pluto-atom-4
+.github/copilot-instructions.md @pluto-atom-4

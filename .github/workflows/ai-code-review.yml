@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     # Only auto-approve PRs created by personal account (prevents external abuse)
     if: github.actor == 'pluto-atom-4' && github.event.pull_request.draft == false
+    env:
+      # Node 24 is default; Node 20 is deprecated (GitHub Actions)
+      ACTIONS_STEP_DEBUG: false
 
     steps:
       - uses: actions/checkout@v4
