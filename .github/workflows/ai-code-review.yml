@@ -1,5 +1,6 @@
 name: AI Code Review
 
+# Test: Verify CODEOWNERS bot approval workflow (Issue #126)
 on:
   pull_request:
     types: [opened, synchronize]
