@@ -1,19 +1,12 @@
-# GitHub Copilot Agent Mode — IntVue
+# GitHub Copilot Agent Mode & Architecture Index — IntVue
 
-**Quick Links:** [CLAUDE.md](../CLAUDE.md) | [AGENTS.md](../AGENTS.md) | [DESIGN.md](../DESIGN.md) | [Rules](./copilot/rules/) | [Instructions](../instructions/) | [Scoped](../CLAUDE.md#rules-router)
+**Quick Links:** [CLAUDE.md](../CLAUDE.md) | [AGENTS.md](../AGENTS.md) | [DESIGN.md](../DESIGN.md) | [Rules](./copilot/rules/) | [Instructions](../instructions/) | [Design Rules](./../.claude/rules/)
 
----
-
-## Overview
-
-This file documents GitHub Copilot's authorization boundaries and enforces code quality standards via three channels:
-1. **Rule YAML files** (`.github/copilot/rules/`) — Programmatic rules for linting and validation
-2. **Instruction files** (`.github/instructions/`) — Comprehensive guidance for specific domains
-3. **Pre-commit hooks** (`scripts/`) — Automated enforcement (build, test, format)
+This is the comprehensive architecture and pattern reference. For quick start, see [CLAUDE.md](../CLAUDE.md). For agent workflows, see [AGENTS.md](../AGENTS.md).
 
 ---
 
-## Boundaries
+## Authorization Boundaries
 
 **✅ Auto:** Bug fixes, test additions, docs, formatting, config updates (no breaking changes)  
 **⚠️ Confirm:** Architecture, APIs, dependencies, manifest, build scripts, storage schemas  
@@ -21,7 +14,25 @@ This file documents GitHub Copilot's authorization boundaries and enforces code 
 
 ---
 
-## Architecture & Rule Mapping
+## System Architecture
+
+**Data Flow:**
+```
+User Input (Views/XAML) → ViewModel (State + Commands) → Services (Business Logic) → Models (Data)
+```
+
+**Key Technologies:**
+- **UI:** WinUI 3 with `x:Bind` data binding, no code-behind logic
+- **State:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`
+- **DI:** Constructor injection via `App.xaml.cs`
+- **Media:** `MediaCapture` + `MediaFrameReader` + Win2D preview
+- **Storage:** `.mp4` recordings to Documents/IntVue
+
+**Platforms:** x86, x64, ARM64 (always detect via `$Platform` variable)
+
+---
+
+## Pattern Reference & Rule Mapping
 
 ### XAML UI Layer (`**/*.xaml`)
 
@@ -155,10 +166,7 @@ This file documents GitHub Copilot's authorization boundaries and enforces code 
 
 ### Reference
 
-For detailed procedures, see:
-- **Quick Checklist:** [`.claude/rules/hook-quick-fix.rules.md`](../.claude/rules/hook-quick-fix.rules.md)
-- **Resolution Guide:** [`.claude/rules/hook-resolution.rules.md`](../.claude/rules/hook-resolution.rules.md)
-- **Strategy & Escalation:** [`.claude/rules/hook-strategy.rules.md`](../.claude/rules/hook-strategy.rules.md)
+See **[`.claude/rules/hook-comprehensive.rules.md`](../.claude/rules/hook-comprehensive.rules.md)** for quick fixes, detailed resolution, and prevention strategies.
 
 ---
 
