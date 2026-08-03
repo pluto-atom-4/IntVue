@@ -1,0 +1,219 @@
+{
+  "audit_date": "2026-08-02",
+  "token_estimate_ratio": "1 token ≈ 4 characters",
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "lines": 140,
+      "chars": 5699,
+      "estimated_tokens": 1425,
+      "target_tokens": 750,
+      "status": "OVER",
+      "delta_percent": 90.0
+    },
+    {
+      "path": "AGENTS.md",
+      "lines": 478,
+      "chars": 26571,
+      "estimated_tokens": 6643,
+      "target_tokens": 3750,
+      "status": "OVER",
+      "delta_percent": 77.1
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "lines": 206,
+      "chars": 8960,
+      "estimated_tokens": 2240,
+      "target_tokens": 1250,
+      "status": "OVER",
+      "delta_percent": 79.2
+    },
+    {
+      "path": ".github/instructions/performance.instructions.md",
+      "lines": 53,
+      "chars": 2801,
+      "estimated_tokens": 700,
+      "target_tokens": 1000,
+      "status": "OK",
+      "delta_percent": -30.0
+    },
+    {
+      "path": ".github/instructions/globalization.instructions.md",
+      "lines": 55,
+      "chars": 2664,
+      "estimated_tokens": 666,
+      "target_tokens": 1000,
+      "status": "OK",
+      "delta_percent": -33.4
+    },
+    {
+      "path": ".github/instructions/accessibility.instructions.md",
+      "lines": 62,
+      "chars": 3560,
+      "estimated_tokens": 890,
+      "target_tokens": 1000,
+      "status": "OK",
+      "delta_percent": -11.0
+    },
+    {
+      "path": ".github/instructions/windows-apis.instructions.md",
+      "lines": 92,
+      "chars": 6235,
+      "estimated_tokens": 1559,
+      "target_tokens": 2000,
+      "status": "OK",
+      "delta_percent": -22.0
+    },
+    {
+      "path": ".github/instructions/design-principles.instructions.md",
+      "lines": 134,
+      "chars": 6089,
+      "estimated_tokens": 1522,
+      "target_tokens": 2000,
+      "status": "OK",
+      "delta_percent": -23.9
+    },
+    {
+      "path": ".github/instructions/code-quality.instructions.md",
+      "lines": 170,
+      "chars": 7158,
+      "estimated_tokens": 1790,
+      "target_tokens": 2000,
+      "status": "OK",
+      "delta_percent": -10.5
+    },
+    {
+      "path": ".github/instructions/security.instructions.md",
+      "lines": 140,
+      "chars": 9759,
+      "estimated_tokens": 2440,
+      "target_tokens": 2500,
+      "status": "OK",
+      "delta_percent": -2.4
+    },
+    {
+      "path": ".github/instructions/testing.instructions.md",
+      "lines": 284,
+      "chars": 10025,
+      "estimated_tokens": 2506,
+      "target_tokens": 2500,
+      "status": "OK",
+      "delta_percent": 0.2
+    },
+    {
+      "path": ".github/instructions/CLAUDE-scoped.md",
+      "lines": 259,
+      "chars": 10378,
+      "estimated_tokens": 2595,
+      "target_tokens": 3000,
+      "status": "OK",
+      "delta_percent": -13.5
+    },
+    {
+      "path": ".github/instructions/implementation-analysis-and-issue-tracking.instructions.md",
+      "lines": 426,
+      "chars": 13124,
+      "estimated_tokens": 3281,
+      "target_tokens": 3500,
+      "status": "OK",
+      "delta_percent": -6.3
+    },
+    {
+      "path": ".github/instructions/winui-best-practices.instructions.md",
+      "lines": 420,
+      "chars": 14188,
+      "estimated_tokens": 3547,
+      "target_tokens": 3500,
+      "status": "OK",
+      "delta_percent": 1.3
+    },
+    {
+      "path": ".claude/rules/hook-strategy.rules.md",
+      "lines": 244,
+      "chars": 6194,
+      "estimated_tokens": 1549,
+      "target_tokens": 1500,
+      "status": "OK",
+      "delta_percent": 3.3
+    },
+    {
+      "path": ".claude/rules/hook-quick-fix.rules.md",
+      "lines": 294,
+      "chars": 7319,
+      "estimated_tokens": 1830,
+      "target_tokens": 1750,
+      "status": "OK",
+      "delta_percent": 4.6
+    },
+    {
+      "path": ".claude/rules/design-spacing.rules.md",
+      "lines": 333,
+      "chars": 9269,
+      "estimated_tokens": 2317,
+      "target_tokens": 2000,
+      "status": "OVER",
+      "delta_percent": 15.9
+    },
+    {
+      "path": ".claude/rules/design-typography.rules.md",
+      "lines": 304,
+      "chars": 9565,
+      "estimated_tokens": 2391,
+      "target_tokens": 2000,
+      "status": "OVER",
+      "delta_percent": 19.6
+    },
+    {
+      "path": ".claude/rules/design-colors.rules.md",
+      "lines": 266,
+      "chars": 10095,
+      "estimated_tokens": 2524,
+      "target_tokens": 2000,
+      "status": "OVER",
+      "delta_percent": 26.2
+    },
+    {
+      "path": ".claude/rules/hook-resolution.rules.md",
+      "lines": 484,
+      "chars": 11512,
+      "estimated_tokens": 2878,
+      "target_tokens": 2500,
+      "status": "OVER",
+      "delta_percent": 15.1
+    },
+    {
+      "path": ".claude/rules/design-components.rules.md",
+      "lines": 494,
+      "chars": 15253,
+      "estimated_tokens": 3813,
+      "target_tokens": 3000,
+      "status": "OVER",
+      "delta_percent": 27.1
+    }
+  ],
+  "summary": {
+    "total_files": 21,
+    "total_lines": 7953,
+    "total_chars": 196418,
+    "total_tokens": 49105,
+    "recommended_tokens": 35000,
+    "status": "EXCEEDS",
+    "overage_tokens": 14105,
+    "overage_percent": 40.3,
+    "breakdown": {
+      "top_level_files": {
+        "total_tokens": 10308,
+        "status": "OVER"
+      },
+      "github_instructions": {
+        "total_tokens": 21495,
+        "status": "OK"
+      },
+      "claude_rules": {
+        "total_tokens": 17302,
+        "status": "PARTIAL_OVER"
+      }
+    }
+  }
+}
