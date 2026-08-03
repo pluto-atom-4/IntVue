@@ -1,140 +1,67 @@
-# CLAUDE.md
+# CLAUDE.md — IntVue WinUI 3
 
-Quick reference for Claude Code working with the IntVue project.
+WinUI 3 desktop app (Windows App SDK 1.8.x) for interview practice. MVVM + DI. Target: .NET 10.0+.
 
-**IntVue:** WinUI 3 desktop app (Windows App SDK 1.8.x) for interview practice. Platforms: x86, x64, ARM64. Architecture: MVVM + DI (CommunityToolkit.Mvvm). Target: .NET 10.0 on Windows 10.0.26100.0+.
-
----
-
-## 🤖 For Autonomous Agents
-
-Read [AGENTS.md](./AGENTS.md) first—it contains **mandatory Two-Gate System verification** (Plan Mode + Evidence-based checks), workflow rules, and build procedures. Agents must follow **[AGENTS.md § Core Agent Workflow](./AGENTS.md#core-agent-workflow)** (steps 1-14) before writing code.
-
-For isolated research threads: **Use sub-agent delegation** via Agent tool (see [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle) for hook integration).
+> **Agents:** Read [AGENTS.md](./AGENTS.md) first (Two-Gate System, Core Workflow).  
+> **Designers:** Read [DESIGN.md](./DESIGN.md) first (semantic tokens, design rules).  
+> **All rules:** [.github/copilot-instructions.md](.github/copilot-instructions.md) (architecture + patterns).
 
 ---
 
 ## Platform Detection (Mandatory)
-
-Before ANY build/test command, detect platform:
 
 ```powershell
 $arch = $env:PROCESSOR_ARCHITECTURE
 $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
 ```
 
-Never hardcode—cross-architecture failures result. See **[AGENTS.md § Detect Platform](./AGENTS.md#detect-platform)** for variants.
-
----
-
-## Context Management
-
-Use `/compact` at **50% tokens** to checkpoint. Use `/rewind` on contradictions. For multi-step tasks: spawn `Agent` tool (inherits AGENTS.md hooks). For specialized tasks: use `Skill` (e.g., `/accessibility-review`). See `.claude/skills/`.
-
----
-
-## Core Guardrails
-
-**Key constraints:**
-- **XAML:** Use `x:Bind` (never `{Binding}`), `{ThemeResource ...}` for colors (never hard-coded)
-- **Namespaces:** `Microsoft.UI.Xaml` only (not `Windows.UI.Xaml`)
-- **Secrets:** Env vars, PasswordVault, or Azure Key Vault (never hard-code)
-- **MediaCapture:** Don't hold open during backgrounding/suspension
-- **Testing:** 80%+ coverage on ViewModels/Services; unit tests required for all features
-- **Code:** YAGNI—implement only what's explicitly requested now
-
-See **[AGENTS.md § Key Rules](./AGENTS.md#key-rules-always-enforced)** for agent-specific rules.
+Pass to all commands: `dotnet build -c Debug -p:Platform=$Platform`
 
 ---
 
 ## Quick Commands
 
+| Task | Command |
+|---|---|
+| **Build** | `dotnet build -c Debug -p:Platform=$Platform` |
+| **Test** | `dotnet test -c Debug -p:Platform=$Platform` |
+| **Run** | `dotnet run -c Debug -p:Platform=$Platform` |
+| **Format** | `dotnet format IntVue.csproj` |
+
+See [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy) for details.
+
+---
+
+## Core Guardrails
+
+- **XAML:** `x:Bind` (never `{Binding}`), `{ThemeResource ...}` (never hard-code)
+- **Namespaces:** `Microsoft.UI.Xaml` only
+- **Secrets:** Env vars, PasswordVault, or Azure Key Vault
+- **MediaCapture:** Don't hold open during suspend/resume
+- **Testing:** 80%+ coverage on ViewModels/Services
+- **Code:** YAGNI—implement only what's explicitly requested
+
+---
+
+## Rules by Category
+
+| Category | Reference |
+|---|---|
+| **Design & UI** | [DESIGN.md](./DESIGN.md) |
+| **Agent Workflow** | [AGENTS.md](./AGENTS.md) |
+| **Code Quality** | [code-quality.instructions.md](.github/instructions/code-quality.instructions.md) |
+| **Git Hooks** | [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md) |
+| **All Rules** | [copilot-instructions.md](.github/copilot-instructions.md) |
+
+---
+
+## Before Committing
+
 ```powershell
-# Build
+dotnet format IntVue.csproj
 dotnet build -c Debug -p:Platform=$Platform
-
-# Test (all)
-cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform
-
-# Test (specific)
-dotnet test -c Debug -p:Platform=$Platform --filter "FullyQualifiedName~MainViewModelTests"
-
-# Run app
-dotnet run -c Debug -p:Platform=$Platform
-
-# Troubleshoot (reset package)
-winapp unregister && dotnet run -c Debug -p:Platform=$Platform
-
-# Secret scanning (pre-push hook runs automatically)
-gitleaks detect --source . -v                  # Manual scan
+dotnet test -c Debug -p:Platform=$Platform
+git commit -m "feat: description"
 ```
 
-**For comprehensive procedures, see [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy).**
-
----
-
-## Architecture Overview
-
-**Folder structure:** Models → ViewModels → Views (XAML) → Services → Converters, Helpers, Controls, Strings, Assets
-
-**MVVM:** CommunityToolkit.Mvvm with `[ObservableProperty]` + `[RelayCommand]`. Constructor DI in `App.xaml.cs`.
-
-**Media capture:** `MediaCapture` + `MediaFrameReader` + Win2D for preview; `LowLagMediaRecording` for recording.
-
-See [DESIGN.md](./DESIGN.md) for full details.
-
----
-
-## Rules Router
-
-| Category | Links |
-|---|---|
-| **Design & UI** | Read `DESIGN.md` first. Then: `design-colors.rules.md`, `design-spacing.rules.md`, `design-typography.rules.md`, `design-components.rules.md` |
-| **Git Hooks** | Blocked? → `hook-quick-fix.rules.md` (5-step checklist). Details: `hook-strategy.rules.md`, `hook-resolution.rules.md` |
-| **Code Quality** | `design-principles.instructions.md`, `code-quality.instructions.md`, `winui-best-practices.instructions.md` |
-| **Testing** | `testing.instructions.md` (MSTest, Moq, AAA, coverage targets) |
-| **Security** | `security.instructions.md` (secrets, validation, PII) |
-| **Performance** | `performance.instructions.md` (async, x:Bind, virtualization) |
-| **Windows APIs** | `windows-apis.instructions.md` (API lookup, samples-first) |
-| **Accessibility** | `accessibility.instructions.md` + `Views/CLAUDE.md` |
-| **Localization** | `globalization.instructions.md` + `Views/CLAUDE.md` |
-| **Scoped** | `Services/CLAUDE.md`, `Views/CLAUDE.md`, `ViewModels/CLAUDE.md` |
-
-**All rules in `.github/instructions/` apply equally to Claude Code and autonomous agents.**
-
----
-
-## Configuration
-
-See [AGENTS.md § Unified Execution Lifecycle](./AGENTS.md#unified-execution-lifecycle) for cross-tool synergy details.
-
----
-
-## Before Handing Off to Agent
-
-1. Commit with clear messages
-2. Tests: `dotnet test -c Debug -p:Platform=$Platform`
-3. Run: `dotnet run -c Debug -p:Platform=$Platform`
-4. Follow [AGENTS.md § Two-Gate System](./AGENTS.md#two-gate-system)
-
----
-
-## Quick Start
-
-### Setup
-- [ ] Detect platform: `$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }`
-- [ ] Install tools: GitHub CLI + gitleaks (see Quick Commands below)
-
-### First Build
-- [ ] `winget install GitHub.cli && gh auth login`
-- [ ] `winget install gitleaks && gitleaks version`
-
-### Commands
-- [ ] Build: `dotnet build -c Debug -p:Platform=$Platform`
-- [ ] Test: `cd Tests/IntVue.Tests && dotnet test -c Debug -p:Platform=$Platform`
-- [ ] Run: `dotnet run -c Debug -p:Platform=$Platform`
-- [ ] Before changes: Read relevant instruction file from Rules Router above
-- [ ] UI work? Read [DESIGN.md](./DESIGN.md) first
-- [ ] Before commit: `dotnet format`, `dotnet build`, `dotnet test`
-- [ ] Before push: `gitleaks detect --source . -v` (secret scanning blocks push if secrets found)
-- [ ] Blocked? See `.claude/rules/hook-quick-fix.rules.md` (2-30 min fix)
+Blocked? → [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md)

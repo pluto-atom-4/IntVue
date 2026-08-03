@@ -1,0 +1,288 @@
+---
+name: "Unit Test Patterns & Coverage"
+applyTo: "**/*Tests.cs,**/*Test.cs"
+category: "testing"
+severity: "error"
+description: |
+  Enforce MSTest unit testing standards with AAA (Arrange-Act-Assert) pattern,
+  proper naming conventions, comprehensive coverage (80%+), and mock usage for dependencies.
+
+references:
+  - "../instructions/testing.instructions.md"
+  - "../instructions/code-quality.instructions.md"
+  - "../instructions/performance.instructions.md"
+
+rules:
+  - id: "test-use-mstest"
+    name: "Use MSTest framework"
+    description: "All unit tests must use [TestMethod] attribute from MSTest, not xUnit or NUnit"
+    pattern: '(\[Fact\]|\[Test\]|using Xunit|using NUnit)'
+    severity: "error"
+    fix: "Use MSTest: add [TestMethod] attribute and inherit TestClass"
+    example: |
+      ❌ AVOID:
+      [Fact]
+      public void MyTest() { }
+
+      ✓ GOOD:
+      using Microsoft.VisualStudio.TestTools.UnitTesting;
+      [TestMethod]
+      public void MyTest() { }
+
+  - id: "test-inherit-testclass"
+    name: "Test classes must inherit from TestClass"
+    description: "All test classes must use [TestClass] attribute from MSTest"
+    pattern: 'public class \w+Tests(?!.*\[TestClass\])'
+    severity: "error"
+    fix: "Add [TestClass] attribute and using Microsoft.VisualStudio.TestTools.UnitTesting"
+    example: |
+      ❌ AVOID:
+      public class MainViewModelTests { }
+
+      ✓ GOOD:
+      [TestClass]
+      public class MainViewModelTests { }
+
+  - id: "test-naming-convention"
+    name: "Follow MethodName_Scenario_ExpectedResult naming"
+    description: "Test methods must follow the pattern: MethodName_Scenario_ExpectedResult"
+    pattern: '(\[TestMethod\]\s+public (async )?(?:void|Task) (?!.*_.*_)(?!Setup|Cleanup))'
+    severity: "error"
+    fix: "Rename test to: MethodUnderTest_Scenario_ExpectedResult"
+    example: |
+      ❌ AVOID:
+      [TestMethod]
+      public void TestCountdown() { }
+      [TestMethod]
+      public void CountdownWorks() { }
+
+      ✓ GOOD:
+      [TestMethod]
+      public void StartCountdownAsync_WithThreeSeconds_ReportsAllValues() { }
+      [TestMethod]
+      public void StartCountdownAsync_WhenCancelled_StopsImmediately() { }
+
+  - id: "test-aaa-pattern"
+    name: "Use Arrange-Act-Assert (AAA) pattern"
+    description: "Every test must follow: Arrange (setup) → Act (call) → Assert (verify)"
+    pattern: '(public (async )?(?:void|Task) \w+.*{(?!.*// Arrange|.*var.*=))'
+    severity: "error"
+    fix: "Structure test as: // Arrange (setup), // Act (call), // Assert (verify)"
+    example: |
+      ❌ AVOID:
+      [TestMethod]
+      public void Add_Test()
+      {
+          var calc = new Calculator();
+          Assert.AreEqual(5, calc.Add(2, 3));
+      }
+
+      ✓ GOOD:
+      [TestMethod]
+      public void Add_TwoNumbers_ReturnsSum()
+      {
+          // Arrange
+          var calculator = new Calculator();
+
+          // Act
+          int result = calculator.Add(2, 3);
+
+          // Assert
+          Assert.AreEqual(5, result);
+      }
+
+  - id: "test-mock-dependencies"
+    name: "Mock external dependencies"
+    description: "Use Moq to mock Service, Repository, and external dependencies"
+    pattern: '(new \w+Service|new \w+Repository)(?!.*Mock)'
+    severity: "error"
+    fix: "Use Moq: var mock = new Mock<IServiceInterface>(); var service = mock.Object;"
+    example: |
+      ❌ AVOID:
+      [TestMethod]
+      public void ViewModel_Test()
+      {
+          var service = new RecordingService();  // Real dependency
+          var vm = new MainViewModel(service);
+      }
+
+      ✓ GOOD:
+      [TestMethod]
+      public void ViewModel_Test()
+      {
+          // Arrange
+          var mockService = new Mock<IRecordingService>();
+          var viewModel = new MainViewModel(mockService.Object);
+
+          // Act
+          // Assert
+      }
+
+  - id: "test-single-assertion"
+    name: "One logical assertion per test"
+    description: "Tests should verify one behavior. Use multiple tests for different scenarios."
+    pattern: '(Assert\.\w+.*;\s*Assert\.\w+)'
+    severity: "warning"
+    fix: "Split into multiple tests: one per scenario"
+    example: |
+      ❌ AVOID:
+      [TestMethod]
+      public void RecordingService_Test()
+      {
+          // Multiple assertions
+          Assert.AreEqual(true, result1);
+          Assert.AreEqual("Ready", status);
+          Assert.AreEqual(3, count);
+      }
+
+      ✓ GOOD:
+      [TestMethod]
+      public void StartRecordingAsync_WithValidPath_ReturnsTrue()
+      {
+          // Arrange, Act
+          // Assert: one logical assertion
+          Assert.AreEqual(true, result);
+      }
+
+      [TestMethod]
+      public void StartRecordingAsync_WithInvalidPath_ThrowsArgumentException()
+      {
+          // Arrange, Act, Assert
+          Assert.ThrowsException<ArgumentException>(() => ...);
+      }
+
+  - id: "test-meaningful-assertions"
+    name: "Use specific assertion methods"
+    description: "Use Assert.AreEqual, Assert.IsTrue, Assert.ThrowsException, not generic Assert.IsNotNull"
+    pattern: '(Assert\.IsNotNull|Assert\.IsTrue\(.*!.*\)|Assert\.IsNull)'
+    severity: "warning"
+    fix: "Use specific: AreEqual, IsTrue/IsFalse, ThrowsException, IsInstanceOfType"
+    example: |
+      ❌ AVOID:
+      Assert.IsNotNull(result);
+      Assert.IsTrue(result != null);
+
+      ✓ GOOD:
+      Assert.AreEqual(expectedValue, result);
+      Assert.IsInstanceOfType(result, typeof(string));
+
+  - id: "test-edge-cases"
+    name: "Test edge cases and error conditions"
+    description: "Tests should cover: null, empty, boundary values, exceptions"
+    pattern: '(public (async )?(?:void|Task) (?!.*Null|.*Empty|.*Boundary|.*Throws|.*Invalid|.*Exception))'
+    severity: "warning"
+    fix: "Add tests for: null input, empty collection, boundary values, exception handling"
+
+  - id: "test-async-pattern"
+    name: "Use async/await in async tests"
+    description: "Tests calling async methods must be marked async and use await"
+    pattern: '(public void.*Async|Task.*public void)'
+    severity: "error"
+    fix: "Change to: public async Task MethodName_Scenario_ExpectedResult()"
+    example: |
+      ❌ AVOID:
+      [TestMethod]
+      public void StartRecordingAsync_Test()
+      {
+          var result = recordingService.StartRecordingAsync().Result;  // Blocks!
+      }
+
+      ✓ GOOD:
+      [TestMethod]
+      public async Task StartRecordingAsync_WithValidPath_Returns True()
+      {
+          // Arrange, Act
+          var result = await recordingService.StartRecordingAsync(path);
+          // Assert
+          Assert.AreEqual(true, result);
+      }
+
+  - id: "test-no-skip-without-reason"
+    name: "Do not skip tests without documented reason"
+    description: "[Ignore] attribute requires clear reason in test or issue link"
+    pattern: '\[Ignore\](?!.*//.*|.*@description)'
+    severity: "warning"
+    fix: "Add comment explaining why test is skipped, or remove [Ignore]"
+
+  - id: "test-setup-teardown"
+    name: "Use [TestInitialize] and [TestCleanup]"
+    description: "Use [TestInitialize] for setup (not constructor) and [TestCleanup] for teardown"
+    pattern: '(public \w+Tests\(\).*{.*mock|public \w+Tests.*Mock|IDisposable)'
+    severity: "info"
+    fix: "Move setup to [TestInitialize] method, cleanup to [TestCleanup]"
+    example: |
+      ❌ AVOID:
+      public class MainViewModelTests
+      {
+          public MainViewModelTests()
+          {
+              var mock = new Mock<IService>();  // Wrong: constructor
+          }
+      }
+
+      ✓ GOOD:
+      public class MainViewModelTests
+      {
+          private Mock<IRecordingService> mockService;
+
+          [TestInitialize]
+          public void Setup()
+          {
+              mockService = new Mock<IRecordingService>();
+          }
+
+          [TestCleanup]
+          public void Cleanup()
+          {
+              mockService = null;
+          }
+      }
+
+  - id: "test-coverage-minimum"
+    name: "Maintain 80%+ code coverage"
+    description: "All public methods must have corresponding tests. Coverage target: 80%+"
+    pattern: 'public (async )?(Task|void|string|int|bool|class)'
+    severity: "error"
+    fix: "Add unit test for public method"
+
+  - id: "test-property-initialization"
+    name: "Initialize mocks and test data clearly"
+    description: "Test data and mocks should be initialized in [TestInitialize], not inline"
+    pattern: '(private readonly.*Mock|private readonly.*mock)'
+    severity: "info"
+    fix: "Declare as private field, initialize in [TestInitialize]"
+
+  - id: "test-no-hardcoded-delays"
+    name: "Do not hardcode delays in tests"
+    description: "Use Task.Delay for testing async, not Thread.Sleep. Keep delays minimal (10-100ms)"
+    pattern: '(Thread\.Sleep|Task\.Delay\([1-9][0-9]{3,}\))'
+    severity: "warning"
+    fix: "Use Task.Delay with short timeout (10-100ms) or mock time"
+
+  - id: "test-meaningful-test-data"
+    name: "Use realistic test data"
+    description: "Test data should represent real-world scenarios, not arbitrary values"
+    pattern: '(= 0|= \"test\"|= \"mock\")'
+    severity: "info"
+    fix: "Use realistic data: file paths, valid timestamps, meaningful strings"
+
+hooks:
+  - trigger: "OnFileSave"
+    delay: "2s"
+    action: "validate-test-syntax"
+    message: "Test pattern and MSTest syntax validation"
+  - trigger: "PostToolUse"
+    matcher: "Edit"
+    action: "coverage-validation"
+    message: "Verify test coverage >= 80% for changed files"
+
+enforcement:
+  - entity: "GitHub Copilot"
+    when: "suggesting test code"
+    action: "enforce MSTest, AAA pattern, MethodName_Scenario_ExpectedResult naming"
+  - entity: "dotnet test pre-commit hook"
+    when: "running test suite"
+    action: "all tests must pass, coverage >= 80%, no [Ignore] without reason"
+  - entity: "pre-push hook"
+    when: "pushing to main"
+    action: "run full test suite with coverage report"

@@ -65,8 +65,10 @@ function Count-FileTokens {
     return @{ Lines = 0; Words = 0; Tokens = 0 }
   }
 
-  $lines = @($content -split '\r?\n').Count
-  $words = @($content -split '\s+').Count
+  # Use Measure-Object for accurate line and word counting
+  $measurements = $content | Measure-Object -Line -Word -Character
+  $lines = $measurements.Lines
+  $words = $measurements.Words
   $tokens = Get-TokenEstimate $lines $words
 
   return @{

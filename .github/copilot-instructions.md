@@ -1,43 +1,39 @@
-# GitHub Copilot Agent Mode — IntVue
+# Copilot Agent Mode - IntVue
 
-**Quick Links:** [CLAUDE.md](../CLAUDE.md) | [AGENTS.md](../AGENTS.md) | [Detailed Rules](./copilot/rules-detailed.md) | [Instructions](../instructions/)
+## Scope
 
----
+**Auto:** Bug fixes, tests, docs, formatting, config  
+**Confirm:** Architecture, APIs, dependencies, build scripts  
+**Blocked:** Secrets, releases, refactors
 
-## Boundaries
+## Pattern Rules
 
-**✅ Auto:** Bug fixes, test additions, docs, formatting, config updates (no breaking changes)  
-**⚠️ Confirm:** Architecture, APIs, dependencies, manifest, build scripts, storage schemas  
-**🚫 Blocked:** Secrets, releases, package identity changes, cross-cutting refactors
+**XAML:** Use `x:Bind`, `{ThemeResource}`, `AutomationProperties.Name`  
+[Details](../.claude/rules/)
 
----
+**ViewModel:** `ObservableObject`, `[ObservableProperty]`, `[RelayCommand]`, DI  
+[Details](../instructions/code-quality.instructions.md)
 
-## Path-Specific Rules
+**Services:** Interfaces, validation, async, `IDisposable`  
+[Details](../instructions/security.instructions.md)
 
-See [rules-detailed.md](./copilot/rules-detailed.md) for examples.
+**Tests:** MSTest, AAA, ≥80% coverage, mocked dependencies  
+[Details](../instructions/testing.instructions.md)
 
-- **XAML** (`**/*.xaml`): x:Bind only, theme colors, 8px grid, accessibility properties, no logic
-- **ViewModels** (`ViewModels/**/*.cs`): ObservableObject, [ObservableProperty], [RelayCommand], async/await
-- **Services** (`Services/**/*.cs`): Stateless, validate inputs, async I/O, no secrets hardcoded
-- **Tests** (`**/*Tests.cs`): MSTest, MethodName_Scenario_ExpectedResult naming, AAA pattern, 80%+ coverage
+## Checks
 
----
+1. Format: `dotnet format IntVue.csproj`
+2. Build: `dotnet build -c Debug -p:Platform=$Platform`
+3. Test: `dotnet test -c Debug -p:Platform=$Platform`
+4. Secrets: `gitleaks detect --source . -v`
 
-## Pre-Commit Checks
+[Quick Fix](../.claude/rules/hook-quick-fix.rules.md)
 
-- [ ] Build: `dotnet build -c Debug -p:Platform=$Platform` → 0 errors
-- [ ] Test: `dotnet test -c Debug -p:Platform=$Platform` → all pass, 80%+ coverage
-- [ ] Format: `dotnet format --verify-no-changes`
-- [ ] No secrets, API keys, or PII
-- [ ] Commit message references issue (`Closes #123`)
-- [ ] New public methods tested
+## Workflow
 
----
+1. Read pattern rules
+2. Follow examples in rules
+3. Run checks before commit
+4. Reference issue: `git commit -m "feat: x (Closes #123)"`
 
-## Acceptance Criteria
-
-✅ Build/tests pass | ✅ Rules respected | ✅ No secrets | ✅ Issue referenced
-
----
-
-**Last Updated:** 2026-07-25 | **Version:** 1.0
+**v2.0** | Updated 2026-08-02

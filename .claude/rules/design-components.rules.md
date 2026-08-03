@@ -16,42 +16,21 @@ Buttons have five primary states. WinUI styles handle hover/pressed automaticall
 | **Disabled** | Grayed out | `IsEnabled="False"` | Disabled announced |
 | **Focus** | Focus outline visible | Tab navigation | Outline visible |
 
-**Secondary Button Pattern:**
+**Button Patterns:**
 ```xaml
-<Button
-    x:Name="BtnPreview"
-    Content="Start Preview"
-    Click="BtnPreview_Click"
-    AutomationProperties.Name="Start camera preview"
-    AutomationProperties.AutomationId="PreviewButtonAutomationId" />
-```
+<!-- Secondary (default) -->
+<Button Content="Preview" AutomationProperties.Name="Start preview" />
 
-**Primary/Accent Button Pattern:**
-```xaml
-<Button
-    x:Name="BtnRecord"
-    Content="Start Recording"
-    Click="BtnRecord_Click"
-    Style="{ThemeResource AccentButtonStyle}"
-    AutomationProperties.Name="Start recording"
-    AutomationProperties.AutomationId="RecordButtonAutomationId" />
-```
+<!-- Primary/Accent -->
+<Button Content="Record" Style="{ThemeResource AccentButtonStyle}" AutomationProperties.Name="Start recording" />
 
-**Disabled Button Pattern:**
-```xaml
-<Button
-    x:Name="BtnPlay"
-    Content="Play Recording"
-    IsEnabled="{x:Bind ViewModel.HasRecording, Mode=OneWay}"
-    AutomationProperties.Name="Play the recorded session" />
-```
+<!-- Disabled -->
+<Button Content="Play" IsEnabled="{x:Bind ViewModel.HasRecording}" />
 
-**Button Group (Horizontal):**
-```xaml
+<!-- Group -->
 <StackPanel Orientation="Horizontal" Spacing="8">
     <Button Content="Action 1" />
     <Button Content="Action 2" />
-    <Button Content="Action 3" />
 </StackPanel>
 ```
 
@@ -64,49 +43,13 @@ Buttons have five primary states. WinUI styles handle hover/pressed automaticall
 
 ## Form Controls
 
-Form controls (TextBox, ComboBox, CheckBox, RadioButton) inherit WinUI 3 styling automatically.
+Form controls inherit WinUI 3 styling automatically:
 
-**TextBox:**
 ```xaml
-<TextBox
-    x:Name="SearchBox"
-    PlaceholderText="Search recordings..."
-    AutomationProperties.Name="Search" />
-```
-
-**ComboBox (e.g., Camera Selection):**
-```xaml
-<ComboBox
-    x:Name="CameraList"
-    PlaceholderText="Select camera"
-    ItemsSource="{x:Bind ViewModel.Cameras, Mode=OneWay}"
-    SelectedItem="{x:Bind ViewModel.SelectedCamera, Mode=TwoWay}"
-    MinWidth="200"
-    AutomationProperties.Name="Camera selection" />
-```
-
-**CheckBox:**
-```xaml
-<CheckBox
-    Content="Save recording automatically"
-    IsChecked="{x:Bind ViewModel.AutoSave, Mode=TwoWay}"
-    AutomationProperties.Name="Auto-save checkbox" />
-```
-
-**RadioButton:**
-```xaml
-<StackPanel>
-    <RadioButton
-        Content="1080p resolution"
-        GroupName="Resolution"
-        IsChecked="{x:Bind ViewModel.Resolution1080p, Mode=TwoWay}"
-        AutomationProperties.Name="1080p resolution option" />
-    <RadioButton
-        Content="720p resolution"
-        GroupName="Resolution"
-        IsChecked="{x:Bind ViewModel.Resolution720p, Mode=TwoWay}"
-        AutomationProperties.Name="720p resolution option" />
-</StackPanel>
+<TextBox PlaceholderText="Search..." AutomationProperties.Name="Search" />
+<ComboBox ItemsSource="{x:Bind ViewModel.Items}" SelectedItem="{x:Bind ViewModel.Selected, Mode=TwoWay}" />
+<CheckBox Content="Auto-save" IsChecked="{x:Bind ViewModel.AutoSave, Mode=TwoWay}" />
+<RadioButton Content="Option A" GroupName="Group1" />
 ```
 
 **Do NOT:**

@@ -1,0 +1,167 @@
+---
+name: "ViewModel MVVM Patterns"
+applyTo: "ViewModels/**/*.cs"
+category: "mvvm"
+severity: "error"
+description: |
+  Enforce MVVM patterns using CommunityToolkit.Mvvm for ViewModels.
+  Requires ObservableObject inheritance, [ObservableProperty] attributes, [RelayCommand] for commands,
+  async/await for long-running operations, and dependency injection via constructor.
+
+references:
+  - "../../.claude/rules/design-colors.rules.md"
+  - "../instructions/code-quality.instructions.md"
+  - "../instructions/winui-best-practices.instructions.md"
+  - "../instructions/performance.instructions.md"
+  - "../../DESIGN.md"
+
+rules:
+  - id: "vm-inherit-observable-object"
+    name: "ViewModels must inherit from ObservableObject"
+    description: "All ViewModel classes must inherit from CommunityToolkit.Mvvm.ComponentModel.ObservableObject"
+    pattern: 'public (partial )?class \w+ViewModel'
+    severity: "error"
+    fix: "Change to: public partial class YourViewModel : ObservableObject"
+    example: |
+      ❌ AVOID:
+      public class MainViewModel { }
+
+      ✓ GOOD:
+      using CommunityToolkit.Mvvm.ComponentModel;
+      public partial class MainViewModel : ObservableObject { }
+
+  - id: "vm-use-observable-property"
+    name: "Use [ObservableProperty] for properties"
+    description: "Properties must use [ObservableProperty] attribute on private backing field, not traditional properties"
+    pattern: '(public property|PropertyChanged event)'
+    severity: "error"
+    fix: "Replace property with [ObservableProperty] private <type> fieldName; (no manual PropertyChanged)"
+    example: |
+      ❌ AVOID:
+      public string Status { get; set; }
+      private string status;
+      public string Status
+      {
+          get => status;
+          set { if (status != value) { status = value; OnPropertyChanged(); } }
+      }
+
+      ✓ GOOD:
+      [ObservableProperty]
+      private string status = "Ready";
+
+  - id: "vm-use-relay-command"
+    name: "Use [RelayCommand] for command methods"
+    description: "Command methods must use [RelayCommand] attribute, not manual ICommand properties"
+    pattern: '(ICommand|RelayCommand\()\)|(new RelayCommand)'
+    severity: "error"
+    fix: "Replace with [RelayCommand] public async Task YourCommandAsync() method"
+    example: |
+      ❌ AVOID:
+      public ICommand StartRecordingCommand =>
+          new RelayCommand(async () => await StartRecordingAsync());
+
+      ✓ GOOD:
+      [RelayCommand]
+      public async Task StartRecordingAsync()
+      {
+          // Implementation
+      }
+
+  - id: "vm-async-operations"
+    name: "Use async/await for long-running operations"
+    description: "All I/O, network, or time-consuming operations must use async/await pattern"
+    pattern: '(Thread\.Sleep|\.Wait\(\)|\.Result)'
+    severity: "error"
+    fix: "Replace blocking operations with async/await. Use await Task.Delay() instead of Thread.Sleep()"
+    example: |
+      ❌ AVOID:
+      public void WaitForRecording()
+      {
+          Thread.Sleep(3000);  // Blocks UI
+      }
+
+      ✓ GOOD:
+      public async Task WaitForRecordingAsync()
+      {
+          await Task.Delay(3000);  // Non-blocking
+      }
+
+  - id: "vm-dependency-injection"
+    name: "Use constructor dependency injection"
+    description: "Dependencies must be injected via constructor, never via ServiceLocator or static"
+    pattern: '(ServiceLocator\.|GetService\(|static .*Service|new \w+Service\(\))'
+    severity: "error"
+    fix: "Add parameter to constructor and store as field/property"
+    example: |
+      ❌ AVOID:
+      public MainViewModel()
+      {
+          var service = new RecordingService();  // Hard-coded dependency
+      }
+
+      ✓ GOOD:
+      private readonly IRecordingService recordingService;
+      public MainViewModel(IRecordingService recordingService)
+      {
+          this.recordingService = recordingService;
+      }
+
+  - id: "vm-partial-class"
+    name: "ViewModels must be partial classes"
+    description: "ViewModel classes must be declared partial for MVVM Toolkit source generation"
+    pattern: 'public class \w+ViewModel(?!.*partial)'
+    severity: "error"
+    fix: "Change to: public partial class YourViewModel : ObservableObject"
+
+  - id: "vm-no-ui-code"
+    name: "No WinUI/XAML code in ViewModels"
+    description: "ViewModels must not reference UI types (Microsoft.UI.Xaml.*, TextBlock, Button, etc.)"
+    pattern: '(using Microsoft\.UI\.Xaml|new Button|new TextBlock|DispatcherQueue\.GetForCurrentThread)'
+    severity: "error"
+    fix: "Move UI interaction to code-behind or use only ICommand/INotifyPropertyChanged patterns"
+
+  - id: "vm-null-checks"
+    name: "Validate inputs and add null checks"
+    description: "Public methods must validate parameters and handle null gracefully"
+    pattern: '(public (async )?(Task|void|string|int|bool) \w+\([^)]*\)(?!.*null|ArgumentNull))'
+    severity: "warning"
+    fix: "Add parameter validation: if (param == null) throw new ArgumentNullException(...)"
+
+  - id: "vm-property-initialization"
+    name: "Initialize properties to safe defaults"
+    description: "[ObservableProperty] fields should have safe default values, avoid nullable unless necessary"
+    pattern: '\[ObservableProperty\]\s+private .*\?'
+    severity: "info"
+    fix: "Provide non-null default value, or use non-nullable type: private string status = \"\";"
+
+  - id: "vm-no-blocking-operations"
+    name: "Never block on UI thread"
+    description: "Do not use .Result, .Wait(), or Thread.Sleep() in ViewModel or code-behind"
+    pattern: '(\.Result|\.Wait\(|Thread\.Sleep)'
+    severity: "error"
+    fix: "Use await async method instead"
+
+  - id: "vm-property-naming"
+    name: "Follow property naming convention"
+    description: "[ObservableProperty] backing fields use camelCase (e.g., _status or status)"
+    pattern: '\[ObservableProperty\].*private [A-Z]\w+'
+    severity: "warning"
+    fix: "Rename field to camelCase: private string status;"
+
+hooks:
+  - trigger: "OnFileSave"
+    delay: "3s"
+    action: "validate-viewmodel-patterns"
+    message: "ViewModel MVVM pattern validation"
+
+enforcement:
+  - entity: "GitHub Copilot"
+    when: "suggesting ViewModel code"
+    action: "enforce ObservableObject, [ObservableProperty], [RelayCommand]"
+  - entity: "dotnet build pre-commit hook"
+    when: "compiling ViewModel files"
+    action: "StyleCop SA* rules enforce partial class, proper using statements"
+  - entity: "dotnet test pre-commit hook"
+    when: "running ViewModel tests"
+    action: "test coverage must be >=80% for all public methods"

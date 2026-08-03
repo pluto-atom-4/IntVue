@@ -69,7 +69,7 @@ Every time you work on this codebase, follow this checklist:
 10. **Write unit tests** -- Every new public method/class needs tests. **Read** [testing](.github/instructions/testing.instructions.md) for framework setup, naming conventions (`MethodName_Scenario_ExpectedResult`), AAA pattern, and `dotnet test` commands.
 11. **Build the project** -- Detect the platform first (`$Platform = $env:PROCESSOR_ARCHITECTURE`), then run `dotnet build -c Debug -p:Platform=$Platform` from the project folder and fix all warnings/errors. **If build errors occur, follow the Troubleshooting Build Errors workflow below.**
 12. **Run tests** -- Run tests related to the change using `--filter` (see [testing](.github/instructions/testing.instructions.md)). Run the full suite only when the change is cross-cutting.
-13. **Run the app with package identity** -- Use `dotnet run` (preferred -- the project references `Microsoft.Windows.SDK.BuildTools.WinApp`, which automatically invokes `winapp run` to register a loose-layout package and launch via AUMID). See [Build, Run & Deploy](#build-run--deploy) below for advanced scenarios.
+13. **Run the app with package identity** -- Use `dotnet run` (preferred). See [agent-build-procedures.md](.github/instructions/agent-build-procedures.md) for advanced scenarios.
 14. **Re-review against original goal** -- Confirm the implementation matches the user's request.
 
 ### Troubleshooting Build Errors
@@ -90,152 +90,13 @@ Only if Steps 1-2 fail to resolve the issue, then inspect `.winmd` metadata file
 
 ## Build, Run & Deploy
 
-This is an MSIX-packaged WinUI 3 app. You **must** pass both `-c` (Configuration) and `-p:Platform=` to every `dotnet build`/`dotnet test` command.
-
-This template references the [`Microsoft.Windows.SDK.BuildTools.WinApp`](https://www.nuget.org/packages/Microsoft.Windows.SDK.BuildTools.WinApp) NuGet package, which hooks `dotnet run` to invoke the [`winapp` CLI](https://github.com/microsoft/WinAppCli). Use `dotnet run` for everyday inner-loop development -- you do not need to call `Add-AppxPackage` or `MakeAppx.exe` by hand.
-
-### Dotnet CLI Workflow
-
-- Prefer `dotnet new` for scaffolding projects and items so namespaces, GUIDs,
-  and resource wiring stay correct.
-- Common commands:
-  - `dotnet new winui -n MyApp`
-  - `dotnet new winui-page -n SettingsPage --project .\MyApp\MyApp.csproj`
-  - `dotnet new winui-usercontrol -n ProfileCard --project .\MyApp\MyApp.csproj`
-- Discover available scaffolds with `dotnet new winui --list` (shows supported
-  parameters such as `--dotnet-version`).
-- Need a newer TFM? Supply `--dotnet-version net10.0` during scaffold or edit
-  `<TargetFramework>` afterward before the first build.
-
-### Prerequisites
-
-- **Developer Mode must be enabled** on Windows. Verify with:
-  ```powershell
-  # Check developer mode
-  Get-WindowsDeveloperLicense
-  # If not enabled: Settings -> System -> For developers -> Developer Mode -> On
-  ```
-- **`winapp` CLI** -- installed transitively via the `Microsoft.Windows.SDK.BuildTools.WinApp` NuGet reference (no separate install needed for `dotnet run`). To use `winapp` directly from the terminal for advanced scenarios (manifest editing, certificate management, packaging), install it standalone:
-  ```powershell
-  winget install Microsoft.WinAppCli --source winget
-  ```
-
-### Detect Platform
-
-**Always detect the machine's architecture first** -- never hardcode a platform value. Run this once at the start of every build/test session:
-
-```powershell
-# Detect the current machine's CPU architecture
-# (returns AMD64 on x64 boxes, ARM64 on ARM64 boxes, x86 on 32-bit boxes)
-$arch = $env:PROCESSOR_ARCHITECTURE
-$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }   # MSBuild expects x64/x86/ARM64
-```
-
-Use `$Platform` in all subsequent `dotnet` commands.
-
-### Build
-
-```powershell
-# Run from the project folder containing the .csproj
-cd <ProjectName>
-
-# Detect platform (see above)
-$arch = $env:PROCESSOR_ARCHITECTURE
-$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
-
-# Debug build (matches current machine)
-dotnet build -c Debug -p:Platform=$Platform
-
-# Release build
-dotnet build -c Release -p:Platform=$Platform
-```
-
-### Run with Package Identity (preferred)
-
-The template references `Microsoft.Windows.SDK.BuildTools.WinApp`, which makes `dotnet run` register a loose-layout package via `winapp run` and launch the app via AUMID activation -- giving it the same package identity it would have in production:
-
-```powershell
-$arch = $env:PROCESSOR_ARCHITECTURE
-$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
-
-dotnet run -c Debug -p:Platform=$Platform
-```
-
-The CLI prints the registered package's AUMID and the launched process's PID -- attach a debugger to that PID for runtime debugging.
-
-#### Useful MSBuild knobs (set in `.csproj` `<PropertyGroup>`)
-
-| Property | When to set |
-|---|---|
-| `EnableWinAppRunSupport=false` | Disable the `dotnet run` integration entirely (e.g., to launch unpackaged) |
-| `WinAppRunUseExecutionAlias=true` | For console apps -- launches via `uap5:ExecutionAlias` so stdin/stdout stay in the terminal. Add the alias first with `winapp manifest add-alias`. |
-| `WinAppRunNoLaunch=true` | Register the package but don't launch (attach your IDE's debugger before launch) |
-| `WinAppLaunchArgs="--flag value"` | Pass arguments to the app on launch |
-
-#### Manual `winapp run` (when not using `dotnet run`)
-
-```powershell
-# Read <TargetFramework> from .csproj first; example uses net10.0-windows10.0.26100.0
-winapp run .\bin\$Platform\Debug\<TargetFramework>
-
-# Pass args after -- to avoid escaping
-winapp run .\bin\$Platform\Debug\<TargetFramework> -- --my-flag value
-
-# Console app: keep stdin/stdout in the current terminal (requires uap5:ExecutionAlias)
-winapp run .\bin\$Platform\Debug\<TargetFramework> --with-alias
-
-# Wipe LocalState/settings between runs to test first-run behavior
-winapp run .\bin\$Platform\Debug\<TargetFramework> --clean
-```
-
-#### Run Tests
-
-```powershell
-# Run from the test project folder
-cd <ProjectName>.Tests
-$arch = $env:PROCESSOR_ARCHITECTURE
-$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
-dotnet test -c Debug -p:Platform=$Platform
-```
-
-### winapp CLI command reference
-
-The `winapp` CLI is the canonical entry point for app-identity, packaging, certificate, and asset operations. Reach for it instead of hand-rolling `MakeAppx`/`SignTool`/`Add-AppxPackage` invocations.
-
-| Scenario | Command | Notes |
-|---|---|---|
-| **Run/debug with identity (loose layout)** | `dotnet run` (or `winapp run <build-output>`) | Default for inner loop. Registers full loose-layout package. |
-| **Console app inner loop** | Set `WinAppRunUseExecutionAlias=true` in `.csproj`, then `dotnet run` | Requires `uap5:ExecutionAlias` -- add via `winapp manifest add-alias`. |
-| **Sparse identity on a single exe** | `winapp create-debug-identity .\bin\Debug\<TFM>\<ProjectName>.exe` | Use when the exe is outside the build folder, or for IDE F5 startup debugging. |
-| **Stop debugging / clean up** | `winapp unregister` | Removes dev packages registered for the current project. |
-| **Generate dev signing cert** | `winapp cert generate --manifest .\Package.appxmanifest --install` | Reads publisher from manifest. Stored as `devcert.pfx` in the project. |
-| **Inspect a cert** | `winapp cert info .\devcert.pfx` | Verify subject matches manifest publisher. |
-| **Sign a file** | `winapp sign .\MyApp.msix --cert .\devcert.pfx` | Wraps `signtool`. |
-| **Build distribution MSIX** | `winapp pack .\bin\$Platform\Release\<TFM>\win-<rid> --cert .\devcert.pfx` | Auto-resolves `$targetnametoken$`, registers third-party WinRT components. |
-| **Self-contained MSIX (bundles WinAppSDK)** | `winapp pack ... --self-contained` | No runtime dependency on the framework package. |
-| **Regenerate Square44/Square150/etc. icons** | `winapp manifest update-assets .\branding\logo.svg` | SVG preferred -- rendered at all 5 scale and 14 targetsize variants. |
-| **Add execution alias** | `winapp manifest add-alias` | Required for console-app inline I/O via `WinAppRunUseExecutionAlias`. |
-| **Underlying SDK tools** | `winapp tool signtool ...`, `winapp tool makeappx ...` | Falls back to the raw [`Microsoft.Windows.SDK.BuildTools`](https://www.nuget.org/packages/Microsoft.Windows.SDK.BuildTools/) tools when needed. |
-
-For full reference, see the [winapp CLI usage docs](https://github.com/microsoft/WinAppCli/blob/main/docs/usage.md) and the [Debugging Guide](https://github.com/microsoft/WinAppCli/blob/main/docs/debugging.md).
-
-### Fallback: register a loose layout manually
-
-Only use this if you've explicitly disabled the `winapp` integration (`<EnableWinAppRunSupport>false</EnableWinAppRunSupport>`) or are debugging the deployment itself. The supported path is `dotnet run` / `winapp run`.
-
-```powershell
-$arch = $env:PROCESSOR_ARCHITECTURE
-$Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }
-$Rid = $Platform.ToLower()   # arm64, x64, x86
-
-# Register the built MSIX package from the build output
-# Read <TargetFramework> from .csproj to build the correct path.
-Add-AppxPackage -Register ".\<ProjectName>\bin\$Platform\Debug\<TargetFramework>\win-$Rid\AppxManifest.xml"
-```
-
-> **Note:** Replace `<TargetFramework>` with the actual value from `.csproj` (e.g., `net10.0-windows10.0.26100.0`).
-
-If the launch fails because an old instance is still running, terminate it with `taskkill /IM <ProjectName>.exe /F` before re-running.
+See [agent-build-procedures.md](.github/instructions/agent-build-procedures.md) for detailed build, run, and deployment procedures including:
+- Platform detection
+- Build command reference
+- Running with package identity (`dotnet run`)
+- Test execution
+- `winapp` CLI reference
+- Troubleshooting build errors
 
 ## Two-Gate System (Evidence-Based Execution)
 

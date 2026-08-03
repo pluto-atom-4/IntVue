@@ -29,17 +29,11 @@ All colors in IntVue use WinUI 3 theme resources. This ensures automatic light/d
 
 **Usage:**
 ```xaml
-<!-- Main heading -->
 <TextBlock Text="Interview Practice" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-
-<!-- Secondary info -->
 <TextBlock Text="Ready to start" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-
-<!-- Error message -->
-<TextBlock Text="Camera failed" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
 ```
 
-**Do NOT:** Hard-code foreground values like `Foreground="#000000"`
+**Do NOT:** Hard-code `Foreground="#000000"`
 
 ---
 
@@ -55,21 +49,11 @@ All colors in IntVue use WinUI 3 theme resources. This ensures automatic light/d
 
 **Usage:**
 ```xaml
-<!-- Page background -->
-<Page Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
-    <!-- Nested panel -->
-    <StackPanel Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}" Padding="12">
-        <TextBlock Text="Controls" />
-    </StackPanel>
-</Page>
-
-<!-- Card (elevated) -->
-<Border Background="{ThemeResource ControlStrongFillColorDefaultBrush}" CornerRadius="8" Padding="12">
-    <TextBlock Text="Recording info" />
-</Border>
+<Page Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" />
+<Border Background="{ThemeResource ControlStrongFillColorDefaultBrush}" CornerRadius="8" />
 ```
 
-**Do NOT:** Use for text fills, interactive states, or warnings
+**Do NOT:** Use for text, interactive states, or warnings
 
 ---
 
@@ -85,20 +69,11 @@ All colors in IntVue use WinUI 3 theme resources. This ensures automatic light/d
 
 **Usage:**
 ```xaml
-<!-- Default button (implicit) -->
 <Button Content="Preview" />
-
-<!-- ComboBox (implicit) -->
-<ComboBox>
-    <x:String>Camera 1</x:String>
-    <x:String>Camera 2</x:String>
-</ComboBox>
-
-<!-- Disabled -->
 <Button Content="Play" IsEnabled="False" />
 ```
 
-**Do NOT:** Explicitly set control backgrounds; rely on WinUI default styles
+**Do NOT:** Explicitly set control backgrounds; use WinUI styles
 
 ---
 
@@ -136,22 +111,11 @@ All colors in IntVue use WinUI 3 theme resources. This ensures automatic light/d
 
 **Usage:**
 ```xaml
-<!-- Recording active (red) -->
-<Grid Background="{ThemeResource SystemFillColorCriticalBrush}" CornerRadius="4" Padding="8">
-    <TextBlock Text="● Recording" Foreground="{ThemeResource TextFillColorPrimaryBrush}" FontWeight="Bold" />
-</Grid>
-
-<!-- Countdown warning (orange as seconds decrease) -->
-<TextBlock Text="3" FontSize="72" Foreground="{ThemeResource SystemFillColorCautionBrush}" FontWeight="Bold" />
-
-<!-- Success message (green) -->
-<TextBlock Text="Saved successfully" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
-
-<!-- Info message (blue) -->
-<TextBlock Text="Initializing..." Foreground="{ThemeResource SystemFillColorAttentionBrush}" />
+<Grid Background="{ThemeResource SystemFillColorCriticalBrush}" CornerRadius="4" />
+<TextBlock Text="Saved" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
 ```
 
-**Do NOT:** Use for decorative elements; use only for status/action messaging
+**Do NOT:** Use for decoration; only for status messaging
 
 ---
 
@@ -166,18 +130,8 @@ All colors in IntVue use WinUI 3 theme resources. This ensures automatic light/d
 
 **Usage:**
 ```xaml
-<!-- Primary action (Start Recording) -->
-<Button
-    Content="Start Recording"
-    Style="{ThemeResource AccentButtonStyle}"
-    Command="{x:Bind ViewModel.RecordCommand}"
-    AutomationProperties.Name="Start recording" />
-
-<!-- Secondary action -->
-<Button
-    Content="Cancel"
-    Command="{x:Bind ViewModel.CancelCommand}"
-    AutomationProperties.Name="Cancel" />
+<Button Content="Start Recording" Style="{ThemeResource AccentButtonStyle}" />
+<Button Content="Cancel" />
 ```
 
 **Do NOT:** Hard-code button colors; use `Style="{ThemeResource AccentButtonStyle}"`
