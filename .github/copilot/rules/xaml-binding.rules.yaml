@@ -1,0 +1,125 @@
+---
+name: "XAML Binding & UI Patterns"
+applyTo: "**/*.xaml"
+category: "ui"
+severity: "error"
+description: |
+  Enforce WinUI 3 and Fluent Design standards for XAML markup.
+  Ensures proper data binding, theme colors, accessibility, and layout consistency.
+
+references:
+  - "../../.claude/rules/design-colors.rules.md"
+  - "../../.claude/rules/design-components.rules.md"
+  - "../../.claude/rules/design-spacing.rules.md"
+  - "../../.claude/rules/design-typography.rules.md"
+  - "../instructions/accessibility.instructions.md"
+  - "../instructions/performance.instructions.md"
+  - "../instructions/winui-best-practices.instructions.md"
+
+rules:
+  - id: "xaml-use-x-bind"
+    name: "Use x:Bind instead of {Binding}"
+    description: "Data binding must use x:Bind (compile-time safe) not {Binding} (runtime-resolved)"
+    pattern: "{Binding"
+    severity: "error"
+    fix: "Replace {Binding} with {x:Bind ViewModel.Property, Mode=OneWay}"
+    example: |
+      ❌ AVOID:
+      <TextBlock Text="{Binding RecordingStatus}" />
+
+      ✓ GOOD:
+      <TextBlock Text="{x:Bind ViewModel.RecordingStatus, Mode=OneWay}" />
+
+  - id: "xaml-use-theme-resources"
+    name: "Use theme resources for colors"
+    description: "All colors must reference WinUI theme resources, never hard-coded hex values"
+    pattern: '(Foreground|Background|BorderBrush)="#[0-9A-Fa-f]{6}'
+    severity: "error"
+    fix: "Replace hex color with {ThemeResource <TokenName>Brush}"
+    example: |
+      ❌ AVOID:
+      <TextBlock Foreground="#000000" />
+      <Button Background="#0078D4" />
+
+      ✓ GOOD:
+      <TextBlock Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+      <Button Style="{ThemeResource AccentButtonStyle}" />
+
+  - id: "xaml-automation-properties"
+    name: "Add automation properties to interactive controls"
+    description: "All buttons, inputs, and interactive elements must have AutomationProperties.Name"
+    pattern: '<(Button|TextBox|ComboBox|CheckBox|RadioButton)(?!.*AutomationProperties.Name)'
+    severity: "error"
+    fix: "Add AutomationProperties.Name with clear description of control purpose"
+    example: |
+      ❌ AVOID:
+      <Button Content="Start Recording" Click="..." />
+
+      ✓ GOOD:
+      <Button
+          Content="Start Recording"
+          Click="..."
+          AutomationProperties.Name="Start recording session" />
+
+  - id: "xaml-no-logic"
+    name: "No code-behind logic in XAML"
+    description: "XAML should contain only layout and binding. Logic belongs in ViewModels or code-behind"
+    pattern: "(Converter=|StringFormat=)[^{]*[^ }]"
+    severity: "warning"
+    fix: "Move string formatting or value conversion to ViewModel as computed property"
+
+  - id: "xaml-spacing-values"
+    name: "Use defined spacing scale (8px grid)"
+    description: "All Spacing/Padding/Margin values must be multiples of 8 (4, 8, 12, 16, 24)"
+    pattern: '(Spacing|Padding|Margin)=["\']([^"]*)([0-9])[^0-9]*["\']'
+    severity: "warning"
+    fix: "Use spacing scale: 4, 8, 12, 16, 24 from design-spacing.rules.md"
+
+  - id: "xaml-border-radius"
+    name: "Use defined border radius scale"
+    description: "Border radius must be 0 (none), 2 (sm), 8 (card), or 16 (large)"
+    pattern: 'CornerRadius="([0-9]+)"'
+    severity: "warning"
+    fix: "Use predefined radius: 2 (sm), 8 (card), 16 (large)"
+
+  - id: "xaml-font-size"
+    name: "Use defined typography scale"
+    description: "FontSize must be from defined scale: 12, 14, 16, 20, 32, or 72 (countdown only)"
+    pattern: 'FontSize="([0-9]+)"'
+    severity: "warning"
+    fix: "Use scale: 12 (caption), 14 (body), 16 (subtitle), 20 (title), 32 (display), 72 (countdown)"
+
+  - id: "xaml-button-style"
+    name: "Use AccentButtonStyle for primary actions"
+    description: "Primary action buttons must use AccentButtonStyle or default Button"
+    pattern: '<Button[^>]*(Content="Start|Content="Record|Content="Save)[^>]*(/>|Background)'
+    severity: "warning"
+    fix: 'Use Style="{ThemeResource AccentButtonStyle}" for primary actions'
+
+  - id: "xaml-text-color"
+    name: "Use text color tokens for readability"
+    description: "Text Foreground must use TextFillColorPrimaryBrush (main) or TextFillColorSecondaryBrush (secondary)"
+    pattern: '<TextBlock[^>]*Foreground="[^{]'
+    severity: "warning"
+    fix: "Use Foreground={ThemeResource TextFillColorPrimaryBrush} or Secondary/Tertiary variant"
+
+  - id: "xaml-no-hardcoded-strings"
+    name: "Externalize user-facing strings"
+    description: "User-facing text should use x:Uid binding for localization, not hard-coded strings"
+    pattern: 'Content="[A-Z][^"]*"'
+    severity: "info"
+    fix: "Move string to AppResources.resw and use x:Uid binding"
+
+hooks:
+  - trigger: "OnFileSave"
+    delay: "2s"
+    action: "validate-xaml"
+    message: "XAML binding and color validation"
+
+enforcement:
+  - entity: "GitHub Copilot"
+    when: "suggesting XAML edits"
+    action: "reject code not matching above rules"
+  - entity: "Claude Code via Skill"
+    when: "using /accessibility-review skill"
+    action: "audit XAML against all rules above"

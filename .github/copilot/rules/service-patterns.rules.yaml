@@ -1,0 +1,211 @@
+---
+name: "Service & Business Logic Patterns"
+applyTo: "Services/**/*.cs"
+category: "business-logic"
+severity: "error"
+description: |
+  Enforce stateless, validating, and secure service patterns.
+  Services must validate inputs at boundaries, use async I/O operations,
+  handle errors gracefully, and never store secrets or PII in code.
+
+references:
+  - "../instructions/security.instructions.md"
+  - "../instructions/performance.instructions.md"
+  - "../instructions/code-quality.instructions.md"
+  - "../instructions/windows-apis.instructions.md"
+
+rules:
+  - id: "svc-interface-definition"
+    name: "Define interfaces for services"
+    description: "All services must have a corresponding interface for testability and dependency injection"
+    pattern: 'public class \w+Service(?!.*interface)'
+    severity: "error"
+    fix: "Create IServiceName interface and make Service implement it"
+    example: |
+      ❌ AVOID:
+      public class RecordingService { }
+
+      ✓ GOOD:
+      public interface IRecordingService { }
+      public class RecordingService : IRecordingService { }
+
+  - id: "svc-stateless"
+    name: "Services should be stateless"
+    description: "Services should not maintain mutable state. Use dependency injection for external state."
+    pattern: '(private .*\{.*get;.*set;|public static.*=)'
+    severity: "error"
+    fix: "Move state to ViewModel or dependency parameter, make service stateless"
+
+  - id: "svc-input-validation"
+    name: "Validate all inputs at service boundary"
+    description: "Public methods must validate parameters (null, empty, bounds) and throw ArgumentException"
+    pattern: 'public (async )?(Task|void|string|int|bool)'
+    severity: "error"
+    fix: "Add guard clauses: if (param == null) throw new ArgumentNullException(...)"
+    example: |
+      ❌ AVOID:
+      public async Task<bool> StartRecordingAsync(string filePath)
+      {
+          return await InitializeRecorderAsync(filePath);
+      }
+
+      ✓ GOOD:
+      public async Task<bool> StartRecordingAsync(string filePath)
+      {
+          if (string.IsNullOrWhiteSpace(filePath))
+              throw new ArgumentException("File path cannot be empty", nameof(filePath));
+          return await InitializeRecorderAsync(filePath);
+      }
+
+  - id: "svc-async-io"
+    name: "Use async/await for all I/O operations"
+    description: "Network, file, or database operations must be async. Never block."
+    pattern: '(\.Result|\.Wait\(|Thread\.Sleep|File\.Read|File\.Write(?!Async))'
+    severity: "error"
+    fix: "Use async variants: ReadAsync, WriteAsync, etc."
+    example: |
+      ❌ AVOID:
+      public bool SaveRecording(string path, byte[] data)
+      {
+          File.WriteAllBytes(path, data);  // Blocks thread
+          return true;
+      }
+
+      ✓ GOOD:
+      public async Task<bool> SaveRecordingAsync(string path, byte[] data)
+      {
+          await File.WriteAllBytesAsync(path, data);  // Non-blocking
+          return true;
+      }
+
+  - id: "svc-error-handling"
+    name: "Handle errors gracefully"
+    description: "Services must catch expected exceptions and return meaningful results or rethrow with context"
+    pattern: '(try.*catch.*{.*}|throw new Exception)'
+    severity: "warning"
+    fix: "Catch specific exception types and either handle or rethrow with context"
+    example: |
+      ❌ AVOID:
+      public async Task<bool> InitializeAsync()
+      {
+          try
+          {
+              await device.InitializeAsync();
+          }
+          catch { return false; }
+      }
+
+      ✓ GOOD:
+      public async Task<bool> InitializeAsync()
+      {
+          try
+          {
+              await device.InitializeAsync();
+              return true;
+          }
+          catch (InvalidOperationException ex)
+          {
+              Debug.WriteLine($"Device init failed: {ex.Message}");
+              return false;
+          }
+      }
+
+  - id: "svc-no-hardcoded-secrets"
+    name: "Never hardcode secrets, keys, or connection strings"
+    description: "API keys, passwords, and secrets must come from environment, PasswordVault, or Key Vault"
+    pattern: '(password|secret|apiKey|connectionString)\s*=\s*["\'][^\"\']*[\"\']*[^;]'
+    severity: "error"
+    fix: "Use environment variables, PasswordVault, or Azure Key Vault"
+    example: |
+      ❌ AVOID:
+      string apiKey = "sk_test_abcdef123456";
+      const string password = "MySecret123";
+
+      ✓ GOOD:
+      string apiKey = Environment.GetEnvironmentVariable("API_KEY") ?? throw new InvalidOperationException();
+      string password = new PasswordVault().Retrieve("app", "password").Password;
+
+  - id: "svc-no-pii-in-logs"
+    name: "Do not log Personally Identifiable Information (PII)"
+    description: "Logs must not contain user emails, phone numbers, addresses, or sensitive data"
+    pattern: '(Debug\.WriteLine|Trace\.WriteLine|Logger\.).*(@|phone|email|ssn)'
+    severity: "error"
+    fix: "Log sanitized identifiers only (e.g., user ID, timestamp), never raw PII"
+
+  - id: "svc-resource-cleanup"
+    name: "Implement IDisposable for resources"
+    description: "Services managing resources (file handles, database connections) must implement IDisposable"
+    pattern: '(MediaCapture|SqlConnection|FileStream|HttpClient)(?!.*IDisposable|using)'
+    severity: "error"
+    fix: "Implement IDisposable or wrap in using statement"
+    example: |
+      ❌ AVOID:
+      public class RecordingService
+      {
+          private MediaCapture mediaCapture;
+      }
+
+      ✓ GOOD:
+      public class RecordingService : IDisposable
+      {
+          private MediaCapture mediaCapture;
+          public void Dispose()
+          {
+              mediaCapture?.Dispose();
+          }
+      }
+
+  - id: "svc-dependency-injection"
+    name: "Use constructor dependency injection"
+    description: "Dependencies must be injected via constructor, not via static or ServiceLocator"
+    pattern: '(ServiceLocator\.|static.*Service|new.*Service\(\))'
+    severity: "error"
+    fix: "Add service parameter to constructor"
+
+  - id: "svc-cancellation-token"
+    name: "Support CancellationToken for long operations"
+    description: "Public async methods should accept CancellationToken for graceful cancellation"
+    pattern: '(public async Task.*\((?!.*CancellationToken))'
+    severity: "warning"
+    fix: "Add CancellationToken cancellationToken = default parameter"
+    example: |
+      ❌ AVOID:
+      public async Task<bool> RecordAsync(int durationSeconds) { }
+
+      ✓ GOOD:
+      public async Task<bool> RecordAsync(int durationSeconds, CancellationToken cancellationToken = default)
+      {
+          cancellationToken.ThrowIfCancellationRequested();
+          // Implementation
+      }
+
+  - id: "svc-method-naming"
+    name: "Async methods must be named with Async suffix"
+    description: "All methods returning Task or Task<T> must end with 'Async'"
+    pattern: 'public (async )?(Task|Task<[^>]+>)\s+\w+(?<!Async)\('
+    severity: "error"
+    fix: "Rename method to include 'Async' suffix"
+
+  - id: "svc-null-coalescing"
+    name: "Use null-coalescing for optional dependencies"
+    description: "Optional dependencies should use null-coalescing or null-conditional operators"
+    pattern: '(if \(.*== null\)|if !\(.*is not null\))'
+    severity: "info"
+    fix: "Use ?? or ?. operators for cleaner null handling"
+
+hooks:
+  - trigger: "OnFileSave"
+    delay: "3s"
+    action: "validate-service-patterns"
+    message: "Service pattern and security validation"
+
+enforcement:
+  - entity: "GitHub Copilot"
+    when: "suggesting Service code"
+    action: "enforce interface, validation, async I/O, no hardcoded secrets"
+  - entity: "dotnet build pre-commit hook"
+    when: "compiling Service files"
+    action: "StyleCop and CA* rules enforce proper error handling, XML docs"
+  - entity: "security-audit skill"
+    when: "auditing services"
+    action: "check for hardcoded secrets, PII in logs, unsafe API usage"
