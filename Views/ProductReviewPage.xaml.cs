@@ -87,6 +87,13 @@ public sealed partial class ProductReviewPage : Page
                 }
             }
 
+            // Initialize default playback volume to 50% for comfortable listening
+            if (this.MediaPlayer?.MediaPlayer != null)
+            {
+                this.MediaPlayer.MediaPlayer.Volume = 0.5;
+                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] MediaPlayer volume initialized to 50%");
+            }
+
             // Initialize recording service
             await this.InitializeRecordingAsync();
 
