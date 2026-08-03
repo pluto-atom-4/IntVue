@@ -66,37 +66,6 @@
           }
         ]
       }
-    ],
-    "OnFileSave": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "id": "stylecop-validation-on-cs-save",
-            "if": "Edit(**/*.cs)",
-            "delay": "3s",
-            "command": "echo '{\"systemMessage\": \"✓ StyleCop/CA analysis runs on next build. Run: dotnet build -c Debug -p:Platform=$Platform to validate\"}'",
-            "statusMessage": "StyleCop/CA validation scheduled..."
-          },
-          {
-            "type": "command",
-            "id": "test-syntax-validation",
-            "if": "Edit(**/*Tests.cs)",
-            "delay": "2s",
-            "command": "echo '{\"systemMessage\": \"✓ Test syntax validation scheduled. Verify: [TestClass], [TestMethod], AAA pattern, MSTest framework\"}'",
-            "statusMessage": "Test syntax validation scheduled..."
-          },
-          {
-            "type": "command",
-            "id": "xaml-binding-validation",
-            "if": "Edit(**/*.xaml)",
-            "delay": "2s",
-            "command": "echo '{\"systemMessage\": \"✓ XAML validation scheduled. Check: x:Bind usage, theme resources, AutomationProperties\"}'",
-            "statusMessage": "XAML binding validation scheduled..."
-          }
-        ]
-      }
     ]
   },
   "buildVerification": {
