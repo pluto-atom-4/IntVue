@@ -1,10 +1,10 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # IntVue Self-Contained Publisher
 # Publishes IntVue as a standalone executable with bundled .NET runtime
 # Usage: ./publish.sh
 # Output: bin/Release/{TargetFramework}/win-{Platform}/publish/IntVue.exe
-
+#
 set -e
 
 # Color codes for output
