@@ -66,6 +66,20 @@ These directives guide Claude Code and Claude API when working on the IntVue pro
 
 ---
 
+## GitHub Issue Closure Governance
+
+**🚫 Issue closure is a manual-only operation.** Before closing any GitHub issue:
+
+1. **Complete the fix** and verify tests pass
+2. **Create/link a PR** documenting what was resolved
+3. **Ask for explicit approval:** "Shall I close issue #X?"
+4. **Wait for user confirmation** — Do NOT close autonomously
+5. **Only then close** the issue via GitHub API
+
+**See:** `.claude/rules/github-governance.rules.md` for full policy, exceptions, and approval workflows.
+
+---
+
 ## Build & Deploy Prerequisites
 
 - Always detect platform: `$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }`
