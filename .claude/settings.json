@@ -32,6 +32,19 @@
             "statusMessage": "Checking for configuration flag..."
           }
         ]
+      },
+      {
+        "matcher": ".*GitHub.*|.*gh .*",
+        "hooks": [
+          {
+            "type": "approval",
+            "id": "github-issue-closure-approval-gate",
+            "operation": "closeIssue|close-issue|updateIssue.*state.*closed",
+            "requireApproval": true,
+            "approvalMessage": "⚠️ GOVERNANCE: Issue closure requires explicit user approval.\n   Rule: See .claude/rules/github-governance.rules.md\n   Shall I close this issue? (Requires explicit 'yes')",
+            "statusMessage": "Checking for GitHub issue closure operations..."
+          }
+        ]
       }
     ],
     "PostToolUse": [
