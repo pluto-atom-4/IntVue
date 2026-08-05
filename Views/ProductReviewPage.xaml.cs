@@ -33,6 +33,8 @@ public sealed partial class ProductReviewPage : Page
     private ProductReviewRecordingService? _recordingService;
     private List<DeviceInformation>? _deviceList;
     private DispatcherTimer? _videoPlaybackTimer;
+    private double _currentVolume = 0.5; // Default 50% (issue #106); updated when user adjusts via transport controls
+    private bool _mediaPlayerEventsSubscribed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProductReviewPage"/> class.
@@ -61,6 +63,14 @@ public sealed partial class ProductReviewPage : Page
 
     /// <summary>
     /// Page loaded - Load questions, initialize recording service, and set up media playback.
+    ///
+    /// Media player event subscriptions (MediaEnded, MediaOpened, VolumeChanged,
+    /// PlaybackStateChanged) are NOT wired up here. MediaPlayerElement declares no Source in
+    /// XAML, so MediaPlayer.MediaPlayer is not guaranteed populated until a Source is first
+    /// assigned via <see cref="SetMediaSource"/> - subscribing here, before that ever happens,
+    /// risks silently skipping subscription entirely (issue #106 root cause). Subscription
+    /// instead happens lazily inside SetMediaSource, the one place MediaPlayer.MediaPlayer is
+    /// provably non-null.
     /// </summary>
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -71,28 +81,6 @@ public sealed partial class ProductReviewPage : Page
 
             // Subscribe to ViewModel property changes to detect when CurrentQuestion changes
             this.ViewModel.PropertyChanged += this.OnViewModelPropertyChanged;
-
-            // Subscribe to media player events
-            if (this.MediaPlayer?.MediaPlayer != null)
-            {
-                var mediaPlayer = this.MediaPlayer.MediaPlayer;
-                mediaPlayer.MediaEnded += this.OnMediaEnded;
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] Subscribed to MediaPlayer.MediaEnded event");
-
-                // Also subscribe to PlaybackStateChanged as backup
-                if (mediaPlayer.PlaybackSession != null)
-                {
-                    mediaPlayer.PlaybackSession.PlaybackStateChanged += this.OnPlaybackStateChanged;
-                    System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] Subscribed to PlaybackSession.PlaybackStateChanged event");
-                }
-            }
-
-            // Initialize default playback volume to 50% for comfortable listening
-            if (this.MediaPlayer?.MediaPlayer != null)
-            {
-                this.MediaPlayer.MediaPlayer.Volume = 0.5;
-                System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnLoaded] MediaPlayer volume initialized to 50%");
-            }
 
             // Initialize recording service
             await this.InitializeRecordingAsync();
@@ -144,15 +132,19 @@ public sealed partial class ProductReviewPage : Page
                 System.Diagnostics.Debug.WriteLine("[ProductReviewPage.OnUnloaded] Video playback timer stopped");
             }
 
-            // Unsubscribe from media player events
-            if (this.MediaPlayer?.MediaPlayer != null)
+            // Unsubscribe from media player events (only if SetMediaSource ever subscribed them)
+            if (this._mediaPlayerEventsSubscribed && this.MediaPlayer?.MediaPlayer != null)
             {
                 this.MediaPlayer.MediaPlayer.MediaEnded -= this.OnMediaEnded;
+                this.MediaPlayer.MediaPlayer.MediaOpened -= this.OnMediaOpened;
+                this.MediaPlayer.MediaPlayer.VolumeChanged -= this.OnMediaVolumeChanged;
 
                 if (this.MediaPlayer.MediaPlayer.PlaybackSession != null)
                 {
                     this.MediaPlayer.MediaPlayer.PlaybackSession.PlaybackStateChanged -= this.OnPlaybackStateChanged;
                 }
+
+                this._mediaPlayerEventsSubscribed = false;
             }
 
             // Dispose recording service
@@ -248,7 +240,7 @@ public sealed partial class ProductReviewPage : Page
 
             // Create media source from file path and load into MediaPlayerElement
             var mediaSource = MediaSource.CreateFromUri(new Uri(currentQuestion.FilePath));
-            this.MediaPlayer.Source = mediaSource;
+            this.SetMediaSource(mediaSource);
 
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.LoadCurrentQuestionMedia] Media source loaded successfully");
         }
@@ -256,6 +248,46 @@ public sealed partial class ProductReviewPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.LoadCurrentQuestionMedia] Error: {ex.GetType().Name}: {ex.Message}");
             this.ViewModel.ErrorMessage = $"Failed to load media: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Assigns a new media source and guarantees volume + event subscriptions are applied
+    /// (issue #106). Centralizing Source assignment here removes the previous dependency on
+    /// MediaPlayer.MediaPlayer being non-null at OnLoaded() time, which was never guaranteed
+    /// since no Source exists until this method's first call. MediaPlayer.MediaPlayer is
+    /// provably populated immediately after Source is assigned, so volume is applied and
+    /// events are subscribed (once) right here instead.
+    /// </summary>
+    private void SetMediaSource(MediaSource source)
+    {
+        this.MediaPlayer.Source = source;
+
+        var mediaPlayer = this.MediaPlayer?.MediaPlayer;
+        if (mediaPlayer == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.SetMediaSource] WARNING: MediaPlayer still null after Source assignment");
+            return;
+        }
+
+        // Apply volume synchronously and immediately - do not depend solely on MediaOpened
+        // firing before AutoPlay begins, since MediaPlayerElement.AutoPlay defaults to true.
+        mediaPlayer.Volume = this._currentVolume;
+        System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.SetMediaSource] Volume applied: {this._currentVolume:P0}");
+
+        if (!this._mediaPlayerEventsSubscribed)
+        {
+            mediaPlayer.MediaEnded += this.OnMediaEnded;
+            mediaPlayer.MediaOpened += this.OnMediaOpened; // defensive secondary correction
+            mediaPlayer.VolumeChanged += this.OnMediaVolumeChanged;
+
+            if (mediaPlayer.PlaybackSession != null)
+            {
+                mediaPlayer.PlaybackSession.PlaybackStateChanged += this.OnPlaybackStateChanged;
+            }
+
+            this._mediaPlayerEventsSubscribed = true;
+            System.Diagnostics.Debug.WriteLine("[ProductReviewPage.SetMediaSource] Media player events subscribed (first source load)");
         }
     }
 
@@ -579,6 +611,30 @@ public sealed partial class ProductReviewPage : Page
     }
 
     /// <summary>
+    /// Media player event - Fires whenever a new media source finishes opening (issue #106).
+    /// Defensive secondary correction: <see cref="SetMediaSource"/> already applies volume
+    /// synchronously right after Source assignment, but this re-applies it again once the
+    /// source has fully opened, in case WinUI resets Volume internally during that transition.
+    /// </summary>
+    private void OnMediaOpened(MediaPlayer sender, object args)
+    {
+        sender.Volume = this._currentVolume;
+        System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnMediaOpened] Volume re-applied: {this._currentVolume:P0}");
+    }
+
+    /// <summary>
+    /// Media player event - Tracks user-adjusted volume (via transport controls) so that
+    /// <see cref="SetMediaSource"/> and <see cref="OnMediaOpened"/> re-apply the user's chosen
+    /// volume instead of always resetting to the default, satisfying "volume persists across
+    /// navigation until user changes it".
+    /// </summary>
+    private void OnMediaVolumeChanged(MediaPlayer sender, object args)
+    {
+        this._currentVolume = sender.Volume;
+        System.Diagnostics.Debug.WriteLine($"[ProductReviewPage.OnMediaVolumeChanged] User volume tracked: {this._currentVolume:P0}");
+    }
+
+    /// <summary>
     /// Handles countdown completion - starts recording after countdown finishes.
     /// </summary>
     private async void OnCountdownCompleted(object? sender, EventArgs e)
@@ -687,7 +743,7 @@ public sealed partial class ProductReviewPage : Page
 
                 // Load the recorded file into the MediaPlayerElement
                 var mediaSource = MediaSource.CreateFromUri(new Uri(recordingPath));
-                this.MediaPlayer.Source = mediaSource;
+                this.SetMediaSource(mediaSource);
 
                 // Start playback
                 if (this.MediaPlayer?.MediaPlayer != null)
