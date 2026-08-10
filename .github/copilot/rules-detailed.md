@@ -1,5 +1,7 @@
 # Copilot Rules — Detailed Examples
 
+> **Note:** Supplementary reference material; it is not yet confirmed that GitHub Copilot Agent Mode ingests this custom YAML schema.
+
 Reference file for [.github/copilot-instructions.md](../copilot-instructions.md). Contains full YAML configurations and code examples.
 
 ---

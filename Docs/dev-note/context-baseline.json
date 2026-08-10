@@ -5,22 +5,22 @@
   "token_estimate_ratio": "1 token ≈ 4 characters",
   "summary": {
     "total_files": 19,
-    "total_chars": 105290,
-    "total_tokens": 26322,
+    "total_chars": 104339,
+    "total_tokens": 26084,
     "recommended_tokens": 35000,
     "status": "OK",
-    "overage_percent": -24.8,
-    "delta_description": "Within budget by 24.8% (recomputed after issue #140 hook-rules consolidation removed hook-quick-fix.rules.md and hook-strategy.rules.md)"
+    "overage_percent": -25.5,
+    "delta_description": "Within budget by 25.5% (recomputed after issue #140: removed hook-quick-fix.rules.md and hook-strategy.rules.md entries, and trimmed CLAUDE.md from 67 to 47 lines)"
   },
   "files": [
     {
       "path": "CLAUDE.md",
-      "lines": 67,
-      "chars": 2720,
-      "estimated_tokens": 680,
+      "lines": 47,
+      "chars": 1769,
+      "estimated_tokens": 442,
       "target_tokens": 750,
       "status": "OK",
-      "delta_percent": -9.3
+      "delta_percent": -41.1
     },
     {
       "path": "DESIGN.md",

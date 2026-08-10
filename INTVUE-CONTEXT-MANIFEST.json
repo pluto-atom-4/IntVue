@@ -9,16 +9,16 @@
       "name": "CLAUDE.md",
       "path": "CLAUDE.md",
       "type": "project-guardrails",
-      "lineCount": 117,
-      "wordCount": 580,
-      "estimatedTokens": 1170,
+      "lineCount": 47,
+      "wordCount": 191,
+      "estimatedTokens": 470,
       "insertionType": "every-turn-tax",
       "priority": 1,
       "description": "Quick reference for platform detection, build commands, architecture overview, code style essentials",
       "targetLineCount": "<200",
       "targetTokens": 1500,
       "status": "optimized",
-      "lastUpdated": "2026-07-19"
+      "lastUpdated": "2026-08-09"
     },
     {
       "id": "core-design-md",
@@ -244,11 +244,11 @@
   "tokenBudgets": {
     "alwaysOnTokens": {
       "description": "Files loaded on every turn (unavoidable token cost)",
-      "currentTokens": 2790,
+      "currentTokens": 2090,
       "budgetTokens": 3000,
-      "percentOfBudget": 93.0,
+      "percentOfBudget": 69.7,
       "files": [
-        "CLAUDE.md (~1170 tokens)",
+        "CLAUDE.md (~470 tokens)",
         ".claude/custom-instructions.md (~1090 tokens)",
         ".github/copilot-instructions.md (~530 tokens)"
       ],

@@ -9,7 +9,7 @@
 ## Pattern Rules
 
 **XAML:** Use `x:Bind`, `{ThemeResource}`, `AutomationProperties.Name`  
-[Details](../.claude/rules/)
+[Details](../.claude/rules/) · [Pattern rule (YAML)](copilot/rules/xaml-binding.rules.yaml)
 
 **ViewModel:** `ObservableObject`, `[ObservableProperty]`, `[RelayCommand]`, DI  
 [Details](../instructions/code-quality.instructions.md)

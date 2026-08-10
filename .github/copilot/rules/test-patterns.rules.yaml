@@ -1,3 +1,4 @@
+# NOTE: Supplementary reference; not yet confirmed that GitHub Copilot Agent Mode ingests this custom schema.
 ---
 name: "Unit Test Patterns & Coverage"
 applyTo: "**/*Tests.cs,**/*Test.cs"
