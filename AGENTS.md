@@ -199,7 +199,7 @@ refersTo: accessibility.instructions.md
 Skills are triggered:
 1. **Explicit:** User invokes `/skill-name`
 2. **Implicit:** PostToolUse hook triggers on file pattern match
-3. **Agent Launch:** OnAgentLaunch hook inherits skill paths from `.claude/settings.json`
+3. **Agent Launch (aspirational):** an `OnAgentLaunch` hook that auto-inherits skill paths is planned but not yet implemented in `.claude/settings.json`
 
 ---
 
@@ -236,20 +236,23 @@ When Copilot encounters a file:
 1. **Match glob pattern** (e.g., `**/*.xaml` matches `Views/MainPage.xaml`)
 2. **Fetch rule references** (accessibility.instructions.md, performance.instructions.md)
 3. **Apply rules** in order of specificity (most specific first)
-4. **Inherit hooks** from `.claude/settings.json` (PreToolUse, PostToolUse, OnFileSave)
+4. **Inherit hooks** from `.claude/settings.json` (currently `PreToolUse` and `PostToolUse`; `OnFileSave` is planned but not yet implemented)
 
 ---
 
 ## Unified Execution Lifecycle (Cross-Tool Synergy)
 
-Both Claude Code and GitHub Copilot CLI follow the same execution lifecycle via `.claude/settings.json` hooks:
+Both Claude Code and GitHub Copilot CLI follow the same execution lifecycle via `.claude/settings.json` hooks.
+**Only `PreToolUse` and `PostToolUse` are implemented today.** The remaining stages below (file-save
+background analysis, context-drift monitoring, agent-launch inheritance) describe the intended future
+lifecycle and are aspirational until added to `.claude/settings.json`.
 
 ### Execution Flow
 
 ```
 File Modified
     ↓
-PreToolUse Hook
+PreToolUse Hook (implemented)
   ├─ Validate tool (e.g., block rm -rf)
   ├─ Warn platform detection (add $Platform variable)
   ├─ Warn configuration flag (add -c Debug)
@@ -257,23 +260,15 @@ PreToolUse Hook
 Tool Execution
   ├─ Edit file, build project, run tests
     ↓
-PostToolUse Hook
+PostToolUse Hook (implemented)
   ├─ Auto-format C# files (suggest `dotnet format`)
   ├─ Multi-file build verification (>3 files changed)
   ├─ XAML validation (suggest `dotnet build`)
     ↓
-OnFileSave Hook (Background)
-  ├─ StyleCop analysis (detect SA/CA errors after 3s)
-  ├─ Test syntax validation (detect broken tests after 2s)
-    ↓
-Context Drift Monitoring
-  ├─ At 50% token usage → suggest `/compact`
-  ├─ On contradiction → suggest `/rewind`
-    ↓
-Agent Launch (if subagent spawned)
-  ├─ Inherit AGENTS.md + core instruction files
-  ├─ Inherit .claude/settings.json hooks
-  ├─ Inherit .claude/skills/ paths
+[Aspirational — not yet implemented]
+  ├─ OnFileSave: StyleCop/test-syntax background analysis
+  ├─ OnContextDrift: suggest `/compact` at 50% token usage, `/rewind` on contradiction
+  ├─ OnAgentLaunch: auto-inherit AGENTS.md + instructions + skill paths on subagent spawn
     ↓
 Task Complete
   ├─ Gate 1: Plan Mode review ✓
@@ -285,13 +280,13 @@ Task Complete
 
 Hooks are configured in `.claude/settings.json`:
 
-| Hook | Trigger | Action | Example |
-|---|---|---|---|
-| `PreToolUse` | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
-| `PostToolUse` | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
-| `OnFileSave` | After file save | background | Run StyleCop analysis after 3s delay |
-| `OnContextDrift` | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
-| `OnAgentLaunch` | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
+| Hook | Status | Trigger | Action | Example |
+|---|---|---|---|---|
+| `PreToolUse` | ✅ Implemented | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
+| `PostToolUse` | ✅ Implemented | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
+| `OnFileSave` | 🚧 Aspirational | After file save | background | Run StyleCop analysis after 3s delay |
+| `OnContextDrift` | 🚧 Aspirational | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
+| `OnAgentLaunch` | 🚧 Aspirational | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
 
 ### Conflict Resolution (GitHub Copilot ↔ Claude Code)
 
