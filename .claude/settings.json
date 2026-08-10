@@ -1,10 +1,4 @@
 {
-  "metadata": {
-    "version": "1.0",
-    "project": "IntVue",
-    "lastUpdated": "2026-07-30",
-    "description": "Claude Code configuration for IntVue WinUI 3 project"
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -30,12 +24,7 @@
             "if": "Bash(dotnet (build|test)(?!.*-c))",
             "command": "echo '{\"systemMessage\": \"⚠️ Configuration flag missing. Use: -c Debug (or -c Release)\"}'",
             "statusMessage": "Checking for configuration flag..."
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
+          },
           {
             "type": "command",
             "id": "github-issue-closure-approval-gate",
@@ -63,12 +52,7 @@
             "if": "Edit(**/*.xaml)",
             "command": "echo '{\"systemMessage\": \"✓ Suggest running: dotnet build -c Debug -p:Platform=x64 to validate XAML binding syntax\"}'",
             "statusMessage": "XAML validation suggestion..."
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
+          },
           {
             "type": "command",
             "id": "test-coverage-validation",
@@ -80,79 +64,7 @@
       }
     ]
   },
-  "buildVerification": {
-    "enabled": true,
-    "platformDetection": "Mandatory before every build/test",
-    "platformDetectionCode": "$arch = $env:PROCESSOR_ARCHITECTURE; $Platform = if ($arch -eq 'AMD64') { 'x64' } else { $arch }",
-    "commands": {
-      "build": "dotnet build -c Debug -p:Platform=$Platform",
-      "test": "dotnet test -c Debug -p:Platform=$Platform",
-      "testFiltered": "dotnet test -c Debug -p:Platform=$Platform --filter 'FullyQualifiedName~<YourTest>'",
-      "run": "dotnet run -c Debug -p:Platform=$Platform",
-      "format": "dotnet format <file>",
-      "clean": "dotnet clean && dotnet build -c Debug -p:Platform=$Platform"
-    }
-  },
-  "contextManagement": {
-    "enabled": true,
-    "compactAtPercent": 50,
-    "rewindTriggers": [
-      "drift_detected",
-      "contradiction_in_output",
-      "repetition_of_prior_steps",
-      "user_confusion"
-    ]
-  },
   "permissions": {
     "defaultMode": "default"
-  },
-  "rulesReferences": {
-    "xaml": {
-      "description": "XAML UI markup rules",
-      "applyTo": "**/*.xaml",
-      "rulesFile": ".github/copilot/rules/xaml-binding.rules.yaml",
-      "references": [
-        ".claude/rules/design-colors.rules.md",
-        ".claude/rules/design-components.rules.md",
-        ".claude/rules/design-spacing.rules.md",
-        ".claude/rules/design-typography.rules.md",
-        ".github/instructions/accessibility.instructions.md",
-        ".github/instructions/performance.instructions.md",
-        ".github/instructions/winui-best-practices.instructions.md"
-      ]
-    },
-    "viewmodels": {
-      "description": "ViewModel MVVM pattern rules",
-      "applyTo": "ViewModels/**/*.cs",
-      "rulesFile": ".github/copilot/rules/viewmodel-patterns.rules.yaml",
-      "references": [
-        ".claude/rules/design-colors.rules.md",
-        ".github/instructions/code-quality.instructions.md",
-        ".github/instructions/winui-best-practices.instructions.md",
-        ".github/instructions/performance.instructions.md",
-        "DESIGN.md"
-      ]
-    },
-    "services": {
-      "description": "Service and business logic pattern rules",
-      "applyTo": "Services/**/*.cs",
-      "rulesFile": ".github/copilot/rules/service-patterns.rules.yaml",
-      "references": [
-        ".github/instructions/security.instructions.md",
-        ".github/instructions/performance.instructions.md",
-        ".github/instructions/code-quality.instructions.md",
-        ".github/instructions/windows-apis.instructions.md"
-      ]
-    },
-    "tests": {
-      "description": "Unit test pattern and MSTest rules",
-      "applyTo": "**/*Tests.cs,**/*Test.cs",
-      "rulesFile": ".github/copilot/rules/test-patterns.rules.yaml",
-      "references": [
-        ".github/instructions/testing.instructions.md",
-        ".github/instructions/code-quality.instructions.md",
-        ".github/instructions/performance.instructions.md"
-      ]
-    }
   }
 }
