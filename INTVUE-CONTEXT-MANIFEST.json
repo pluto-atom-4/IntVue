@@ -235,7 +235,7 @@
     "instructionFileTokens": {
       "description": "Project-wide rules (loaded on-demand per scope)",
       "budgetPerFile": 2000,
-      "totalInstructionFiles": 11,
+      "totalInstructionFiles": 10,
       "files": [
         "design-principles.instructions.md",
         "code-quality.instructions.md",
@@ -246,8 +246,7 @@
         "windows-apis.instructions.md",
         "accessibility.instructions.md",
         "globalization.instructions.md",
-        "implementation-analysis-and-issue-tracking.instructions.md",
-        "CLAUDE-scoped.md"
+        "implementation-analysis-and-issue-tracking.instructions.md"
       ]
     }
   },
