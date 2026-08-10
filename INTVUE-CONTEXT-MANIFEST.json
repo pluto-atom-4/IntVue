@@ -53,22 +53,6 @@
       "lastUpdated": "2026-07-19"
     },
     {
-      "id": "claude-custom-instructions",
-      "name": ".claude/custom-instructions.md",
-      "path": ".claude/custom-instructions.md",
-      "type": "behavioral-directives",
-      "lineCount": 109,
-      "wordCount": 529,
-      "estimatedTokens": 1090,
-      "insertionType": "every-turn-tax",
-      "priority": 1,
-      "description": "Code update guidelines, refactoring guards, error handling, secrets management, build prerequisites",
-      "targetLineCount": "<300",
-      "targetTokens": 1500,
-      "status": "created",
-      "lastUpdated": "2026-07-19"
-    },
-    {
       "id": "copilot-instructions",
       "name": ".github/copilot-instructions.md",
       "path": ".github/copilot-instructions.md",
@@ -228,12 +212,11 @@
   "tokenBudgets": {
     "alwaysOnTokens": {
       "description": "Files loaded on every turn (unavoidable token cost)",
-      "currentTokens": 2090,
+      "currentTokens": 1000,
       "budgetTokens": 3000,
-      "percentOfBudget": 69.7,
+      "percentOfBudget": 33.3,
       "files": [
         "CLAUDE.md (~470 tokens)",
-        ".claude/custom-instructions.md (~1090 tokens)",
         ".github/copilot-instructions.md (~530 tokens)"
       ],
       "status": "healthy"
@@ -269,8 +252,8 @@
     }
   },
   "statusSummary": {
-    "totalFiles": 15,
-    "filesComplete": 15,
+    "totalFiles": 14,
+    "filesComplete": 14,
     "filesToCreate": 0,
     "filesNeedingRefactor": 0,
     "complianceRate": "100%",
@@ -280,7 +263,6 @@
     "Phase 1: Document token budgets (in progress)",
     "Phase 2a: Refactor CLAUDE.md to <200 lines, ~1.5K tokens",
     "Phase 2b: Expand DESIGN.md to 200-400 lines with architecture diagram",
-    "Phase 2d: Create .claude/custom-instructions.md (~300 lines, ~1.5K tokens)",
     "Phase 2e: Create .github/copilot-instructions.md (<60 lines, ~800 tokens)",
     "Phase 3: Finalize INTVUE-CONTEXT-MANIFEST.json with accurate token counts",
     "Phase 4: Create CI/CD workflow context-drift-check.yml",
@@ -288,7 +270,7 @@
   ],
   "notes": {
     "tokenEstimationMethod": "Conservative: max(lines*10, words*1.3). Will be refined with actual Claude token counter.",
-    "alwaysOnTargetRationale": "CLAUDE.md + custom-instructions.md + copilot-instructions.md must stay <3K tokens to avoid context tax degradation",
+    "alwaysOnTargetRationale": "CLAUDE.md + copilot-instructions.md must stay <3K tokens to avoid context tax degradation",
     "scopedCLAUDEFiles": [
       "Services/CLAUDE.md (exists, media capture patterns)",
       "Views/CLAUDE.md (exists, XAML, accessibility, localization)",

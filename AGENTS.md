@@ -98,6 +98,33 @@ See [agent-build-procedures.md](.github/instructions/agent-build-procedures.md) 
 - `winapp` CLI reference
 - Troubleshooting build errors
 
+**Prerequisites:**
+- Never hardcode a platform identifier (x64, x86, ARM64) -- always detect it via `$env:PROCESSOR_ARCHITECTURE`.
+- Check the project `.csproj` for the true source of versions and target names -- never `package.json` or a `.nuspec`.
+- Run tests before committing: `dotnet test -c Debug -p:Platform=$Platform`.
+
+## Testing Expectations
+
+- All public ViewModels and Services require unit tests; target 80%+ coverage on business logic (see [testing.instructions.md](.github/instructions/testing.instructions.md)).
+- Framework: MSTest + Moq. Follow the AAA pattern (Arrange -> Act -> Assert).
+- Async tests: use `async Task` and `await Task.Delay(10)` to resolve timing issues around progress/callback assertions.
+
+## Error Handling
+
+- **Validate at boundaries:** user input, file I/O, network calls, media capture.
+- **Trust internal code:** don't re-validate between internal classes -- preconditions already hold.
+- **Graceful degradation:** prefer null checks -> safe defaults over throwing exceptions.
+- **Log failures with context:** include operation name, inputs, and error code.
+
+## Secrets & Security
+
+- **Never hard-code** API keys, passwords, connection strings, or tokens.
+- **Local development:** use environment variables (set in the IDE).
+- **Sensitive UI state:** PasswordVault is optional, not required for MVP.
+- **Production secrets:** Azure Key Vault (future).
+- **Never commit `.env` files.**
+- See [security.instructions.md](.github/instructions/security.instructions.md) for full secure-coding rules.
+
 ## Two-Gate System (Evidence-Based Execution)
 
 The project enforces **two verification gates** before any task is considered complete. These gates ensure agents make decisions based on evidence (build logs, test output, LSP checks) rather than predictions.
@@ -307,6 +334,11 @@ Hooks are configured in `.claude/settings.json`:
 - **Two-Gate System is mandatory** -- Plan Mode for >3 files/200 LOC; Evidence-based verification (build + test + LSP + app run) before task completion.
 - **Web search before decompilation** -- When facing unknown types or build errors, always search the web / API docs first. Only use WinMD/ILDASM as a last resort (see [Troubleshooting Build Errors](#troubleshooting-build-errors)).
 - **Use `winapp` for app-identity / packaging / signing** -- Don't hand-roll `MakeAppx`/`SignTool`/`Add-AppxPackage` invocations. The CLI keeps the manifest, certificate, and registration steps in sync.
+- **Use `x:Bind` in XAML** -- never `{Binding}`.
+- **Use `{ThemeResource ...}` for colors** -- never hard-code hex values.
+- **Dispose MediaCapture properly** -- never hold it open across suspend/resume.
+- **Keep ViewModels free of business logic** -- domain logic belongs in Services; ViewModels handle state.
+- **Use constructor injection for dependencies.**
 
 ## Windows AI Prerequisites
 
@@ -330,5 +362,11 @@ TextRecognizer, ImageScaler, etc.) -- see
    reflects the updated manifest -- a stale registration will silently use
    the old capability set.
 
+## Cross-References
 
-
+- Code quality rules: [code-quality.instructions.md](.github/instructions/code-quality.instructions.md)
+- WinUI 3 patterns: [winui-best-practices.instructions.md](.github/instructions/winui-best-practices.instructions.md)
+- Architecture & boundaries: [DESIGN.md](./DESIGN.md)
+- Design tokens & theming: `.claude/rules/design-*.rules.md`
+- Hook / error resolution: [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md)
+- GitHub issue closure approval gate: [github-governance.rules.md](.claude/rules/github-governance.rules.md) -- issue closure is a manual-only operation requiring explicit user approval.

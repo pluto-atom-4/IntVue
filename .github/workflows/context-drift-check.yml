@@ -46,7 +46,6 @@ jobs:
             'CLAUDE.md',
             'DESIGN.md',
             'AGENTS.md',
-            '.claude/custom-instructions.md',
             '.github/copilot-instructions.md',
             'INTVUE-CONTEXT-MANIFEST.json'
           )
@@ -164,7 +163,7 @@ jobs:
           Write-Host ""
 
           # Count context files
-          $coreFiles = @('CLAUDE.md', 'DESIGN.md', 'AGENTS.md', '.claude/custom-instructions.md', '.github/copilot-instructions.md')
+          $coreFiles = @('CLAUDE.md', 'DESIGN.md', 'AGENTS.md', '.github/copilot-instructions.md')
           $designRules = Get-ChildItem '.claude/rules/*.rules.md' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count
           $instrFiles = Get-ChildItem '.github/instructions/*.md' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count
 

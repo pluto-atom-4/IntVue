@@ -241,7 +241,7 @@ Agent: ✅ Closes (user approved via main agent)
 - **CLAUDE.md:** General agent guidance
 - **AGENTS.md:** Two-Gate System for multi-agent workflows
 - **settings.json:** Hook configuration for approval gate
-- **custom-instructions.md:** Code update guidelines
+- **AGENTS.md:** Code update guidelines, testing expectations, error handling, secrets & security
 
 ---
 
