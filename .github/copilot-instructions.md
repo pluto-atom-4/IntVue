@@ -27,7 +27,7 @@
 3. Test: `dotnet test -c Debug -p:Platform=$Platform`
 4. Secrets: `gitleaks detect --source . -v`
 
-[Quick Fix](../.claude/rules/hook-quick-fix.rules.md)
+[Quick Fix](../.claude/rules/hook-comprehensive.rules.md)
 
 ## Workflow
 

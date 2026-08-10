@@ -39,9 +39,7 @@ $ContextFiles = @(
   @{ Path = '.claude/rules/design-spacing.rules.md'; Category = 'design' },
   @{ Path = '.claude/rules/design-typography.rules.md'; Category = 'design' },
   @{ Path = '.claude/rules/design-components.rules.md'; Category = 'design' },
-  @{ Path = '.claude/rules/hook-quick-fix.rules.md'; Category = 'rules' },
-  @{ Path = '.claude/rules/hook-resolution.rules.md'; Category = 'rules' },
-  @{ Path = '.claude/rules/hook-strategy.rules.md'; Category = 'rules' }
+  @{ Path = '.claude/rules/hook-comprehensive.rules.md'; Category = 'rules' }
 )
 
 function Get-TokenEstimate {

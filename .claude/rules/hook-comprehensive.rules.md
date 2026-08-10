@@ -131,29 +131,9 @@ git commit -m "feat: your feature"
 
 ## Detailed Error Resolution
 
-### Formatting Violations
+Beyond the Quick Fix steps above, these reference tables help diagnose *which* error you're seeing.
 
-**What's Happening:** `dotnet format` detected code not matching style rules
-
-**Common Issues:**
-- Missing XML docs: `/// <summary>`
-- Wrong member order: Constructor after Property (should be Constructor → Property → Methods)
-- Hard-coded colors in XAML: Must use `{ThemeResource ...Brush}`
-- Using `{Binding}`: Change to compile-time safe `x:Bind`
-- Inconsistent spacing/indentation
-
-**Fix:** Auto-formatter handles most issues:
-```powershell
-dotnet format IntVue.csproj
-git add .
-git commit -m "style: Auto-format code"
-```
-
----
-
-### Build Errors
-
-**Error Examples:**
+### Build Error Codes
 
 | Code | Meaning | Solution |
 |---|---|---|
@@ -162,47 +142,21 @@ git commit -m "style: Auto-format code"
 | CS0103 | Name not in scope | Declare variable, add `using` |
 | CS0029 | Type mismatch | Cast or change type |
 | MSIX0001 | Windows App SDK error | Check `.csproj` configuration |
+| WinRT001 | WinRT projection error | Check `EnableUnsafeMixedMicrosoftWindowsUIXamlProjections` |
 
-**Fix Process:**
-1. Read error output carefully (file + line number + message)
-2. Identify the issue (missing using, typo, wrong type)
-3. Fix the code
-4. Rebuild: `dotnet build -c Debug -p:Platform=$Platform`
-5. Commit: `git commit -m "fix: Resolve compilation error"`
+### Test Failures — Fix Code vs. Fix Test
 
----
+When a test fails, decide which side is wrong before editing:
+- **Implementation is wrong** (test expectation is correct) → fix the code, re-run, commit `fix: ...`.
+- **Test expectation is wrong** (implementation is correct) → fix the assertion, re-run, commit `fix: Correct test expectation`.
+- **Intentional WIP** → bypass with `SKIP_TESTS_ON_FAILURE=1` (Section C above).
 
-### Test Failures
-
-**Option A: Fix Implementation (Recommended)**
-
-```powershell
-# Example: Test expects countdown to reach 0, but code reports 1
-# Expected: 0, Actual: 1
-
-# Fix the code
-for (int i = seconds; i >= 0; i--)  # Change >= 1 to >= 0
-{
-    progress.Report(i);
-}
-
-# Re-run: dotnet test -c Debug -p:Platform=$Platform
-# Commit: git commit -m "fix: Update countdown to report 0"
-```
-
-**Option B: Fix Test (If Implementation is Correct)**
-
-```csharp
-// If implementation only reports 1, fix test assertion
-Assert.AreEqual(1, countdownValue);  // Correct expectation
-```
-
-**Option C: Bypass (For WIP Only)**
-
-```powershell
-$env:SKIP_TESTS_ON_FAILURE = '1'
-git commit -m "feat: Work in progress - tests pending"
-```
+| Issue | Cause | Fix |
+|---|---|---|
+| `Assert.AreEqual failed` | Expected ≠ Actual | Fix code or test |
+| `NullReferenceException` | Null object access | Set up mock properly |
+| `Task timeout` | Operation takes too long | Increase timeout or optimize |
+| `Progress callback not executed` | Async timing issue | Add `await Task.Delay(10)` |
 
 ---
 
@@ -241,36 +195,11 @@ powershell -File scripts\pre-commit.ps1
 powershell -File scripts\pre-push.ps1
 ```
 
-### Tests Skip but Should Run
-```powershell
-# Check environment variable
-$env:RUN_TESTS
+If tests skip unexpectedly, check `$env:RUN_TESTS` (see Environment Variables above).
+If build/test results differ from local, run a clean build (`dotnet clean`) and confirm
+`$Platform` matches `[System.Environment]::ProcessorArchitecture`.
 
-# Clear it
-$env:RUN_TESTS = ''
-git commit  # Tests will run now
-```
-
-### Different Results Locally vs Hook
-```powershell
-# Ensure platform consistency
-[System.Environment]::ProcessorArchitecture
-
-# Clean build
-dotnet clean
-dotnet build -c Debug -p:Platform=$Platform
-```
-
----
-
-## Time Estimates
-
-| Error Type | Time | Difficulty |
-|---|---|---|
-| Formatting | 2-5 min | Easy (auto-fix) |
-| Build | 5-30 min | Medium |
-| Tests | 10-45 min | Medium-Hard |
-| **Total** | **20-80 min** | Varies |
+**Time estimates:** Formatting 2-5 min · Build 5-30 min · Tests 10-45 min (see Section headers above).
 
 ---
 

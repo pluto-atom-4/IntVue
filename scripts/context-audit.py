@@ -34,9 +34,7 @@ BUDGETS = {
     ".claude/rules/design-components.rules.md": 4500,
     ".claude/rules/design-spacing.rules.md": 2800,
     ".claude/rules/design-typography.rules.md": 2800,
-    ".claude/rules/hook-quick-fix.rules.md": 2200,
-    ".claude/rules/hook-resolution.rules.md": 3500,
-    ".claude/rules/hook-strategy.rules.md": 2000,
+    ".claude/rules/hook-comprehensive.rules.md": 2500,
 }
 
 

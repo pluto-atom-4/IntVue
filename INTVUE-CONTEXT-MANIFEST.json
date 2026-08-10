@@ -157,46 +157,18 @@
       "lastUpdated": "2026-07-04"
     },
     {
-      "id": "hook-quick-fix",
-      "name": "hook-quick-fix.rules.md",
-      "path": ".claude/rules/hook-quick-fix.rules.md",
+      "id": "hook-comprehensive",
+      "name": "hook-comprehensive.rules.md",
+      "path": ".claude/rules/hook-comprehensive.rules.md",
       "type": "error-resolution",
-      "lineCount": 240,
-      "wordCount": 1800,
-      "estimatedTokens": 2400,
+      "lineCount": 223,
+      "wordCount": 944,
+      "estimatedTokens": 2230,
       "insertionType": "on-demand",
       "priority": 1,
-      "description": "5-step checklists for formatting, build, and test errors",
+      "description": "Consolidated hook guide: quick-fix checklist, hook overview, prevention strategy, detailed error resolution (supersedes former hook-quick-fix/hook-resolution/hook-strategy files, merged in issue #140)",
       "status": "exists",
-      "lastUpdated": "2026-07-04"
-    },
-    {
-      "id": "hook-resolution",
-      "name": "hook-resolution.rules.md",
-      "path": ".claude/rules/hook-resolution.rules.md",
-      "type": "error-resolution",
-      "lineCount": 400,
-      "wordCount": 3200,
-      "estimatedTokens": 4000,
-      "insertionType": "on-demand",
-      "priority": 2,
-      "description": "Detailed error explanations and prevention strategies for all hook types",
-      "status": "exists",
-      "lastUpdated": "2026-07-04"
-    },
-    {
-      "id": "hook-strategy",
-      "name": "hook-strategy.rules.md",
-      "path": ".claude/rules/hook-strategy.rules.md",
-      "type": "error-resolution",
-      "lineCount": 200,
-      "wordCount": 1500,
-      "estimatedTokens": 2000,
-      "insertionType": "on-demand",
-      "priority": 1,
-      "description": "Project-level hook strategy, blocking behavior, escalation path",
-      "status": "exists",
-      "lastUpdated": "2026-07-04"
+      "lastUpdated": "2026-08-09"
     },
     {
       "id": "instr-design-principles",
@@ -313,8 +285,8 @@
     }
   },
   "statusSummary": {
-    "totalFiles": 19,
-    "filesComplete": 19,
+    "totalFiles": 16,
+    "filesComplete": 16,
     "filesToCreate": 0,
     "filesNeedingRefactor": 0,
     "complianceRate": "100%",
