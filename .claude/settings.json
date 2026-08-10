@@ -34,14 +34,13 @@
         ]
       },
       {
-        "matcher": ".*GitHub.*|.*gh .*",
+        "matcher": "Bash",
         "hooks": [
           {
-            "type": "approval",
+            "type": "command",
             "id": "github-issue-closure-approval-gate",
-            "operation": "closeIssue|close-issue|updateIssue.*state.*closed",
-            "requireApproval": true,
-            "approvalMessage": "⚠️ GOVERNANCE: Issue closure requires explicit user approval.\n   Rule: See .claude/rules/github-governance.rules.md\n   Shall I close this issue? (Requires explicit 'yes')",
+            "if": "Bash(gh issue close|gh issue delete)",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"GOVERNANCE: Issue closure requires explicit user approval. See .claude/rules/github-governance.rules.md\"}}'",
             "statusMessage": "Checking for GitHub issue closure operations..."
           }
         ]
