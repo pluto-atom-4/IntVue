@@ -15,15 +15,6 @@ Views (XAML pages and windows) and Controls (custom or reusable UI components) d
 - **Choose the right mode:** Use `Mode=OneWay` or `Mode=OneTime` for read-only bindings (faster than `TwoWay`). Use `Mode=TwoWay` only when the UI updates the ViewModel property.
 - **Format:** One attribute per line for controls with 3+ attributes. Order: `x:Name` → `x:Uid` → `AutomationProperties` → layout → data → style.
 
-```xml
-<!-- GOOD: x:Bind with appropriate mode -->
-<TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
-<Button Command="{x:Bind ViewModel.SaveCommand}" Content="Save" />
-
-<!-- AVOID: {Binding}, which is slower and lacks compile-time checks -->
-<TextBlock Text="{Binding Title}" />
-```
-
 See `.github/instructions/performance.instructions.md` for details on binding performance.
 
 ---
@@ -33,16 +24,6 @@ See `.github/instructions/performance.instructions.md` for details on binding pe
 - **Never hard-code colors** in XAML or C#. Always use WinUI 3 theme resources.
 - **Use semantic token names** (e.g., `text-primary`, `surface-primary`) as the single source of truth for styling.
 - **Consult DESIGN.md** for complete token definitions, mappings, and usage guidelines.
-
-```xml
-<!-- GOOD: Theme resource via semantic token -->
-<TextBlock Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-<Button Style="{ThemeResource AccentButtonStyle}" Content="Start Recording" />
-
-<!-- AVOID: Hard-coded colors -->
-<TextBlock Foreground="#000000" />
-<Button Background="#0078D4" />
-```
 
 **Common theme resources (see DESIGN.md for complete list):**
 - Text: `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`, `TextFillColorDisabledBrush`
@@ -66,18 +47,6 @@ Test your UI in **light, dark, and high-contrast themes** to ensure readability 
 - **Never call `Window.Current`**; it doesn't exist in WinUI 3. Pass window reference explicitly.
 - **Use `DispatcherQueue`**, not `CoreDispatcher`.
 
-```csharp
-// GOOD: Pass window reference explicitly
-public void DoSomething(Window window)
-{
-    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-    // ...
-}
-
-// AVOID: Window.Current (not available in WinUI 3)
-// var window = Window.Current;
-```
-
 See `.github/instructions/winui-best-practices.instructions.md` for architecture and navigation patterns.
 
 ---
@@ -87,21 +56,6 @@ See `.github/instructions/winui-best-practices.instructions.md` for architecture
 - **Use `x:Load` for heavy content** (advanced options, secondary panels) to improve startup time. Load them on-demand.
 - **Use virtualization** for long lists: `ListView`, `ItemsRepeater` with `StackLayout`, or `DataGrid`.
 - **Avoid deep visual tree nesting** — deep XAML hierarchies hurt layout performance.
-
-```xml
-<!-- GOOD: Defer heavy content loading -->
-<StackPanel x:Load="{x:Bind ViewModel.ShowAdvancedOptions, Mode=OneWay}">
-    <!-- Heavy content loaded only when needed -->
-</StackPanel>
-
-<!-- GOOD: Virtualize long lists -->
-<ListView ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}" />
-
-<!-- AVOID: Loading all content upfront -->
-<StackPanel Visibility="{x:Bind ViewModel.ShowAdvancedOptions, Mode=OneWay, Converter=...}">
-    <!-- Heavy content always in memory -->
-</StackPanel>
-```
 
 See `.github/instructions/performance.instructions.md` for virtualization and layout optimization.
 
@@ -143,20 +97,7 @@ See `.github/instructions/accessibility.instructions.md` for full accessibility 
 - **Use `x:Uid` in XAML** to link controls to resource strings. The resource key is derived from `x:Uid`.
 - **Use `ResourceLoader` in C# code** to load strings dynamically.
 
-```xml
-<!-- GOOD: x:Uid links to resource strings -->
-<Button
-    x:Uid="SaveButton"
-    Content="Save"
-    ToolTipService.ToolTip="Save the recording" />
-
-<!-- Resource file (Resources.resw):
-     SaveButton.Content = "Save"
-     SaveButton/ToolTipService.ToolTip = "Save the recording"
--->
-```
-
-See `.github/instructions/globalization.instructions.md` for full localization guidelines.
+See `.github/instructions/globalization.instructions.md` for full localization guidelines and a code example.
 
 ---
 

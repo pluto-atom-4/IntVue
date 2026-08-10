@@ -257,5 +257,5 @@ Before generating UI:
 - [ ] Every font size matches the typography scale
 - [ ] Every button has `AutomationProperties.Name`
 - [ ] Focus indicators are visible (trust WinUI defaults)
-- [ ] Component patterns match Section 6 in design-components.rules.md
+- [ ] Component patterns match those documented in `design-components.rules.md`
 - [ ] Light/dark/high-contrast themes supported via `{ThemeResource}`

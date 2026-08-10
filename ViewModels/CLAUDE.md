@@ -130,22 +130,13 @@ private async Task LoadDataAsync()
 
 ## ObservableProperty Patterns
 
-- **Auto-property pattern:** Use `[ObservableProperty]` with private backing field for type safety
+- **Auto-property pattern:** Use `[ObservableProperty]` with private backing field for type safety (see the ViewModel Base Class example above)
 - **Boolean flags for UI state:** `IsLoading`, `IsRecording`, `HasError`, etc.
 - **Default values:** Initialize to sensible defaults (empty string, zero, false)
 
+Validation or computed logic (if needed, keep it brief) uses the generated partial change-notification method:
+
 ```csharp
-// GOOD: Auto-property with default value
-[ObservableProperty]
-private string title = string.Empty;
-
-[ObservableProperty]
-private int itemCount = 0;
-
-[ObservableProperty]
-private bool isLoading;  // Defaults to false
-
-// GOOD: Validation or computed logic (if needed, keep it brief)
 [ObservableProperty]
 private string userName = string.Empty;
 partial void OnUserNameChanged(string value)
@@ -159,27 +150,11 @@ partial void OnUserNameChanged(string value)
 
 ## Dependency Injection
 
-- **Constructor injection:** All services passed via constructor, never resolved via `App.Services`
+- **Constructor injection:** All services passed via constructor, never resolved via `App.Services` (see the ViewModel Base Class example above, which constructor-injects `IMediaCaptureService`)
 - **Interface-based:** Depend on `IMyService`, not concrete `MyService` class
 - **Testability:** Design so services can be easily mocked in unit tests
 
-```csharp
-public partial class MyViewModel : ObservableObject
-{
-    private readonly IMediaCaptureService _mediaService;
-    private readonly INavigationService _navigationService;
-
-    // GOOD: Constructor injection
-    public MyViewModel(IMediaCaptureService mediaService, INavigationService navigationService)
-    {
-        _mediaService = mediaService;
-        _navigationService = navigationService;
-    }
-
-    // AVOID: Resolving from service locator
-    // private IMediaCaptureService _mediaService = App.Services.GetService<IMediaCaptureService>();
-}
-```
+**Avoid:** Resolving via service locator, e.g. `private IMediaCaptureService _mediaService = App.Services.GetService<IMediaCaptureService>();`
 
 ---
 
