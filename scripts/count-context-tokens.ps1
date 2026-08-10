@@ -32,7 +32,6 @@ $ContextFiles = @(
   @{ Path = 'CLAUDE.md'; Category = 'core' },
   @{ Path = 'DESIGN.md'; Category = 'core' },
   @{ Path = 'AGENTS.md'; Category = 'core' },
-  @{ Path = '.claude/profiles.json'; Category = 'config' },
   @{ Path = '.claude/custom-instructions.md'; Category = 'core' },
   @{ Path = '.github/copilot-instructions.md'; Category = 'core' },
   @{ Path = '.claude/rules/design-colors.rules.md'; Category = 'design' },

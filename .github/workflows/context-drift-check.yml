@@ -46,7 +46,6 @@ jobs:
             'CLAUDE.md',
             'DESIGN.md',
             'AGENTS.md',
-            '.claude/profiles.json',
             '.claude/custom-instructions.md',
             '.github/copilot-instructions.md',
             'INTVUE-CONTEXT-MANIFEST.json'

@@ -53,22 +53,6 @@
       "lastUpdated": "2026-07-19"
     },
     {
-      "id": "claude-profiles",
-      "name": ".claude/profiles.json",
-      "path": ".claude/profiles.json",
-      "type": "configuration",
-      "lineCount": 93,
-      "wordCount": 215,
-      "estimatedTokens": 300,
-      "insertionType": "configuration-only",
-      "priority": 0,
-      "description": "AI context profiles (local-dev, ai-audit, security-review) with tool/budget boundaries",
-      "targetLineCount": "<100",
-      "targetTokens": 300,
-      "status": "created",
-      "lastUpdated": "2026-07-19"
-    },
-    {
       "id": "claude-custom-instructions",
       "name": ".claude/custom-instructions.md",
       "path": ".claude/custom-instructions.md",
@@ -285,8 +269,8 @@
     }
   },
   "statusSummary": {
-    "totalFiles": 16,
-    "filesComplete": 16,
+    "totalFiles": 15,
+    "filesComplete": 15,
     "filesToCreate": 0,
     "filesNeedingRefactor": 0,
     "complianceRate": "100%",
@@ -296,7 +280,6 @@
     "Phase 1: Document token budgets (in progress)",
     "Phase 2a: Refactor CLAUDE.md to <200 lines, ~1.5K tokens",
     "Phase 2b: Expand DESIGN.md to 200-400 lines with architecture diagram",
-    "Phase 2c: Create .claude/profiles.json (DONE)",
     "Phase 2d: Create .claude/custom-instructions.md (~300 lines, ~1.5K tokens)",
     "Phase 2e: Create .github/copilot-instructions.md (<60 lines, ~800 tokens)",
     "Phase 3: Finalize INTVUE-CONTEXT-MANIFEST.json with accurate token counts",
