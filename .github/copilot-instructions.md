@@ -9,7 +9,7 @@
 ## Pattern Rules
 
 **XAML:** Use `x:Bind`, `{ThemeResource}`, `AutomationProperties.Name`  
-[Details](../.claude/rules/)
+[Details](../.claude/rules/) · [Pattern rule (YAML)](copilot/rules/xaml-binding.rules.yaml)
 
 **ViewModel:** `ObservableObject`, `[ObservableProperty]`, `[RelayCommand]`, DI  
 [Details](../instructions/code-quality.instructions.md)
@@ -27,7 +27,7 @@
 3. Test: `dotnet test -c Debug -p:Platform=$Platform`
 4. Secrets: `gitleaks detect --source . -v`
 
-[Quick Fix](../.claude/rules/hook-quick-fix.rules.md)
+[Quick Fix](../.claude/rules/hook-comprehensive.rules.md)
 
 ## Workflow
 

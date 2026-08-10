@@ -1,3 +1,4 @@
+# NOTE: Supplementary reference; not yet confirmed that GitHub Copilot Agent Mode ingests this custom schema.
 ---
 name: "ViewModel MVVM Patterns"
 applyTo: "ViewModels/**/*.cs"

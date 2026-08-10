@@ -130,15 +130,14 @@ This rule is enforced via a PreToolUse hook on GitHub API calls:
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": ".*GitHub.*",
+        "matcher": "Bash",
         "hooks": [
           {
-            "type": "approval",
-            "id": "github-issue-closure-gate",
-            "operation": "close|closeIssue|updateIssueState",
-            "if": "IssueOperation(close|resolve|duplicate|wontfix)",
-            "requireApproval": true,
-            "approvalMessage": "⚠️ Issue closure requires explicit user approval. Proceed? (Y/N)"
+            "type": "command",
+            "id": "github-issue-closure-approval-gate",
+            "if": "Bash(gh issue close|gh issue delete)",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"GOVERNANCE: Issue closure requires explicit user approval. See .claude/rules/github-governance.rules.md\"}}'",
+            "statusMessage": "Checking for GitHub issue closure operations..."
           }
         ]
       }
@@ -242,7 +241,7 @@ Agent: ✅ Closes (user approved via main agent)
 - **CLAUDE.md:** General agent guidance
 - **AGENTS.md:** Two-Gate System for multi-agent workflows
 - **settings.json:** Hook configuration for approval gate
-- **custom-instructions.md:** Code update guidelines
+- **AGENTS.md:** Code update guidelines, testing expectations, error handling, secrets & security
 
 ---
 

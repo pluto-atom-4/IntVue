@@ -98,6 +98,33 @@ See [agent-build-procedures.md](.github/instructions/agent-build-procedures.md) 
 - `winapp` CLI reference
 - Troubleshooting build errors
 
+**Prerequisites:**
+- Never hardcode a platform identifier (x64, x86, ARM64) -- always detect it via `$env:PROCESSOR_ARCHITECTURE`.
+- Check the project `.csproj` for the true source of versions and target names -- never `package.json` or a `.nuspec`.
+- Run tests before committing: `dotnet test -c Debug -p:Platform=$Platform`.
+
+## Testing Expectations
+
+- All public ViewModels and Services require unit tests; target 80%+ coverage on business logic (see [testing.instructions.md](.github/instructions/testing.instructions.md)).
+- Framework: MSTest + Moq. Follow the AAA pattern (Arrange -> Act -> Assert).
+- Async tests: use `async Task` and `await Task.Delay(10)` to resolve timing issues around progress/callback assertions.
+
+## Error Handling
+
+- **Validate at boundaries:** user input, file I/O, network calls, media capture.
+- **Trust internal code:** don't re-validate between internal classes -- preconditions already hold.
+- **Graceful degradation:** prefer null checks -> safe defaults over throwing exceptions.
+- **Log failures with context:** include operation name, inputs, and error code.
+
+## Secrets & Security
+
+- **Never hard-code** API keys, passwords, connection strings, or tokens.
+- **Local development:** use environment variables (set in the IDE).
+- **Sensitive UI state:** PasswordVault is optional, not required for MVP.
+- **Production secrets:** Azure Key Vault (future).
+- **Never commit `.env` files.**
+- See [security.instructions.md](.github/instructions/security.instructions.md) for full secure-coding rules.
+
 ## Two-Gate System (Evidence-Based Execution)
 
 The project enforces **two verification gates** before any task is considered complete. These gates ensure agents make decisions based on evidence (build logs, test output, LSP checks) rather than predictions.
@@ -199,7 +226,7 @@ refersTo: accessibility.instructions.md
 Skills are triggered:
 1. **Explicit:** User invokes `/skill-name`
 2. **Implicit:** PostToolUse hook triggers on file pattern match
-3. **Agent Launch:** OnAgentLaunch hook inherits skill paths from `.claude/settings.json`
+3. **Agent Launch (aspirational):** an `OnAgentLaunch` hook that auto-inherits skill paths is planned but not yet implemented in `.claude/settings.json`
 
 ---
 
@@ -236,20 +263,23 @@ When Copilot encounters a file:
 1. **Match glob pattern** (e.g., `**/*.xaml` matches `Views/MainPage.xaml`)
 2. **Fetch rule references** (accessibility.instructions.md, performance.instructions.md)
 3. **Apply rules** in order of specificity (most specific first)
-4. **Inherit hooks** from `.claude/settings.json` (PreToolUse, PostToolUse, OnFileSave)
+4. **Inherit hooks** from `.claude/settings.json` (currently `PreToolUse` and `PostToolUse`; `OnFileSave` is planned but not yet implemented)
 
 ---
 
 ## Unified Execution Lifecycle (Cross-Tool Synergy)
 
-Both Claude Code and GitHub Copilot CLI follow the same execution lifecycle via `.claude/settings.json` hooks:
+Both Claude Code and GitHub Copilot CLI follow the same execution lifecycle via `.claude/settings.json` hooks.
+**Only `PreToolUse` and `PostToolUse` are implemented today.** The remaining stages below (file-save
+background analysis, context-drift monitoring, agent-launch inheritance) describe the intended future
+lifecycle and are aspirational until added to `.claude/settings.json`.
 
 ### Execution Flow
 
 ```
 File Modified
     ↓
-PreToolUse Hook
+PreToolUse Hook (implemented)
   ├─ Validate tool (e.g., block rm -rf)
   ├─ Warn platform detection (add $Platform variable)
   ├─ Warn configuration flag (add -c Debug)
@@ -257,23 +287,15 @@ PreToolUse Hook
 Tool Execution
   ├─ Edit file, build project, run tests
     ↓
-PostToolUse Hook
+PostToolUse Hook (implemented)
   ├─ Auto-format C# files (suggest `dotnet format`)
   ├─ Multi-file build verification (>3 files changed)
   ├─ XAML validation (suggest `dotnet build`)
     ↓
-OnFileSave Hook (Background)
-  ├─ StyleCop analysis (detect SA/CA errors after 3s)
-  ├─ Test syntax validation (detect broken tests after 2s)
-    ↓
-Context Drift Monitoring
-  ├─ At 50% token usage → suggest `/compact`
-  ├─ On contradiction → suggest `/rewind`
-    ↓
-Agent Launch (if subagent spawned)
-  ├─ Inherit AGENTS.md + core instruction files
-  ├─ Inherit .claude/settings.json hooks
-  ├─ Inherit .claude/skills/ paths
+[Aspirational — not yet implemented]
+  ├─ OnFileSave: StyleCop/test-syntax background analysis
+  ├─ OnContextDrift: suggest `/compact` at 50% token usage, `/rewind` on contradiction
+  ├─ OnAgentLaunch: auto-inherit AGENTS.md + instructions + skill paths on subagent spawn
     ↓
 Task Complete
   ├─ Gate 1: Plan Mode review ✓
@@ -285,13 +307,13 @@ Task Complete
 
 Hooks are configured in `.claude/settings.json`:
 
-| Hook | Trigger | Action | Example |
-|---|---|---|---|
-| `PreToolUse` | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
-| `PostToolUse` | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
-| `OnFileSave` | After file save | background | Run StyleCop analysis after 3s delay |
-| `OnContextDrift` | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
-| `OnAgentLaunch` | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
+| Hook | Status | Trigger | Action | Example |
+|---|---|---|---|---|
+| `PreToolUse` | ✅ Implemented | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
+| `PostToolUse` | ✅ Implemented | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
+| `OnFileSave` | 🚧 Aspirational | After file save | background | Run StyleCop analysis after 3s delay |
+| `OnContextDrift` | 🚧 Aspirational | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
+| `OnAgentLaunch` | 🚧 Aspirational | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
 
 ### Conflict Resolution (GitHub Copilot ↔ Claude Code)
 
@@ -312,6 +334,11 @@ Hooks are configured in `.claude/settings.json`:
 - **Two-Gate System is mandatory** -- Plan Mode for >3 files/200 LOC; Evidence-based verification (build + test + LSP + app run) before task completion.
 - **Web search before decompilation** -- When facing unknown types or build errors, always search the web / API docs first. Only use WinMD/ILDASM as a last resort (see [Troubleshooting Build Errors](#troubleshooting-build-errors)).
 - **Use `winapp` for app-identity / packaging / signing** -- Don't hand-roll `MakeAppx`/`SignTool`/`Add-AppxPackage` invocations. The CLI keeps the manifest, certificate, and registration steps in sync.
+- **Use `x:Bind` in XAML** -- never `{Binding}`.
+- **Use `{ThemeResource ...}` for colors** -- never hard-code hex values.
+- **Dispose MediaCapture properly** -- never hold it open across suspend/resume.
+- **Keep ViewModels free of business logic** -- domain logic belongs in Services; ViewModels handle state.
+- **Use constructor injection for dependencies.**
 
 ## Windows AI Prerequisites
 
@@ -335,5 +362,11 @@ TextRecognizer, ImageScaler, etc.) -- see
    reflects the updated manifest -- a stale registration will silently use
    the old capability set.
 
+## Cross-References
 
-
+- Code quality rules: [code-quality.instructions.md](.github/instructions/code-quality.instructions.md)
+- WinUI 3 patterns: [winui-best-practices.instructions.md](.github/instructions/winui-best-practices.instructions.md)
+- Architecture & boundaries: [DESIGN.md](./DESIGN.md)
+- Design tokens & theming: `.claude/rules/design-*.rules.md`
+- Hook / error resolution: [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md)
+- GitHub issue closure approval gate: [github-governance.rules.md](.claude/rules/github-governance.rules.md) -- issue closure is a manual-only operation requiring explicit user approval.

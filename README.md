@@ -189,4 +189,4 @@ The three-layer guidance system ensures:
 - **Security focus:** Media capture rules are prominent in `Services/CLAUDE.md`
 - **Cross-platform support:** Symlinks enable unified configuration for Claude Code and Cursor
 
-For questions about the AI guidance system, see `.github/instructions/CLAUDE-scoped.md` (template and meta-guidance).
+For questions about the AI guidance system, see `AGENTS.md` (the orphaned `CLAUDE-scoped.md` meta-template has been retired).

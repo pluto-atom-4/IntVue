@@ -32,16 +32,12 @@ $ContextFiles = @(
   @{ Path = 'CLAUDE.md'; Category = 'core' },
   @{ Path = 'DESIGN.md'; Category = 'core' },
   @{ Path = 'AGENTS.md'; Category = 'core' },
-  @{ Path = '.claude/profiles.json'; Category = 'config' },
-  @{ Path = '.claude/custom-instructions.md'; Category = 'core' },
   @{ Path = '.github/copilot-instructions.md'; Category = 'core' },
   @{ Path = '.claude/rules/design-colors.rules.md'; Category = 'design' },
   @{ Path = '.claude/rules/design-spacing.rules.md'; Category = 'design' },
   @{ Path = '.claude/rules/design-typography.rules.md'; Category = 'design' },
   @{ Path = '.claude/rules/design-components.rules.md'; Category = 'design' },
-  @{ Path = '.claude/rules/hook-quick-fix.rules.md'; Category = 'rules' },
-  @{ Path = '.claude/rules/hook-resolution.rules.md'; Category = 'rules' },
-  @{ Path = '.claude/rules/hook-strategy.rules.md'; Category = 'rules' }
+  @{ Path = '.claude/rules/hook-comprehensive.rules.md'; Category = 'rules' }
 )
 
 function Get-TokenEstimate {
@@ -93,8 +89,8 @@ foreach ($entry in $ContextFiles) {
   if ($metrics) {
     $totalTokens += $metrics.Tokens
 
-    # Always-on: CLAUDE.md, custom-instructions.md, copilot-instructions.md
-    if (@('CLAUDE.md', '.claude/custom-instructions.md', '.github/copilot-instructions.md') -contains $file) {
+    # Always-on: CLAUDE.md, copilot-instructions.md
+    if (@('CLAUDE.md', '.github/copilot-instructions.md') -contains $file) {
       $alwaysOnTokens += $metrics.Tokens
     }
 

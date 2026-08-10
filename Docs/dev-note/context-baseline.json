@@ -4,23 +4,23 @@
   "optimization_status": "COMPLETE",
   "token_estimate_ratio": "1 token ≈ 4 characters",
   "summary": {
-    "total_files": 21,
-    "total_chars": 130320,
-    "total_tokens": 32580,
+    "total_files": 19,
+    "total_chars": 104339,
+    "total_tokens": 26084,
     "recommended_tokens": 35000,
     "status": "OK",
-    "overage_percent": -6.9,
-    "delta_description": "Within budget by 6.9%"
+    "overage_percent": -25.5,
+    "delta_description": "Within budget by 25.5% (recomputed after issue #140: removed hook-quick-fix.rules.md and hook-strategy.rules.md entries, and trimmed CLAUDE.md from 67 to 47 lines)"
   },
   "files": [
     {
       "path": "CLAUDE.md",
-      "lines": 67,
-      "chars": 2720,
-      "estimated_tokens": 680,
+      "lines": 47,
+      "chars": 1769,
+      "estimated_tokens": 442,
       "target_tokens": 750,
       "status": "OK",
-      "delta_percent": -9.3
+      "delta_percent": -41.1
     },
     {
       "path": "DESIGN.md",
@@ -159,39 +159,12 @@
     },
     {
       "path": ".claude/rules/hook-comprehensive.rules.md",
-      "lines": 245,
-      "chars": 9800,
-      "estimated_tokens": 2450,
+      "lines": 223,
+      "chars": 6370,
+      "estimated_tokens": 1592,
       "target_tokens": 2500,
       "status": "OK",
-      "delta_percent": -2.0
-    },
-    {
-      "path": ".claude/rules/hook-quick-fix.rules.md",
-      "lines": 295,
-      "chars": 11800,
-      "estimated_tokens": 2950,
-      "target_tokens": 3000,
-      "status": "OK",
-      "delta_percent": -1.7
-    },
-    {
-      "path": ".claude/rules/hook-resolution.rules.md",
-      "lines": 485,
-      "chars": 19400,
-      "estimated_tokens": 4850,
-      "target_tokens": 5000,
-      "status": "OK",
-      "delta_percent": -3.0
-    },
-    {
-      "path": ".claude/rules/hook-strategy.rules.md",
-      "lines": 245,
-      "chars": 9800,
-      "estimated_tokens": 2450,
-      "target_tokens": 2500,
-      "status": "OK",
-      "delta_percent": -2.0
+      "delta_percent": -36.3
     }
   ],
   "optimization_summary": {
