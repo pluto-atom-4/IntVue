@@ -1,5 +1,9 @@
 # Git Hooks — Comprehensive Guide
 
+> **Scope:** This file covers **git commit/push hooks** (`scripts/pre-commit.ps1`, `scripts/pre-push.ps1`) — formatting, build, and test checks that run when you `git commit` / `git push`.
+>
+> Looking for **Claude Code PreToolUse command hooks** instead (destructive-command blocking, missing `-c`/`-p:Platform` warnings)? Those are a separate system, documented in [destructive-command-governance.rules.md](./destructive-command-governance.rules.md) and in [AGENTS.md](../../AGENTS.md)'s PreToolUse hook table.
+
 All commits and pushes are validated via pre-commit and pre-push hooks. This guide covers quick fixes, detailed resolution, and prevention strategies.
 
 ---

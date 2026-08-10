@@ -309,11 +309,22 @@ Hooks are configured in `.claude/settings.json`:
 
 | Hook | Status | Trigger | Action | Example |
 |---|---|---|---|---|
-| `PreToolUse` | ✅ Implemented | Before any tool runs | block/warn | Block `rm -rf`, warn missing platform variable |
+| `PreToolUse` | ✅ Implemented | Before any tool runs | block/warn (see sub-table below) | Block destructive commands, warn missing platform/config flag |
 | `PostToolUse` | ✅ Implemented | After tool completes | suggest/auto | Suggest `dotnet format`, suggest build verification |
 | `OnFileSave` | 🚧 Aspirational | After file save | background | Run StyleCop analysis after 3s delay |
 | `OnContextDrift` | 🚧 Aspirational | At 50% token usage | suggest | Suggest `/compact` to checkpoint |
 | `OnAgentLaunch` | 🚧 Aspirational | When spawning subagent | inherit | Auto-inherit AGENTS.md + instructions |
+
+#### `PreToolUse` Hooks (Detail)
+
+The `PreToolUse` row above covers four individual hooks on the `Bash` matcher in `.claude/settings.json`:
+
+| Hook `id` | Trigger | Behavior | Notes |
+|---|---|---|---|
+| `block-destructive-shell` | `rm -rf`, `del /s`, `rd /s`, `Remove-Item ... -Recurse`\|`-Force`, `git reset --hard`, `git push --force`\|`-f`, `Format-Volume` — matched anywhere in the command (chained commands like `cd x && rm -rf y` are also caught) | `ask` — prompts for explicit human approval before the command runs | See [destructive-command-governance.rules.md](.claude/rules/destructive-command-governance.rules.md) for the full policy, approval scenarios, and the `.claude/settings.local.json` allow-list override for recurring legitimate commands |
+| `warn-missing-platform` | `dotnet build\|test\|run` without `-p:Platform=` | Non-blocking `systemMessage` showing the full corrected command, e.g. `dotnet build -c Debug -p:Platform=$Platform` | Does not escalate to `ask` |
+| `warn-missing-config-flag` | `dotnet build\|test` without `-c` | Non-blocking `systemMessage` showing the full corrected command, e.g. `dotnet build -c Debug -p:Platform=<arch>` | Does not escalate to `ask` |
+| `github-issue-closure-approval-gate` | `gh issue close`, `gh issue delete` | `ask` — prompts for explicit human approval before the command runs | See [github-governance.rules.md](.claude/rules/github-governance.rules.md) |
 
 ### Conflict Resolution (GitHub Copilot ↔ Claude Code)
 

@@ -24,7 +24,8 @@ dotnet test -c Debug -p:Platform=$Platform
 git commit -m "feat: description"
 ```
 
-Blocked? → [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md)
+Commit/push blocked (formatting, build, tests)? → [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md)
+Command blocked/asked (destructive command, missing `-c`/`-p:Platform`)? → [destructive-command-governance.rules.md](.claude/rules/destructive-command-governance.rules.md)
 Full build/run/deploy details: [AGENTS.md § Build, Run & Deploy](./AGENTS.md#build-run--deploy)
 
 ## Core Guardrails
@@ -44,4 +45,5 @@ Full build/run/deploy details: [AGENTS.md § Build, Run & Deploy](./AGENTS.md#bu
 | **Agent Workflow** | [AGENTS.md](./AGENTS.md) |
 | **Code Quality** | [code-quality.instructions.md](.github/instructions/code-quality.instructions.md) |
 | **Git Hooks** | [hook-comprehensive.rules.md](.claude/rules/hook-comprehensive.rules.md) |
+| **Destructive Command Governance** | [destructive-command-governance.rules.md](.claude/rules/destructive-command-governance.rules.md) |
 | **All Rules** | [copilot-instructions.md](.github/copilot-instructions.md) |
