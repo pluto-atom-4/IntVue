@@ -65,7 +65,7 @@ IntVue uses **Segoe UI** (standard for WinUI 3 and Windows apps):
 <TextBlock FontSize="32" />   <!-- type-display -->
 ```
 
-**Exception:** Countdown display uses 72px (documented as feature-specific override in Section 6 of `design-components.rules.md`)
+**Exception:** Countdown display uses 72px (documented as feature-specific override in the "Countdown Display" section of `design-components.rules.md`)
 
 ---
 
