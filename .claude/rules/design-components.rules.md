@@ -61,13 +61,7 @@ Form controls inherit WinUI 3 styling automatically:
 
 ## Keyboard Navigation & Focus Indicators
 
-WinUI 3 automatically provides focus outlines. They are **critical for accessibility**.
-
-**Default Focus Behavior (Automatic):**
-```xaml
-<!-- Focus automatically visible when using Tab -->
-<Button Content="Action" AutomationProperties.Name="Do action" />
-```
+WinUI 3 automatically provides focus outlines when tabbing between controls. They are **critical for accessibility**.
 
 **Tab Order (Optional, for Complex Layouts):**
 ```xaml
@@ -220,7 +214,7 @@ For forms with multiple fields:
 
 ```xaml
 <StackPanel Spacing="16" Padding="12">
-    <!-- Field 1 -->
+    <!-- Field (repeat this label+control block per field) -->
     <StackPanel Spacing="4">
         <TextBlock Text="Camera" FontSize="14" FontWeight="SemiBold" />
         <ComboBox
@@ -230,16 +224,7 @@ For forms with multiple fields:
             MinWidth="200"
             AutomationProperties.Name="Camera selection" />
     </StackPanel>
-    
-    <!-- Field 2 -->
-    <StackPanel Spacing="4">
-        <TextBlock Text="Resolution" FontSize="14" FontWeight="SemiBold" />
-        <StackPanel Spacing="8">
-            <RadioButton Content="1080p" GroupName="Resolution" />
-            <RadioButton Content="720p" GroupName="Resolution" />
-        </StackPanel>
-    </StackPanel>
-    
+
     <!-- Actions -->
     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
         <Button Content="Cancel" />
@@ -248,10 +233,7 @@ For forms with multiple fields:
 </StackPanel>
 ```
 
-**Spacing Rules:**
-- Label + control spacing: 4px (`spacing-xs`)
-- Between fields: 16px (`spacing-lg`)
-- Button group: 8px (`spacing-sm`)
+**Spacing Rules:** See `.claude/rules/design-spacing.rules.md` for the canonical spacing scale (label + control spacing, field spacing, button group spacing) applied above.
 
 ---
 
@@ -308,95 +290,36 @@ For confirm dialogs and modal overlays:
 **Dialog Styling Rules:**
 - Overlay background: `ControlFillColorTransparentBrush` (semi-transparent)
 - Dialog background: `SolidBackgroundFillColorBaseBrush` (matches page)
-- Border radius: 16px (`radius-large`)
-- Padding: 24px (`spacing-xl`)
 - Max width: 400px (prevents too-wide dialogs)
+- Border radius and padding: see `.claude/rules/design-spacing.rules.md` (`radius-large`, `spacing-xl`) for the canonical values used above
 
 ---
 
 ## List/Grid Patterns (Future)
 
-For virtualized lists and grids:
-
-**Virtualized List:**
-```xaml
-<ListView ItemsSource="{x:Bind ViewModel.Recordings, Mode=OneWay}">
-    <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:Recording">
-            <StackPanel Padding="12" Spacing="4">
-                <TextBlock 
-                    Text="{x:Bind Name, Mode=OneWay}" 
-                    FontSize="14"
-                    FontWeight="SemiBold" />
-                <TextBlock 
-                    Text="{x:Bind Date, Mode=OneWay}" 
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-        </DataTemplate>
-    </ListView.ItemTemplate>
-</ListView>
-```
-
-**Grid Layout:**
-```xaml
-<Grid ColumnSpacing="16" RowSpacing="16" Padding="16">
-    <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="*" />
-    </Grid.ColumnDefinitions>
-    
-    <Border CornerRadius="8" Background="{ThemeResource ControlStrongFillColorDefaultBrush}" Padding="12" />
-    <Border CornerRadius="8" Background="{ThemeResource ControlStrongFillColorDefaultBrush}" Padding="12" Grid.Column="1" />
-</Grid>
-```
-
-**Do NOT:** Use StackPanel for long lists; always virtualize with `ListView` or `ItemsRepeater`
+Not yet built. When implemented, virtualize long lists with `ListView` or `ItemsRepeater` (never `StackPanel`), and use `Grid` with `ColumnSpacing`/`RowSpacing` per the 8px scale in `design-spacing.rules.md` for grid layouts.
 
 ---
 
 ## Accessibility Requirements
 
-**All Interactive Controls:**
-```xaml
-<!-- Every button, link, input must have automation property -->
-<Button
-    Content="Action"
-    AutomationProperties.Name="Clear description of action"
-    AutomationProperties.AutomationId="ButtonAutomationId" />
-```
+**All Interactive Controls:** Every button, link, and input must have `AutomationProperties.Name` (see the Button Patterns example under "Button States" above).
 
-**Keyboard Navigation:**
-- Tab: Navigate forward
-- Shift+Tab: Navigate backward
-- Enter/Space: Activate button
-- Escape: Cancel dialog
+**Keyboard Navigation:** See "Keyboard Navigation & Focus Indicators" above for the full rules and examples.
 
 **Color Contrast:**
 - Text must meet WCAG AA: 4.5:1 ratio for normal text, 3:1 for large text
 - Always test in light, dark, and high-contrast themes
 
-**Screen Reader Testing:**
-- Windows+Enter: Activate Narrator (built-in screen reader)
-- Verify all buttons have `AutomationProperties.Name`
-- Verify all inputs have labels (via `AutomationProperties.Name` or associated TextBlock)
-
-**Focus Indicators:**
-- Tab outlines must be visible on all backgrounds (WinUI provides)
-- Never hide focus (critical for keyboard users)
+**Screen Reader & Focus Testing:**
+- Windows+Enter: Activate Narrator (built-in screen reader) and verify all buttons/inputs have labels
+- Tab outlines must be visible on all backgrounds (WinUI provides); never hide focus
 
 ---
 
 ## Essential Rules
 
-1. **Button accessibility** — All buttons have `AutomationProperties.Name`
-2. **Keyboard support** — Tab/Enter/Escape work everywhere
-3. **Color contrast** — Sufficient contrast in all themes
-4. **Focus indicators** — Always visible (trust WinUI)
-5. **No hard-coded styles** — Use WinUI theme resources
-6. **Form labels** — All inputs have clear labels
-7. **Recording indicator** — Always visible when active
-8. **Countdown visible** — Never hidden or off-screen
+These rules are already covered in detail above (Button States, Form Controls, Keyboard Navigation & Focus Indicators, Recording Indicator, Countdown Display, Accessibility Requirements). See `DESIGN.md`'s "Essential Rules Summary" for the project-wide version of this list.
 
 ---
 
@@ -416,14 +339,6 @@ For virtualized lists and grids:
 
 <!-- ✓ Good: Use style -->
 <Button Style="{ThemeResource AccentButtonStyle}" />
-```
-
-```xaml
-<!-- ❌ Avoid: Conditional recording indicator visibility -->
-<Grid Visibility="{x:Bind ShowOnHover}" />
-
-<!-- ✓ Good: Always visible when recording -->
-<Grid Visibility="{x:Bind ViewModel.IsRecording, Converter=...}" />
 ```
 
 ---
