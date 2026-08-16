@@ -7,22 +7,22 @@
           {
             "type": "command",
             "id": "block-destructive-shell",
-            "if": "Bash(^(rm -rf|del /s|git reset --hard|Format-Volume|git push --force|git push -f))",
-            "command": "echo '{\"continue\": false, \"stopReason\": \"Destructive shell command blocked for safety. Use explicit manual review instead.\"}' ",
+            "if": "Bash((rm -rf|del /s|git reset --hard|Format-Volume|git push --force|git push -f|rd /s|Remove-Item[^\\r\\n]*-Recurse|Remove-Item[^\\r\\n]*-Force))",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"GOVERNANCE: Destructive command (rm -rf / del /s / rd /s / Remove-Item -Recurse|-Force / git reset --hard / git push --force|-f / Format-Volume) blocked by default for safety. Requires explicit human approval in this turn, or a documented allow-list entry in .claude/settings.local.json for recurring legitimate use. See .claude/rules/destructive-command-governance.rules.md\"}}'",
             "statusMessage": "Checking for destructive commands..."
           },
           {
             "type": "command",
             "id": "warn-missing-platform",
             "if": "Bash(dotnet (build|test|run)(?!.*-p:Platform))",
-            "command": "echo '{\"systemMessage\": \"⚠️ Platform variable not detected. Set: \\$arch = \\$env:PROCESSOR_ARCHITECTURE; \\$Platform = if (\\$arch -eq '\"'\"'AMD64'\"'\"') { '\"'\"'x64'\"'\"' } else { \\$arch }; Then use: dotnet build -c Debug -p:Platform=\\$Platform\"}'",
+            "command": "echo '{\"systemMessage\": \"⚠️ Platform not detected. Detect it first: \\$arch = \\$env:PROCESSOR_ARCHITECTURE; \\$Platform = if (\\$arch -eq '\"'\"'AMD64'\"'\"') { '\"'\"'x64'\"'\"' } else { \\$arch }. Corrected command example: dotnet build -c Debug -p:Platform=\\$Platform (resolves to e.g. dotnet build -c Debug -p:Platform=x64)\"}'",
             "statusMessage": "Checking for platform detection..."
           },
           {
             "type": "command",
             "id": "warn-missing-config-flag",
             "if": "Bash(dotnet (build|test)(?!.*-c))",
-            "command": "echo '{\"systemMessage\": \"⚠️ Configuration flag missing. Use: -c Debug (or -c Release)\"}'",
+            "command": "echo '{\"systemMessage\": \"⚠️ Configuration flag missing. Corrected command example: dotnet build -c Debug -p:Platform=<arch> (use -c Release for Release builds; the same -c flag applies to dotnet test -c Debug -p:Platform=<arch>)\"}'",
             "statusMessage": "Checking for configuration flag..."
           },
           {

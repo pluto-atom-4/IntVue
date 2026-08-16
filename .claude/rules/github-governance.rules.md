@@ -123,28 +123,7 @@ Agent: ✅ Closes (user approved)
 
 ### Settings.json Hook
 
-This rule is enforced via a PreToolUse hook on GitHub API calls:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "id": "github-issue-closure-approval-gate",
-            "if": "Bash(gh issue close|gh issue delete)",
-            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"GOVERNANCE: Issue closure requires explicit user approval. See .claude/rules/github-governance.rules.md\"}}'",
-            "statusMessage": "Checking for GitHub issue closure operations..."
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+This rule is enforced via the `github-issue-closure-approval-gate` PreToolUse hook on `Bash` tool calls matching `gh issue close`/`gh issue delete` — see its full definition directly in `.claude/settings.json`.
 
 ---
 
@@ -181,18 +160,6 @@ Agent: ✅ Can auto-close for this session only
 - Critical issues
 - Issues with stakeholders
 - Issues that affect production
-
----
-
-## Audit Trail
-
-All issue closures are logged for compliance:
-
-| Date | Issue | Closed By | Reason | Approval |
-|---|---|---|---|---|
-| 2026-08-05 | #42 | Claude Code | User request | "Yes, close it" |
-| 2026-08-05 | #43 | User (manual) | Duplicate | N/A |
-| 2026-08-06 | #44 | fix-github-issues skill | Auto-close (waived) | Settings.json override |
 
 ---
 
