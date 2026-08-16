@@ -113,17 +113,7 @@ the human's explicit yes/no before proceeding.
 
 ### Settings.json Hook
 
-This rule is enforced via a PreToolUse hook on `Bash` tool calls in `.claude/settings.json`:
-
-```json
-{
-  "type": "command",
-  "id": "block-destructive-shell",
-  "if": "Bash((rm -rf|del /s|git reset --hard|Format-Volume|git push --force|git push -f|rd /s|Remove-Item[^\\r\\n]*-Recurse|Remove-Item[^\\r\\n]*-Force))",
-  "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"GOVERNANCE: Destructive command (rm -rf / del /s / rd /s / Remove-Item -Recurse|-Force / git reset --hard / git push --force|-f / Format-Volume) blocked by default for safety. Requires explicit human approval in this turn, or a documented allow-list entry in .claude/settings.local.json for recurring legitimate use. See .claude/rules/destructive-command-governance.rules.md\"}}'",
-  "statusMessage": "Checking for destructive commands..."
-}
-```
+This rule is enforced via the `block-destructive-shell` PreToolUse hook on `Bash` tool calls — see its `id`/`if`/`command` definition directly in `.claude/settings.json`.
 
 **Key differences from the previous implementation:**
 - The regex is no longer anchored to the start of the command (`^` removed), so it also catches destructive commands chained after other commands (e.g., `cd x && rm -rf y`).
@@ -162,16 +152,6 @@ A human — not an agent — adds an explicit entry to `.claude/settings.local.j
 - Anything that could affect production data or shared infrastructure
 
 **Approval is never automatic and never self-granted by an agent.** An agent may explain how to add an allow-list entry, but must not add one itself to bypass a block it just hit.
-
----
-
-## Audit Trail
-
-All approved destructive command executions should be noted for traceability:
-
-| Date | Command | Approved By | Reason | Approval Method |
-|---|---|---|---|---|
-| _(none yet)_ | | | | |
 
 ---
 
