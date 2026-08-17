@@ -1,183 +1,137 @@
 {
-  "audit_date": "2026-08-02",
-  "last_updated": "2026-08-02T14:30:00Z",
-  "optimization_status": "COMPLETE",
-  "token_estimate_ratio": "1 token ≈ 4 characters",
-  "summary": {
-    "total_files": 19,
-    "total_chars": 104339,
-    "total_tokens": 26084,
-    "recommended_tokens": 35000,
-    "status": "OK",
-    "overage_percent": -25.5,
-    "delta_description": "Within budget by 25.5% (recomputed after issue #140: removed hook-quick-fix.rules.md and hook-strategy.rules.md entries, and trimmed CLAUDE.md from 67 to 47 lines)"
-  },
+  "timestamp": "2026-08-16T19:27:47.682147",
   "files": [
     {
       "path": "CLAUDE.md",
-      "lines": 47,
-      "chars": 1769,
-      "estimated_tokens": 442,
-      "target_tokens": 750,
-      "status": "OK",
-      "delta_percent": -41.1
+      "lines": 70,
+      "chars": 3194,
+      "bytes_utf8": 3208,
+      "tokens_estimated": 802,
+      "budget": 1800,
+      "status": "compliant",
+      "percent_of_budget": 44.55555555555556,
+      "last_modified": "2026-08-16T19:04:00.827000"
     },
     {
       "path": "DESIGN.md",
-      "lines": 262,
-      "chars": 10480,
-      "estimated_tokens": 2620,
-      "target_tokens": 3500,
-      "status": "OK",
-      "delta_percent": -25.1
+      "lines": 261,
+      "chars": 9425,
+      "bytes_utf8": 9573,
+      "tokens_estimated": 2393,
+      "budget": 3000,
+      "status": "compliant",
+      "percent_of_budget": 79.76666666666667,
+      "last_modified": "2026-08-09T21:58:40.068273"
     },
     {
       "path": "AGENTS.md",
-      "lines": 339,
-      "chars": 13600,
-      "estimated_tokens": 3400,
-      "target_tokens": 4000,
-      "status": "OK",
-      "delta_percent": -15.0
+      "lines": 390,
+      "chars": 23109,
+      "bytes_utf8": 23214,
+      "tokens_estimated": 5803,
+      "budget": 7500,
+      "status": "compliant",
+      "percent_of_budget": 77.37333333333333,
+      "last_modified": "2026-08-16T19:04:00.821000"
     },
     {
       "path": ".github/copilot-instructions.md",
       "lines": 60,
-      "chars": 2440,
-      "estimated_tokens": 610,
-      "target_tokens": 1250,
-      "status": "OK",
-      "delta_percent": -51.2
-    },
-    {
-      "path": ".github/instructions/performance.instructions.md",
-      "lines": 53,
-      "chars": 2801,
-      "estimated_tokens": 700,
-      "target_tokens": 1000,
-      "status": "OK",
-      "delta_percent": -30.0
-    },
-    {
-      "path": ".github/instructions/globalization.instructions.md",
-      "lines": 55,
-      "chars": 2664,
-      "estimated_tokens": 666,
-      "target_tokens": 1000,
-      "status": "OK",
-      "delta_percent": -33.4
-    },
-    {
-      "path": ".github/instructions/accessibility.instructions.md",
-      "lines": 62,
-      "chars": 3560,
-      "estimated_tokens": 890,
-      "target_tokens": 1000,
-      "status": "OK",
-      "delta_percent": -11.0
-    },
-    {
-      "path": ".github/instructions/windows-apis.instructions.md",
-      "lines": 92,
-      "chars": 6235,
-      "estimated_tokens": 1559,
-      "target_tokens": 2000,
-      "status": "OK",
-      "delta_percent": -22.0
-    },
-    {
-      "path": ".github/instructions/design-principles.instructions.md",
-      "lines": 134,
-      "chars": 6089,
-      "estimated_tokens": 1522,
-      "target_tokens": 2000,
-      "status": "OK",
-      "delta_percent": -23.9
-    },
-    {
-      "path": ".github/instructions/code-quality.instructions.md",
-      "lines": 170,
-      "chars": 7158,
-      "estimated_tokens": 1790,
-      "target_tokens": 2000,
-      "status": "OK",
-      "delta_percent": -10.5
-    },
-    {
-      "path": ".github/instructions/security.instructions.md",
-      "lines": 140,
-      "chars": 9759,
-      "estimated_tokens": 2440,
-      "target_tokens": 2500,
-      "status": "OK",
-      "delta_percent": -2.4
-    },
-    {
-      "path": ".github/instructions/testing.instructions.md",
-      "lines": 284,
-      "chars": 10025,
-      "estimated_tokens": 2506,
-      "target_tokens": 2500,
-      "status": "OK",
-      "delta_percent": 0.2
+      "chars": 3064,
+      "bytes_utf8": 3084,
+      "tokens_estimated": 771,
+      "budget": 1000,
+      "status": "compliant",
+      "percent_of_budget": 77.10000000000001,
+      "last_modified": "2026-08-16T19:04:00.784000"
     },
     {
       "path": ".claude/rules/design-colors.rules.md",
-      "lines": 221,
-      "chars": 8840,
-      "estimated_tokens": 2210,
-      "target_tokens": 2500,
-      "status": "OK",
-      "delta_percent": -11.6
+      "lines": 220,
+      "chars": 8615,
+      "bytes_utf8": 8631,
+      "tokens_estimated": 2157,
+      "budget": 3000,
+      "status": "compliant",
+      "percent_of_budget": 71.89999999999999,
+      "last_modified": "2026-08-16T16:22:38.488703"
     },
     {
       "path": ".claude/rules/design-components.rules.md",
-      "lines": 438,
-      "chars": 17520,
-      "estimated_tokens": 4380,
-      "target_tokens": 4500,
-      "status": "OK",
-      "delta_percent": -2.7
+      "lines": 352,
+      "chars": 11805,
+      "bytes_utf8": 11835,
+      "tokens_estimated": 2958,
+      "budget": 4500,
+      "status": "compliant",
+      "percent_of_budget": 65.73333333333333,
+      "last_modified": "2026-08-16T16:22:38.490698"
     },
     {
       "path": ".claude/rules/design-spacing.rules.md",
-      "lines": 334,
-      "chars": 13360,
-      "estimated_tokens": 3340,
-      "target_tokens": 3500,
-      "status": "OK",
-      "delta_percent": -4.6
+      "lines": 333,
+      "chars": 9245,
+      "bytes_utf8": 9269,
+      "tokens_estimated": 2317,
+      "budget": 2800,
+      "status": "compliant",
+      "percent_of_budget": 82.75,
+      "last_modified": "2026-08-16T16:22:38.492719"
     },
     {
       "path": ".claude/rules/design-typography.rules.md",
-      "lines": 305,
-      "chars": 12200,
-      "estimated_tokens": 3050,
-      "target_tokens": 3200,
-      "status": "OK",
-      "delta_percent": -4.7
+      "lines": 304,
+      "chars": 9549,
+      "bytes_utf8": 9587,
+      "tokens_estimated": 2396,
+      "budget": 2800,
+      "status": "compliant",
+      "percent_of_budget": 85.57142857142857,
+      "last_modified": "2026-08-16T16:22:38.492719"
+    },
+    {
+      "path": ".claude/rules/destructive-command-governance.rules.md",
+      "lines": 200,
+      "chars": 9044,
+      "bytes_utf8": 9148,
+      "tokens_estimated": 2287,
+      "budget": 2800,
+      "status": "compliant",
+      "percent_of_budget": 81.67857142857143,
+      "last_modified": "2026-08-16T19:03:05.780293"
+    },
+    {
+      "path": ".claude/rules/github-governance.rules.md",
+      "lines": 219,
+      "chars": 5977,
+      "bytes_utf8": 6067,
+      "tokens_estimated": 1516,
+      "budget": 1800,
+      "status": "compliant",
+      "percent_of_budget": 84.22222222222221,
+      "last_modified": "2026-08-16T19:03:05.781296"
     },
     {
       "path": ".claude/rules/hook-comprehensive.rules.md",
-      "lines": 223,
-      "chars": 6370,
-      "estimated_tokens": 1592,
-      "target_tokens": 2500,
-      "status": "OK",
-      "delta_percent": -36.3
+      "lines": 227,
+      "chars": 6574,
+      "bytes_utf8": 6662,
+      "tokens_estimated": 1665,
+      "budget": 2500,
+      "status": "compliant",
+      "percent_of_budget": 66.60000000000001,
+      "last_modified": "2026-08-16T19:03:05.782513"
     }
   ],
-  "optimization_summary": {
-    "phase_1": "Created path-scoped YAML rules + expanded copilot instructions",
-    "phase_2": "Implemented 4 quick wins (context reduction from 49K to 36K tokens)",
-    "phase_3": "Fixed line count compliance (60-line budget achieved)",
-    "total_reduction": "49105 -> 32580 tokens (-16525 tokens, -33.7% reduction)",
-    "achievements": [
-      "CLAUDE.md: 280+ lines -> 67 lines (75% reduction)",
-      "AGENTS.md: 478 lines -> 339 lines (29% reduction)",
-      ".github/copilot-instructions.md: 206 lines -> 60 lines (71% reduction)",
-      "All files now within budget targets",
-      "Overall project now 6.9% under 35K budget"
-    ]
-  }
+  "summary": {
+    "total_files": 11,
+    "compliant": 11,
+    "warnings": 0,
+    "over_budget": 0,
+    "total_tokens": 25065,
+    "total_budget": 33500,
+    "utilization_percent": 74.8
+  },
+  "warnings": [],
+  "errors": []
 }

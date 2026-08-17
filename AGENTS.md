@@ -197,9 +197,16 @@ Bypass Gate 2 only for:
 
 ## Skill Discovery & Framework
 
+> **Full indexed catalog:** [SKILLS.md](./SKILLS.md) at the repo root documents the
+> auto-discovery mechanism below in more detail and is the required fallback index for tools
+> (GitHub Copilot Agent Mode included) that don't scan `.claude/skills/` on their own.
+
 ### Available Skills (in `.claude/skills/`)
 
-The following specialized skills are auto-discovered and ready to invoke:
+The following specialized skills are auto-discovered and ready to invoke. Per-user on/off state
+lives in `.claude/settings.local.json` (`skillOverrides`, git-ignored) — check it before
+assuming a skill below is active in your session; [SKILLS.md](./SKILLS.md) carries the same
+caveat.
 
 | Skill | Purpose | Usage |
 |---|---|---|

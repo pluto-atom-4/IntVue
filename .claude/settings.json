@@ -65,6 +65,48 @@
     ]
   },
   "permissions": {
-    "defaultMode": "default"
+    "defaultMode": "default",
+    "allow": [
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet format *)",
+      "Bash(dotnet clean *)",
+      "Bash(gitleaks detect *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr close *)",
+      "Bash(gh release create *)",
+      "Bash(gh release delete *)",
+      "Bash(dotnet publish *)",
+      "Bash(dotnet nuget push *)",
+      "Bash(SignTool *)",
+      "Bash(MakeAppx *)",
+      "Bash(Add-AppxPackage *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/secrets.json)",
+      "Read(**/appsettings.local.json)",
+      "Read(**/*.pfx)",
+      "Read(**/local.settings.json)",
+      "Read(**/devcert.pfx)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_EFFORT_LEVEL": "high",
+    "MAX_THINKING_TOKENS": "32000"
   }
 }

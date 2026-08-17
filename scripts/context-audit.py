@@ -15,10 +15,14 @@ Output: docs/dev-note/context-baseline.json
 
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Token estimation: ~4 chars per token (conservative)
 CHARS_PER_TOKEN = 4
@@ -28,13 +32,15 @@ BUDGETS = {
     "CLAUDE.md": 1800,
     "DESIGN.md": 3000,
     "AGENTS.md": 7500,
-    ".github/copilot-instructions.md": 500,
+    ".github/copilot-instructions.md": 1000,
     # Rules files (flexible, but track)
     ".claude/rules/design-colors.rules.md": 3000,
     ".claude/rules/design-components.rules.md": 4500,
     ".claude/rules/design-spacing.rules.md": 2800,
     ".claude/rules/design-typography.rules.md": 2800,
     ".claude/rules/hook-comprehensive.rules.md": 2500,
+    ".claude/rules/destructive-command-governance.rules.md": 2800,
+    ".claude/rules/github-governance.rules.md": 1800,
 }
 
 
@@ -44,6 +50,7 @@ class FileMetrics:
     path: str
     lines: int
     chars: int
+    bytes_utf8: int
     tokens_estimated: int
     budget: Optional[int]
     status: str  # "compliant", "warning", "over_budget"
@@ -54,9 +61,9 @@ class FileMetrics:
         return asdict(self)
 
 
-def get_token_estimate(text: str) -> int:
-    """Estimate tokens using char count / 4."""
-    return len(text) // CHARS_PER_TOKEN
+def get_token_estimate(byte_count: int) -> int:
+    """Estimate tokens using UTF-8 byte count / 4."""
+    return byte_count // CHARS_PER_TOKEN
 
 
 def audit_file(file_path: Path, root_path: Path) -> Optional[FileMetrics]:
@@ -68,10 +75,11 @@ def audit_file(file_path: Path, root_path: Path) -> Optional[FileMetrics]:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        relative_path = str(file_path.relative_to(root_path))
+        relative_path = file_path.relative_to(root_path).as_posix()
         lines = len(content.splitlines())
         chars = len(content)
-        tokens = get_token_estimate(content)
+        content_bytes = len(content.encode("utf-8"))
+        tokens = get_token_estimate(content_bytes)
         budget = BUDGETS.get(relative_path)
 
         # Determine status
@@ -96,6 +104,7 @@ def audit_file(file_path: Path, root_path: Path) -> Optional[FileMetrics]:
             path=relative_path,
             lines=lines,
             chars=chars,
+            bytes_utf8=content_bytes,
             tokens_estimated=tokens,
             budget=budget,
             status=status,
@@ -134,7 +143,7 @@ def print_metrics(metrics_list: list[FileMetrics]) -> tuple[list[str], list[str]
         }.get(metrics.status, "?")
         print(
             f"{status_icon} {metrics.path}\n"
-            f"   Lines: {metrics.lines} | Tokens: {metrics.tokens_estimated} | "
+            f"   Bytes: {metrics.bytes_utf8} | Tokens: {metrics.tokens_estimated} | "
             f"Budget: {metrics.budget or 'none'}"
         )
         if metrics.percent_of_budget:
