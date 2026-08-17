@@ -132,13 +132,13 @@ jobs:
               comment += '✓ All compliant\n';
             }
 
-            comment += '\n### File Summary\n| File | Tokens | Budget | Status |\n';
-            comment += '|------|--------|--------|--------|\n';
+            comment += '\n### File Summary\n| File | Bytes | Tokens | Budget | Status |\n';
+            comment += '|------|-------|--------|--------|--------|\n';
             audit.files.forEach(f => {
               const status = f.status === 'compliant' ? '✓' :
                            f.status === 'warning' ? '⚠' : '❌';
               const budgetStr = f.budget ? `${f.budget}` : '—';
-              comment += `| \`${f.path}\` | ${f.tokens_estimated} | ${budgetStr} | ${status} |\n`;
+              comment += `| \`${f.path}\` | ${f.bytes_utf8} | ${f.tokens_estimated} | ${budgetStr} | ${status} |\n`;
             });
 
             comment += '\n**Next:** See [audit findings](../docs/dev-note/ai-config-audit-findings.md) for recommendations.\n';
