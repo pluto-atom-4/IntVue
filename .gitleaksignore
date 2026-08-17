@@ -14,3 +14,9 @@
 # Configuration templates — .env.example, appsettings.example.json
 **.example.*:*:example-config
 **/appsettings.*.json:*:example-credentials
+
+# .github/copilot/rules/service-patterns.rules.yaml:121 — illustrative "❌ AVOID" example
+# string inside the svc-no-hardcoded-secrets rule (Stripe test-mode prefix, sequential
+# low-entropy suffix; not a real/live credential). See that file's rule id
+# svc-no-hardcoded-secrets for context.
+1a13948c16cbf8a8c9e557c9403df6c3a9e8fb4a:.github/copilot/rules/service-patterns.rules.yaml:stripe-access-token:121
