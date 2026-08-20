@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\IntVue.csproj" />
+    <ProjectReference Include="..\..\IntVue.Core\IntVue.Core.csproj" />
   </ItemGroup>
 
 </Project>

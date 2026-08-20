@@ -121,6 +121,12 @@ public partial class App : Application
         // Add all cross-platform services from IntVue.Core
         services.AddIntVueCore();
 
+        // Add Windows-specific services (have Windows API dependencies)
+        services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IConsentService, ConsentService>();
+        services.AddSingleton<IProductReviewService, ProductReviewService>();
+        services.AddSingleton<IPlaylistService, PlaylistService>();
+
         // Add Windows-specific/UI services
         services.AddTransient<IntVue.ViewModels.ProductReviewViewModel>();
 

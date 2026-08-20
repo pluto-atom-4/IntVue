@@ -18,14 +18,12 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // Register platform-agnostic services
+        // Register platform-agnostic services (no Windows API dependencies)
         services.AddSingleton<ICountdownService, CountdownService>();
         services.AddSingleton<IFeatureFlagService, FeatureFlagService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<IConsentService, ConsentService>();
-        services.AddSingleton<IProductReviewService, ProductReviewService>();
-        services.AddSingleton<IPlaylistService, PlaylistService>();
 
+        // Note: PlaylistService, ProductReviewService, SettingsService, and ConsentService
+        // are registered in the Windows-specific App.xaml.cs because they have Windows API dependencies.
         return services;
     }
 }
