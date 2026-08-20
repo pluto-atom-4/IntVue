@@ -105,6 +105,11 @@
       <!-- Models, Converters, and ViewModels moved to IntVue.Core -->
     </ItemGroup>
 
+    <!-- Reference to IntVue.Core (cross-platform library) -->
+    <ItemGroup>
+      <ProjectReference Include="IntVue.Core/IntVue.Core.csproj" />
+    </ItemGroup>
+
     <!-- Exclude the Tests folder from the main project compile items so the test
          source files (which live under Tests\) are built only by the test
          project and do not cause compilation errors in the app project. -->
