@@ -77,12 +77,32 @@ write_info "Project root: $PROJECT_ROOT"
 cd "$PROJECT_ROOT"
 
 # Build
-write_info ""
-write_info "Building IntVue project in Debug mode..."
-write_info "Running: dotnet build -c Debug -p:Platform=$PLATFORM"
-write_info ""
+# On Linux: build Core and Tests only (skip Windows-only WinUI layer)
+# On Windows: build all projects
+build_succeeded=false
 
-if dotnet build -c Debug -p:Platform=$PLATFORM; then
+write_info ""
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    write_info "🐧 Linux detected: building Core and Tests only (skipping Windows-only WinUI layer)"
+    write_info "Running: dotnet build -c Debug -p:Platform=$PLATFORM IntVue.Core/IntVue.Core.csproj"
+    write_info "Running: dotnet build -c Debug -p:Platform=$PLATFORM Tests/IntVue.Tests/IntVue.Tests.csproj"
+    write_info ""
+
+    if dotnet build -c Debug -p:Platform=$PLATFORM IntVue.Core/IntVue.Core.csproj && \
+       dotnet build -c Debug -p:Platform=$PLATFORM Tests/IntVue.Tests/IntVue.Tests.csproj; then
+        build_succeeded=true
+    fi
+else
+    write_info "🪟 Windows detected: building all projects"
+    write_info "Running: dotnet build -c Debug -p:Platform=$PLATFORM"
+    write_info ""
+
+    if dotnet build -c Debug -p:Platform=$PLATFORM; then
+        build_succeeded=true
+    fi
+fi
+
+if [ "$build_succeeded" = true ]; then
     write_success ""
     write_success "Build succeeded!"
     write_info ""

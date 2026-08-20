@@ -117,12 +117,19 @@ public partial class App : Application
     private static ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<ICountdownService, CountdownService>();
-        services.AddSingleton<IProductReviewService, ProductReviewService>();
+
+        // Add all cross-platform services from IntVue.Core
+        services.AddIntVueCore();
+
+        // Add Windows-specific services (have Windows API dependencies)
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IConsentService, ConsentService>();
+        services.AddSingleton<IProductReviewService, ProductReviewService>();
         services.AddSingleton<IPlaylistService, PlaylistService>();
-        services.AddSingleton<IFeatureFlagService, FeatureFlagService>();
+
+        // Add Windows-specific/UI services
         services.AddTransient<IntVue.ViewModels.ProductReviewViewModel>();
+
         return services.BuildServiceProvider();
     }
 }

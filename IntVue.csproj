@@ -16,6 +16,8 @@
         <EnableMsixTooling>true</EnableMsixTooling>
         <ImplicitUsings>enable</ImplicitUsings>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Enable Windows targeting on Linux/cross-platform builds -->
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <!-- Fixes CsWinRT1030 warning for generic WinRT projection objects -->
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <!-- Forces the WinUI 3 build to output a standard unpackaged .exe -->
@@ -100,6 +102,12 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Services\" />
+      <!-- Models, Converters, and ViewModels moved to IntVue.Core -->
+    </ItemGroup>
+
+    <!-- Reference to IntVue.Core (cross-platform library) -->
+    <ItemGroup>
+      <ProjectReference Include="IntVue.Core/IntVue.Core.csproj" />
     </ItemGroup>
 
     <!-- Exclude the Tests folder from the main project compile items so the test
