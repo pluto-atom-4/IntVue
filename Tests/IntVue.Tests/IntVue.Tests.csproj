@@ -1,14 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
-    <!-- Explicitly define platform support to clear the Win2D warning -->
-    <Platforms>x86;x64;ARM64</Platforms>
-    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <!-- Ignores the always-true assertion rule so dotnet format can finish without errors -->
     <NoWarn>$(NoWarn);MSTEST0032</NoWarn>
   </PropertyGroup>
