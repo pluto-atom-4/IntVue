@@ -27,8 +27,8 @@
         <EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>true</EnableUnsafeMixedMicrosoftWindowsUIXamlProjections>
 	<!-- Prevents dotnet format from double-evaluating WinUI auto-generated files -->
         <!-- Prevents dotnet from evaluating WinUI auto-generated files -->
-        <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
-        <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);obj\**;bin\**</DefaultItemExcludesInProjectFolder>
+        <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**;IntVue.Core\bin\**;IntVue.Core\obj\**;Tests\**\bin\**;Tests\**\obj\**</DefaultItemExcludes>
+        <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);obj\**;bin\**;IntVue.Core\bin\**;IntVue.Core\obj\**;Tests\**\bin\**;Tests\**\obj\**</DefaultItemExcludesInProjectFolder>
     </PropertyGroup>
 
     <!-- Code analysis & style enforcement settings (added per project guidelines) -->
@@ -102,7 +102,7 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Services\" />
-      <!-- Models, Converters, and ViewModels moved to IntVue.Core -->
+      <!-- Models, Services, and ViewModels moved to IntVue.Core; Converters remains here -->
     </ItemGroup>
 
     <!-- Reference to IntVue.Core (cross-platform library) -->
@@ -112,9 +112,16 @@
 
     <!-- Exclude the Tests folder from the main project compile items so the test
          source files (which live under Tests\) are built only by the test
-         project and do not cause compilation errors in the app project. -->
+         project and do not cause compilation errors in the app project.
+         Also exclude IntVue.Core (nested under this project's own directory)
+         since its sources are already compiled into IntVue.Core.dll and
+         referenced via ProjectReference below; without this exclude, the
+         default SDK-style recursive glob would compile them a second time
+         directly into IntVue.exe, causing CS0436 duplicate-type warnings and
+         CS0121 ambiguous-call errors. -->
     <ItemGroup>
       <Compile Remove="Tests\**\*.cs" />
+      <Compile Remove="IntVue.Core\**\*.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="chore-idea.md" />
@@ -147,6 +154,7 @@
     <Target Name="RemoveWinUIDuplicatesFromFormat" BeforeTargets="CoreCompile;ComputeCompileInputs">
       <ItemGroup>
 	<Compile Remove="Tests\**\*.cs" />
+	<Compile Remove="IntVue.Core\**\*.cs" />
         <Compile Remove="obj\**\win-x64\**\*.cs" />
         <Compile Remove="$(BaseIntermediateOutputPath)**\*.cs" />
       </ItemGroup>
