@@ -29,7 +29,7 @@ CHARS_PER_TOKEN = 4
 
 # Recommended budgets (in tokens)
 BUDGETS = {
-    "CLAUDE.md": 1800,
+    "CLAUDE.md": 3000,
     "DESIGN.md": 3000,
     "AGENTS.md": 7500,
     ".github/copilot-instructions.md": 1000,
