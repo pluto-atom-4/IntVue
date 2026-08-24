@@ -13,48 +13,29 @@ and semantic design tokens (never hard-coded colors/spacing/type sizes).
 **Confirm:** Architecture, APIs, dependencies, build scripts
 **Blocked:** Secrets, releases, refactors
 
-## Pattern Rules (Path-Specific, Auto-Discovered)
+## Pattern Rules
 
-Copilot Agent Mode auto-appends the matching rule file(s) below when it touches a path. Full
-glob-matching mechanics and precedence order: [.github/copilot/README.md](copilot/README.md).
+Copilot Agent Mode auto-appends path-specific rules (XAML → x:Bind, ViewModels → MVVM, Services → validation/async, Tests → MSTest/AAA). See [.github/copilot/README.md](copilot/README.md) for full glob precedence and [.github/instructions/](../instructions/) for detailed patterns.
 
-| Path glob | Rule file | Domain |
-|---|---|---|
-| `**/*.xaml` | [xaml-binding.rules.yaml](copilot/rules/xaml-binding.rules.yaml) | Views/XAML — `x:Bind`, `{ThemeResource}`, `AutomationProperties.Name` |
-| `ViewModels/**/*.cs` | [viewmodel-patterns.rules.yaml](copilot/rules/viewmodel-patterns.rules.yaml) | `ObservableObject`, `[ObservableProperty]`, `[RelayCommand]`, DI |
-| `Services/**/*.cs` | [service-patterns.rules.yaml](copilot/rules/service-patterns.rules.yaml) | Interfaces, validation, async, `IDisposable`, no hardcoded secrets |
-| `**/*Tests.cs`, `**/*Test.cs` | [test-patterns.rules.yaml](copilot/rules/test-patterns.rules.yaml) | MSTest, AAA, ≥80% coverage, mocked dependencies |
+## Skills Catalog
 
-Detailed worked examples: [rules-detailed.md](copilot/rules-detailed.md) · Full instruction
-files: [.github/instructions/](../instructions/) · Design tokens: [.claude/rules/](../.claude/rules/)
+Copilot does not auto-discover skills; use [SKILLS.md](../SKILLS.md) as the indexed fallback catalog for accessibility-review, feature-generation, security-audit.
 
-## Skills Catalog (Fallback for Non-Auto-Discovering Tools)
+## Checks & Build Procedure
 
-Copilot Agent Mode does not auto-discover `.claude/skills/*/SKILL.md` the way Claude Code
-does. Use [SKILLS.md](../SKILLS.md) at the repo root as the indexed fallback catalog — open the
-linked `SKILL.md` file directly when a task matches one of its trigger phrases (accessibility
-review, feature scaffolding, security/media-capture audit).
+**Before commit:** Format → Build → Test → Secrets scan.
 
-## Checks
+```powershell
+dotnet format IntVue.csproj
+dotnet build -c Debug -p:Platform=$Platform
+dotnet test -c Debug -p:Platform=$Platform
+gitleaks detect --source . -v
+```
 
-1. Format: `dotnet format IntVue.csproj`
-2. Build: `dotnet build -c Debug -p:Platform=$Platform`
-3. Test: `dotnet test -c Debug -p:Platform=$Platform`
-4. Secrets: `gitleaks detect --source . -v`
-
-[Quick Fix](../.claude/rules/hook-comprehensive.rules.md)
+Details: [agent-build-procedures.md](../instructions/agent-build-procedures.md) · Troubleshooting: [hook-comprehensive.rules.md](../.claude/rules/hook-comprehensive.rules.md)
 
 ## WRAP Workflow
 
-- **W**rite issues — capture the task as a GitHub issue or atomic request before generating
-  code; reference it in the commit (`Closes #123`).
-- **R**efine instructions — read the pattern rule(s) for the path(s) you're touching (table
-  above) before writing code, not after.
-- **A**tomic tasks — one concern per PR/commit (one bug fix, one feature slice); keep diffs
-  small enough to review against the Scope table above.
-- **P**air with agent — run the Checks above after every generation pass; treat Copilot output
-  as a draft the human/agent verifies, not a final answer.
+**W**rite issues before coding · **R**efine instructions per path · **A**tomic tasks (one concern per PR) · **P**air with agent (run checks after each pass, treat output as draft). Reference issues in commits: `git commit -m "feat: description (Closes #123)"`. See [AGENTS.md § Core Agent Workflow](../AGENTS.md#core-agent-workflow) for details.
 
-Reference issue in commits: `git commit -m "feat: x (Closes #123)"`
-
-**v2.1** | Updated 2026-08-16
+**v2.1** | Updated 2026-08-23

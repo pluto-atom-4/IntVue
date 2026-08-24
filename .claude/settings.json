@@ -66,22 +66,25 @@
   },
   "permissions": {
     "defaultMode": "default",
+    "governance": "Scoped by operation type: readOnly (allow), buildAndTest (allow), CI/CD/publishing (ask), destructive (blocked via PreToolUse hook). See .claude/rules/destructive-command-governance.rules.md and github-governance.rules.md for detailed governance policies.",
     "allow": [
       "Bash(git status)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git branch *)",
       "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git check-ignore *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr diff *)",
       "Bash(dotnet build *)",
       "Bash(dotnet test *)",
       "Bash(dotnet format *)",
       "Bash(dotnet clean *)",
-      "Bash(gitleaks detect *)",
-      "Bash(gh issue view *)",
-      "Bash(gh issue list *)",
-      "Bash(gh pr view *)",
-      "Bash(gh pr list *)"
+      "Bash(gitleaks detect *)"
     ],
     "ask": [
       "Bash(git push *)",
@@ -107,6 +110,8 @@
   },
   "env": {
     "CLAUDE_CODE_EFFORT_LEVEL": "high",
-    "MAX_THINKING_TOKENS": "32000"
+    "CLAUDE_CODE_EFFORT_LEVEL_description": "Enables advanced reasoning (extra thinking time, deep analysis)",
+    "MAX_THINKING_TOKENS": "32000",
+    "MAX_THINKING_TOKENS_description": "Maximum tokens for internal reasoning before generating response"
   }
 }
