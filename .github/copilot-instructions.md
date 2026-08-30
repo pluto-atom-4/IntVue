@@ -1,41 +1,48 @@
-# Copilot Agent Mode - IntVue
+---
+title: Copilot Agent Mode — IntVue
+version: "2.2"
+---
 
-## Tech Stack Anchor
+# Copilot Agent Mode
 
-Architecture, tech boundaries, and data flow are defined in [DESIGN.md](../DESIGN.md)
-(§ System Architecture, § Technology Boundaries). Read it before generating code — it is the
-single source of truth for the stack: WinUI 3 / Windows App SDK, MVVM + DI, `x:Bind`-only XAML,
-and semantic design tokens (never hard-coded colors/spacing/type sizes).
+**Tech Stack:** WinUI 3, MVVM + DI, .NET 10.0+. Read [DESIGN.md](../DESIGN.md) for architecture.
 
 ## Scope
 
-**Auto:** Bug fixes, tests, docs, formatting, config
-**Confirm:** Architecture, APIs, dependencies, build scripts
-**Blocked:** Secrets, releases, refactors
+| Task | Auto? | Confirm? | Block? |
+|---|---|---|---|
+| Bug fixes, tests, docs, formatting, config | ✅ | — | — |
+| Architecture, APIs, dependencies, build scripts | — | ✅ | — |
+| Secrets, releases, refactors >3 files | — | — | ✅ |
 
-## Pattern Rules
+## Quick Rules
 
-Copilot Agent Mode auto-appends path-specific rules (XAML → x:Bind, ViewModels → MVVM, Services → validation/async, Tests → MSTest/AAA). See [.github/copilot/README.md](copilot/README.md) for full glob precedence and [.github/instructions/](../instructions/) for detailed patterns.
+| Category | DO ✅ | DO NOT ❌ |
+|---|---|---|
+| **XAML** | `x:Bind`, `{ThemeResource ...}`, `AutomationProperties.Name` | `{Binding}`, hard-coded colors, omit labels |
+| **ViewModel** | `ObservableObject`, `[ObservableProperty]`, `RelayCommand`, DI | Business logic, `new Service()` |
+| **Service** | Stateless, validate inputs, dispose resources, `ConfigureAwait(false)` | State across calls, bare exceptions |
+| **Tests** | MSTest + Moq, AAA, `Method_Scenario_Result`, ≥80% coverage | Generic names, mixed concerns |
+| **Git** | `Closes #123`, conventional commits, ≤50 chars | No issue ref, generic subjects |
 
-## Skills Catalog
+**Detailed patterns:** [copilot-patterns.rules.md](../../.claude/rules/copilot-patterns.rules.md)
 
-Copilot does not auto-discover skills; use [SKILLS.md](../SKILLS.md) as the indexed fallback catalog for accessibility-review, feature-generation, security-audit.
-
-## Checks & Build Procedure
-
-**Before commit:** Format → Build → Test → Secrets scan.
+## Build
 
 ```powershell
+$Platform = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { $env:PROCESSOR_ARCHITECTURE }
 dotnet format IntVue.csproj
 dotnet build -c Debug -p:Platform=$Platform
 dotnet test -c Debug -p:Platform=$Platform
-gitleaks detect --source . -v
 ```
 
-Details: [agent-build-procedures.md](../instructions/agent-build-procedures.md) · Troubleshooting: [hook-comprehensive.rules.md](../.claude/rules/hook-comprehensive.rules.md)
+## Workflow
 
-## WRAP Workflow
+**WRAP:** Write issues · Refine instructions · Atomic tasks · Pair with agent.
 
-**W**rite issues before coding · **R**efine instructions per path · **A**tomic tasks (one concern per PR) · **P**air with agent (run checks after each pass, treat output as draft). Reference issues in commits: `git commit -m "feat: description (Closes #123)"`. See [AGENTS.md § Core Agent Workflow](../AGENTS.md#core-agent-workflow) for details.
+## Skills
 
-**v2.1** | Updated 2026-08-23
+- `/accessibility-review`, `/feature-generation`, `/security-audit` ([SKILLS.md](../SKILLS.md))
+
+See [AGENTS.md](../AGENTS.md) for full workflow, Two-Gate System, hook config.
+

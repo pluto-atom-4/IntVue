@@ -1,4 +1,11 @@
 {
+  "effortLevel": "high",
+  "effortLevelDescription": "Extended thinking enabled. High-depth analysis for complex agent workflows, multi-file refactors, cross-cutting concerns. Reduces hallucination, improves plan accuracy.",
+  "modelDefaults": {
+    "primary": "claude-opus-5",
+    "fallback": "claude-sonnet-5",
+    "reasoning": "Opus for full-context multi-file work (Two-Gate System, plan mode). Sonnet for fast lints/formatting."
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -110,8 +117,8 @@
   },
   "env": {
     "CLAUDE_CODE_EFFORT_LEVEL": "high",
-    "CLAUDE_CODE_EFFORT_LEVEL_description": "Enables advanced reasoning (extra thinking time, deep analysis)",
+    "CLAUDE_CODE_EFFORT_LEVEL_description": "Enables advanced reasoning (extra thinking time, deep analysis for >3 file changes)",
     "MAX_THINKING_TOKENS": "32000",
-    "MAX_THINKING_TOKENS_description": "Maximum tokens for internal reasoning before generating response"
+    "MAX_THINKING_TOKENS_description": "Maximum tokens for internal reasoning before generating response (tuned for complex multi-file workflows)"
   }
 }

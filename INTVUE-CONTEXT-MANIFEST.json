@@ -9,16 +9,16 @@
       "name": "CLAUDE.md",
       "path": "CLAUDE.md",
       "type": "project-guardrails",
-      "lineCount": 47,
-      "wordCount": 191,
-      "estimatedTokens": 470,
+      "lineCount": 166,
+      "wordCount": 1352,
+      "estimatedTokens": 2977,
       "insertionType": "every-turn-tax",
       "priority": 1,
-      "description": "Quick reference for platform detection, build commands, architecture overview, code style essentials",
-      "targetLineCount": "<200",
-      "targetTokens": 1500,
+      "description": "Quick reference for platform detection, build commands, architecture overview, code style essentials, pre-commit checklist",
+      "targetLineCount": "<300",
+      "targetTokens": 3000,
       "status": "optimized",
-      "lastUpdated": "2026-08-09"
+      "lastUpdated": "2026-08-30"
     },
     {
       "id": "core-design-md",
@@ -41,32 +41,46 @@
       "name": "AGENTS.md",
       "path": "AGENTS.md",
       "type": "agent-workflow",
-      "lineCount": 270,
-      "wordCount": 2278,
-      "estimatedTokens": 2961,
+      "lineCount": 342,
+      "wordCount": 2561,
+      "estimatedTokens": 5622,
       "insertionType": "agent-only",
       "priority": 1,
-      "description": "Autonomous agent workflows, mandatory file-reading rules, build/run procedures",
-      "targetLineCount": "<150",
-      "targetTokens": 1500,
-      "status": "needs-refactor",
-      "lastUpdated": "2026-07-19"
+      "description": "Autonomous agent workflows, Two-Gate System, 14-step core workflow, PreToolUse/PostToolUse hooks, conflict resolution, instruction files index",
+      "targetLineCount": "<500",
+      "targetTokens": 7500,
+      "status": "optimized",
+      "lastUpdated": "2026-08-30"
     },
     {
       "id": "copilot-instructions",
       "name": ".github/copilot-instructions.md",
       "path": ".github/copilot-instructions.md",
       "type": "ide-autocomplete",
-      "lineCount": 53,
-      "wordCount": 243,
-      "estimatedTokens": 530,
+      "lineCount": 48,
+      "wordCount": 315,
+      "estimatedTokens": 427,
       "insertionType": "ide-autocomplete-trigger",
       "priority": 1,
-      "description": "GitHub Copilot-specific guidance (syntax, naming, patterns, XAML, MVVM)",
+      "description": "GitHub Copilot-specific guidance (compact) with references to copilot-patterns.rules.md for detailed examples",
       "targetLineCount": "<60",
       "targetTokens": 800,
+      "status": "optimized",
+      "lastUpdated": "2026-08-30"
+    },
+    {
+      "id": "copilot-patterns-rules",
+      "name": "copilot-patterns.rules.md",
+      "path": ".claude/rules/copilot-patterns.rules.md",
+      "type": "pattern-reference",
+      "lineCount": 180,
+      "wordCount": 1176,
+      "estimatedTokens": 1296,
+      "insertionType": "on-demand",
+      "priority": 2,
+      "description": "Detailed Copilot Agent Mode pattern examples (XAML, MVVM, Services, Tests, Git) with code examples and anti-patterns",
       "status": "created",
-      "lastUpdated": "2026-07-19"
+      "lastUpdated": "2026-08-30"
     },
     {
       "id": "design-colors-rules",
@@ -212,12 +226,12 @@
   "tokenBudgets": {
     "alwaysOnTokens": {
       "description": "Files loaded on every turn (unavoidable token cost)",
-      "currentTokens": 1000,
-      "budgetTokens": 3000,
-      "percentOfBudget": 33.3,
+      "currentTokens": 3404,
+      "budgetTokens": 5000,
+      "percentOfBudget": 68.1,
       "files": [
-        "CLAUDE.md (~470 tokens)",
-        ".github/copilot-instructions.md (~530 tokens)"
+        "CLAUDE.md (~2977 tokens)",
+        ".github/copilot-instructions.md (~427 tokens)"
       ],
       "status": "healthy"
     },
@@ -251,12 +265,12 @@
     }
   },
   "statusSummary": {
-    "totalFiles": 14,
-    "filesComplete": 14,
+    "totalFiles": 15,
+    "filesComplete": 15,
     "filesToCreate": 0,
     "filesNeedingRefactor": 0,
     "complianceRate": "100%",
-    "phase": "Phase 3: Token Accounting (in progress)"
+    "phase": "Phase 5: Context Optimization Complete (Aug 2026 Best Practices)"
   },
   "nextSteps": [
     "Phase 1: Document token budgets (in progress)",
