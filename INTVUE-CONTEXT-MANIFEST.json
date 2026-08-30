@@ -57,14 +57,14 @@
       "name": ".github/copilot-instructions.md",
       "path": ".github/copilot-instructions.md",
       "type": "ide-autocomplete",
-      "lineCount": 82,
-      "wordCount": 467,
-      "estimatedTokens": 816,
+      "lineCount": 48,
+      "wordCount": 315,
+      "estimatedTokens": 427,
       "insertionType": "ide-autocomplete-trigger",
       "priority": 1,
-      "description": "GitHub Copilot-specific guidance (syntax, naming, patterns, XAML, MVVM) - compact with reference links",
-      "targetLineCount": "<100",
-      "targetTokens": 1000,
+      "description": "GitHub Copilot-specific guidance (compact) with references to copilot-patterns.rules.md for detailed examples",
+      "targetLineCount": "<60",
+      "targetTokens": 800,
       "status": "optimized",
       "lastUpdated": "2026-08-30"
     },
@@ -226,12 +226,12 @@
   "tokenBudgets": {
     "alwaysOnTokens": {
       "description": "Files loaded on every turn (unavoidable token cost)",
-      "currentTokens": 3793,
+      "currentTokens": 3404,
       "budgetTokens": 5000,
-      "percentOfBudget": 75.9,
+      "percentOfBudget": 68.1,
       "files": [
         "CLAUDE.md (~2977 tokens)",
-        ".github/copilot-instructions.md (~816 tokens)"
+        ".github/copilot-instructions.md (~427 tokens)"
       ],
       "status": "healthy"
     },
