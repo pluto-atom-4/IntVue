@@ -2,8 +2,8 @@
   "effortLevel": "high",
   "effortLevelDescription": "Extended thinking enabled. High-depth analysis for complex agent workflows, multi-file refactors, cross-cutting concerns. Reduces hallucination, improves plan accuracy.",
   "modelDefaults": {
-    "primary": "claude-opus-5",
-    "fallback": "claude-sonnet-5",
+    "primary": "claude-sonnet-5",
+    "fallback": "claude-haiku-4-5",
     "reasoning": "Opus for full-context multi-file work (Two-Gate System, plan mode). Sonnet for fast lints/formatting."
   },
   "hooks": {
