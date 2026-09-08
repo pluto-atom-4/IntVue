@@ -8,17 +8,14 @@
       }
     },
     "code-review-graph": {
-      "command": "uvx",
-      "args": [
-        "code-review-graph",
-        "serve"
-      ],
-      "type": "stdio"
+      "type": "stdio",
+      "command": "code-review-graph",
+      "args": ["serve"]
     },
     "graphify": {
       "type": "stdio",
       "command": "graphify-mcp",
-      "args": []
+      "args": ["graphify-out/graph.json"]
     }
   }
 }
