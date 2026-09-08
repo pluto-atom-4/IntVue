@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/pluto-atom-4/.local/bin/graphify hook-guard search"
+            "command": "graphify hook-guard search"
           }
         ]
       },
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/pluto-atom-4/.local/bin/graphify hook-guard read"
+            "command": "graphify hook-guard read"
           }
         ]
       }
