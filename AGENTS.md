@@ -33,6 +33,20 @@
 
 ---
 
+## Graph Intelligence Tools
+
+`code-review-graph` (micro/AST blast-radius) and `graphify` (macro/doc knowledge graph) replace expensive Grep/Glob with structured graph queries. Registered as MCP servers for this project (`.mcp.json` + user-level `~/.claude/settings.json`); `PostToolUse`/`SessionStart`/`PreToolUse` hooks in `.claude/settings.json` keep the graph fresh and steer broad searches toward it automatically.
+
+| Need | Use | Fallback |
+|---|---|---|
+| Macro assessment (subsystem/architecture, business logic across docs) | Graphify — `graphify query "<question>"`, `graphify-out/GRAPH_REPORT.md` | `README.md`/design docs |
+| Micro/blast-radius (callers, callees, impact of a change) | code-review-graph MCP tools (`query_graph_tool`, `get_impact_radius_tool`, `detect_changes_tool`) | Targeted Grep on the file + direct imports |
+| Graph tool errors/empty result | — | Fall back to Grep/Glob rather than looping on the graph |
+
+Full routing matrix, orchestration rules (macro→micro escalation, single-engine isolation, stale-graph handling), and the MCP tool reference table: [graph-tools.rules.md](.claude/rules/graph-tools.rules.md).
+
+---
+
 ## Core Agent Workflow (14 Steps)
 
 1. **Review goal** — Understand the issue/request scope and acceptance criteria

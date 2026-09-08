@@ -100,3 +100,11 @@ issue-sympton.md
 chore-idea.md
 docs/dev-note/context-baseline.json
 about-*-md.md
+issue-content-last-comment.json
+# Added by code-review-graph
+.code-review-graph/
+
+# Graphify knowledge graph output (not self-ignoring, unlike code-review-graph)
+graphify-out/
+.graphify_cache/
+*.graphify-bak
