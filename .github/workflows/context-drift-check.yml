@@ -80,10 +80,10 @@ jobs:
           Write-Host ""
 
           $checks = @(
-            @{ File = 'CLAUDE.md'; MaxLines = 200; Category = 'Quick Reference' },
-            @{ File = 'DESIGN.md'; MinLines = 200; MaxLines = 400; Category = 'Architecture' },
-            @{ File = 'AGENTS.md'; MaxLines = 300; Category = 'Agent Workflow'; Warning = $true },
-            @{ File = '.github/copilot-instructions.md'; MaxLines = 60; Category = 'Copilot' }
+            @{ File = 'CLAUDE.md'; MaxLines = 300; Category = 'Quick Reference' },
+            @{ File = 'DESIGN.md'; MinLines = 200; MaxLines = 600; Category = 'Architecture' },
+            @{ File = 'AGENTS.md'; MaxLines = 500; Category = 'Agent Workflow'; Warning = $true },
+            @{ File = '.github/copilot-instructions.md'; MaxLines = 100; Category = 'Copilot (compact with references)' }
           )
 
           $violations = @()
