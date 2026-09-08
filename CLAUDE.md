@@ -6,6 +6,7 @@ WinUI 3 (Windows App SDK 1.8.x) interview practice app. MVVM + DI. .NET 10.0+.
 > **Designers:** Read [DESIGN.md](./DESIGN.md) first (semantic tokens, design rules).
 > **Skills:** [SKILLS.md](./SKILLS.md) — indexed catalog + auto-discovery/fallback mechanism.
 > **All rules:** [.github/copilot-instructions.md](.github/copilot-instructions.md).
+> **Graph tools:** [graph-tools.rules.md](.claude/rules/graph-tools.rules.md) — code-review-graph (blast-radius) + graphify (macro map) routing.
 
 ## Quick Start (5 Steps)
 
@@ -104,6 +105,7 @@ These rules prevent silent failures, security breaches, and architectural debt. 
 | **Destructive Commands** | [destructive-command-governance.rules.md](.claude/rules/destructive-command-governance.rules.md) | Approval gate for `rm -rf`, `git reset --hard`, `git push --force`, etc.; allow-list override for recurring use |
 | **GitHub Governance** | [github-governance.rules.md](.claude/rules/github-governance.rules.md) | Issue closure approval gate: no auto-close without explicit user approval; scenarios and bypass policy |
 | **Copilot Agent Mode** | [.github/copilot-instructions.md](.github/copilot-instructions.md) | GitHub Copilot Agent Mode only: path-specific pattern rules, WRAP workflow, scope matrix |
+| **Graph Tools** | [graph-tools.rules.md](.claude/rules/graph-tools.rules.md) | code-review-graph (AST/blast-radius) + graphify (macro knowledge graph) routing, MCP tool table, orchestration/fallback rules |
 
 ## Pre-Implementation Checklist
 

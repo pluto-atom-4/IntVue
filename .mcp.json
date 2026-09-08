@@ -6,6 +6,19 @@
       "headers": {
         "Authorization": "Bearer ${GITHUB_MCP_PAT}"
       }
+    },
+    "code-review-graph": {
+      "command": "uvx",
+      "args": [
+        "code-review-graph",
+        "serve"
+      ],
+      "type": "stdio"
+    },
+    "graphify": {
+      "type": "stdio",
+      "command": "graphify-mcp",
+      "args": []
     }
   }
 }
